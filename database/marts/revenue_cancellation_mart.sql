@@ -1,0 +1,1 @@
+-- TODO: Define database\\marts\\revenue_cancellation_mart.sql after grain and KPI definitions are approved.

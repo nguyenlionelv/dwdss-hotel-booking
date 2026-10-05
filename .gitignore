@@ -1,0 +1,38 @@
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Node / frontend
+node_modules/
+frontend/dist/
+
+# Local data and generated outputs
+data/raw/**/*.csv
+data/raw/**/*.json
+data/raw/**/*.jsonl
+data/raw/**/*.parquet
+data/raw/**/*.xlsx
+ml/artifacts/*.joblib
+ml/artifacts/*.pkl
+artifacts/forecasts/*
+artifacts/metrics/*
+artifacts/logs/*
+artifacts/screenshots/*
+!artifacts/**/.gitkeep
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

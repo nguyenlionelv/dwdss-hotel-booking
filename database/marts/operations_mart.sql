@@ -1,0 +1,1 @@
+-- TODO: Define database\\marts\\operations_mart.sql after grain and KPI definitions are approved.

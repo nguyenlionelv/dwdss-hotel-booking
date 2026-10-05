@@ -1,0 +1,1 @@
+-- TODO: Define database\\marts\\guest_customer_mart.sql after grain and KPI definitions are approved.

@@ -1,0 +1,1 @@
+-- TODO: Define database\\marts\\booking_performance_mart.sql after grain and KPI definitions are approved.

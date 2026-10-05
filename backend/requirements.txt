@@ -1,0 +1,1 @@
+# Add and pin FastAPI, database driver, and other runtime dependencies when API implementation begins.
