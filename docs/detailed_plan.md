@@ -5,7 +5,7 @@
 > **Deadline:** 10/11/2026.  
 > **Tham chiếu:** [Hotel_booking_Overall_plan.md](Hotel_booking_Overall_plan.md). Tài liệu này là kế hoạch triển khai theo phạm vi đã thu gọn, tập trung ở mức low-level.
 
-**Tài liệu triển khai:** [Schema và hợp đồng dữ liệu](schema_and_data_contracts.md) quy định mapping và input/output từng giai đoạn; [hợp đồng API/ML](api_ml_contracts.md) quy định request/response, model artifact và inference sẽ được upload lên.
+**Tài liệu triển khai cho DATA READY → STAGING READY:** [data dictionary](data_dictionary/operations_sources.md), [source manifest](data_dictionary/source_manifest_20261017.md), [Source → Staging contract](etl_spec/operations_source_to_target.md) và [kế hoạch Member 2](member2_execution_plan.md). API/ML contract thuộc gate downstream, chưa là tài liệu nạp Staging.
 
 ## 1. Phạm vi và yêu cầu nghiệp vụ
 
@@ -24,7 +24,7 @@
 
 Operations Mart phục vụ cả ba workload trên. Guest / Customer, Revenue & Cancellation, Booking / Commercial Performance và các mô hình tương ứng nằm ngoài phiên bản này. Chỉ số hủy booking được giữ làm thông tin hỗ trợ diễn giải demand, không tạo thêm domain.
 
-Toàn bộ DW, Mart, OLAP, Reporting và Mining trong phiên bản này chỉ xử lý booking của **City Hotel**. Raw và staging giữ dữ liệu nguồn để truy vết; bước Staging → DW lọc phạm vi City Hotel.
+Toàn bộ Staging Booking, DW, Mart, OLAP, Reporting và Mining trong phiên bản này chỉ xử lý booking của **City Hotel**. Raw Booking gốc giữ nguyên cả hai hotel để truy vết; bước **Source → Staging** chỉ nạp record `hotel = 'City Hotel'`, đếm riêng hotel khác và hotel không xác định. Holiday PT/Lisboa và Weather lịch sử đại diện Lisbon vẫn là hai nguồn Staging bắt buộc.
 
 ## 2. Kiến trúc tổng quát
 
@@ -53,7 +53,7 @@ Giữ các thành phần, công nghệ và cách phân lớp của kế hoạch 
     Python ETL Jobs
           ▲
           │
- Booking / Weather / Holiday / Event
+ Booking (City Hotel) / Holiday PT-Lisboa / Weather Lisbon
 ```
 
 ```text
@@ -76,7 +76,7 @@ Giữ các thành phần, công nghệ và cách phân lớp của kế hoạch 
 
 **Luồng ML:** Mart → Feature Engineering → Train/Evaluate offline → model artifact; React → FastAPI → đọc Mart/features và model → inference → kết quả JSON.
 
-Frontend gọi FastAPI; backend sử dụng dữ liệu DW/Mart chính thức. ETL và training chạy riêng, không chạy khi mở dashboard hay khi backend khởi động. Weather/Event vẫn thuộc khả năng tích hợp của kiến trúc; phạm vi baseline của nguồn được quy định bên dưới.
+Frontend gọi FastAPI; backend sử dụng dữ liệu DW/Mart chính thức. ETL và training chạy riêng, không chạy khi mở dashboard hay khi backend khởi động. Nguồn triển khai gồm Booking, Holiday và Weather; Event ngoài phạm vi.
 
 ## 3. Quy ước dữ liệu và thiết kế DW
 
@@ -93,23 +93,23 @@ Frontend gọi FastAPI; backend sử dụng dữ liệu DW/Mart chính thức. E
 
 | Nguồn | Field chính | Quy tắc sử dụng |
 |---|---|---|
-| Booking — bắt buộc | `hotel`, `arrival_date_*`, `is_canceled`, `adults`, `children`, `babies`, `stays_in_weekend_nights`, `stays_in_week_nights`, `lead_time`, `adr`, `country` | Giữ raw bất biến; ghi nguồn, thời gian bao phủ và định nghĩa field; chỉ nạp bản ghi có `hotel = 'City Hotel'` vào DW |
-| Calendar/Holiday | Ngày, thứ, tuần, tháng, quý, năm; ngày lễ, quốc gia/vùng, tên lễ | Calendar tạo từ lịch; holiday phải có nguồn và mapping với Portugal, hoặc thành phố (vùng) của City Hotel |
-| Weather — có điều kiện | Ngày, địa điểm, nhiệt độ trung bình, lượng mưa, độ ẩm, gió, mã thời tiết | Chỉ tích hợp khi chứng minh được mapping City Hotel–location và thời gian |
-| Event — để mở rộng | Tên, loại, ngày bắt đầu/kết thúc, địa điểm | Chưa triển khai trong baseline |
+| Booking — bắt buộc | `hotel`, `arrival_date_*`, `is_canceled`, `adults`, `children`, `babies`, `stays_in_weekend_nights`, `stays_in_week_nights`, `lead_time`, `adr`, `country` | Giữ raw bất biến; chỉ nạp `hotel = 'City Hotel'` vào Staging, giữ source-row ID trước lọc và đếm nhóm bị bỏ qua |
+| Holiday — bắt buộc | Ngày lễ, quốc gia/vùng, tên lễ, scope; calendar ngày/thứ/tuần/tháng/quý/năm dẫn xuất từ ngày đến | Nạp lịch PT/Lisboa có version, năm và cấu hình sinh; nhiều lễ cùng ngày được gộp ở context trước khi join |
+| Weather — bắt buộc | Ngày, tọa độ đại diện Lisbon, nhiệt độ trung bình, lượng mưa theo ERA5 | Giữ dữ liệu lịch sử cùng khoảng ngày City Hotel và metadata request; không coi là dự báo thời tiết tương lai |
+| Event — ngoài phạm vi | — | Không triển khai |
 
-Nguồn booking cụ thể, phạm vi ngày và mapping địa điểm phải được xác nhận ở bước profiling. Nếu holiday chưa mapping được, đánh dấu chưa xác định; chỉ so sánh weekday/weekend, không gán mọi ngày thành non-holiday.
+Nguồn booking, ngày và mapping Lisbon đã được xác nhận trong source manifest. Weekday là thứ Hai–thứ Sáu, weekend là thứ Bảy–Chủ nhật theo ngày đến; holiday độc lập. Holiday chưa xác định không được gán non-holiday; weather thiếu không được gán lượng mưa 0.
 
 ### 3.3. Bảng tối thiểu
 
 | Bảng/lớp | Grain và nội dung |
 |---|---|
-| `staging.stg_booking` | Một dòng nguồn; dữ liệu gần raw và metadata `_source_file`, `_source_row_id`, `_batch_id`, `_ingested_at` |
+| `staging.stg_booking` | Một record City Hotel theo vị trí raw gốc; typed nullable + raw value, `_source_file`, checksum, `_source_row_id`, `_batch_id`, `_ingested_at` |
 | `staging.stg_holiday` | Một ngày lễ × phạm vi địa lý; giữ provenance |
-| `staging.stg_weather` — có điều kiện | Ngày/giờ × location theo nguồn; chuẩn hóa về daily trước khi tích hợp |
+| `staging.stg_weather` | Một phần tử daily × request/grid/model theo nguồn; chuẩn hóa về một context/ngày trước khi tích hợp |
 | `dw.dim_date` | Một ngày; date key, full date, year, quarter, month, ISO week/year, day of week, is_weekend |
 | `dw.dim_hotel` | Một bản ghi City Hotel; key, tên và mapping địa lý đã được xác nhận |
-| `dw.dim_country` | Một mã country; key, code, tên; có Unknown để giữ booking thiếu country |
+| `dw.dim_country` | Một mã country; cách xử lý country thiếu là quyết định downstream theo field, không tự điền chuỗi `Unknown` trong Staging |
 | `dw.fact_booking` | Booking key, source row reference, date/hotel/country foreign keys, booking_count = 1, cancellation flag, số khách từng nhóm, tổng khách, stay nights, lead time, ADR |
 | Context holiday/weather | Chuẩn hóa còn tối đa một bản ghi cho mỗi ngày × địa điểm cần join; nhiều tên lễ tổng hợp trong cùng context |
 
@@ -119,17 +119,17 @@ Giữ `dim_date`, `dim_hotel` và `dim_country` để phục vụ Operations và
 
 | Bước | Xử lý cụ thể | Output / điều kiện hoàn thành |
 |---|---|---|
-| Sources → Staging | Nạp raw, thêm metadata, định danh dòng ổn định bằng nguồn/file và vị trí dòng hoặc ID thật; profile null, giá trị bất thường, phạm vi ngày | Staging truy ngược được raw; đối soát số dòng mỗi batch |
-| Staging → DW | Chuẩn hóa hotel và chỉ giữ `hotel = 'City Hotel'`; parse arrival date/kiểu dữ liệu; tính khách và stay nights; áp dụng quy tắc missing/invalid; nạp dimension trước fact | PK/FK hợp lệ; đối soát riêng dòng ngoài phạm vi, dòng City Hotel được nhận và dòng bị cách ly; không nhân bản fact khi join |
+| Sources → Staging | Chỉ nạp Booking `hotel = 'City Hotel'`, giữ row ID trước lọc; nạp Holiday và Weather; typed nullable và raw value; tách missing/invalid/reject; ghi metadata, issue và batch | Đối soát riêng ba nguồn, City Hotel trong Staging, rerun idempotent và chỉ công bố batch thành công trên PostgreSQL |
+| Staging → DW | Member 2 chốt quy tắc downstream theo từng field; dựng context một dòng/ngày/City Hotel, nạp dimension rồi fact theo thiết kế duyệt | PK/FK hợp lệ, không nhân bản fact; không suy missing thành 0/False/`Unknown` khi chưa có rule được duyệt |
 | DW → Mart | Aggregate booking City Hotel theo ngày đến; join calendar và context; tạo chuỗi ngày liên tục trong khoảng nguồn City Hotel bao phủ | Duy nhất một dòng City Hotel × ngày; tổng KPI khớp DW |
 | Mart → Features | Tạo target, lag và rolling trên chuỗi ngày của City Hotel; gắn ngày chốt dữ liệu | Feature dataset theo thời gian, truy vết được Mart và chỉ dùng thông tin đã biết |
 
 **Quy tắc xử lý:**
 
-- Ngày không hợp lệ, số khách/số đêm âm, tổng khách bằng 0 hoặc cancellation flag ngoài 0/1 phải được cách ly và ghi lý do theo hợp đồng dữ liệu.
-- Baseline cách ly booking thiếu `children`, không tự điền 0; thay đổi quy tắc sau profiling phải cập nhật contract. Không xóa toàn bộ dòng chỉ vì thiếu field phụ như ADR/weather.
+- Giá trị thiếu đã nhận diện theo từng field thành SQL `NULL` (không xác định); không tự điền 0, False, trung bình hay chuỗi `Unknown`, không loại record chỉ vì thiếu giá trị. Thiếu `children` không cách ly ở Staging.
+- Invalid (ngày không tồn tại, số khách/số đêm âm, cancellation flag ngoài 0/1, parse failure...) khác missing: record đọc được vẫn giữ trong Staging với raw value và issue gồm rule code, field, lý do, severity, batch. Lỗi cấu trúc không đọc được ghi reject hoặc batch failure.
 - Giữ các reservation có cùng thuộc tính nếu không có bằng chứng là nạp trùng. Chạy lại cùng batch không tạo thêm booking.
-- Các dòng thuộc hotel khác được ghi nhận là ngoài phạm vi, không tính là dữ liệu lỗi; đối soát đủ dòng staging và kiểm tra DW/Mart chỉ chứa City Hotel.
+- Các dòng thuộc hotel khác được ghi nhận là ngoài phạm vi ngay ở Source → Staging, hotel không xác định đếm riêng; kiểm tra Staging Booking/DW/Mart chỉ chứa City Hotel.
 - Holiday/weather được tổng hợp đúng grain trước khi join; dùng left join để không làm mất booking vì thiếu context.
 - Ngày không có booking trong khoảng dữ liệu được xác nhận đầy đủ có count = 0; ngày thiếu dữ liệu nguồn giữ trạng thái thiếu, không tự điền 0.
 - Full refresh trong baseline phải có thể chạy lại và chỉ công bố Mart sau khi kiểm tra thành công; log batch, số dòng và thời điểm cập nhật.
@@ -140,9 +140,9 @@ Giữ `dim_date`, `dim_hotel` và `dim_country` để phục vụ Operations và
 
 **Bảng phục vụ chính:** `mart.daily_hotel_operations`, khóa duy nhất `(hotel_key, date_key)`, với `hotel_key` cố định là City Hotel. View tuần/tháng đọc từ bảng này, không hình thành Mart mới.
 
-**View phục vụ DO-A05:** `mart.daily_hotel_operations_by_country`, grain `(hotel_key, date_key, country_key)`, tổng hợp từ fact và dùng cùng công thức KPI. Country là thuộc tính của booking; bao gồm nhóm Unknown. Forecast vẫn dùng view tổng theo ngày; không join hai aggregate rồi cộng measure.
+**View phục vụ DO-A05:** `mart.daily_hotel_operations_by_country`, grain `(hotel_key, date_key, country_key)`, tổng hợp từ fact và dùng cùng công thức KPI. Country là thuộc tính của booking; cách hiển thị nhóm country chưa xác định phải được chốt ở quy tắc downstream, không tự gán chuỗi `Unknown` khi nạp Staging. Forecast vẫn dùng view tổng theo ngày; không join hai aggregate rồi cộng measure.
 
-Quy ước: **A** là các booking hợp lệ của City Hotel có ngày đến thuộc nhóm đang xét; **B** là tập con của A có `is_canceled = 0`.
+Quy ước dự kiến cho DW/Mart: **A** là các booking City Hotel đủ điều kiện tính theo quy tắc downstream **được chốt riêng theo field** và có ngày đến thuộc nhóm đang xét; **B** là tập con của A có `is_canceled = 0`. Staging không áp dụng eligibility này, và các KPI phải ghi coverage khi đầu vào còn `NULL`/invalid.
 
 | Field/KPI | Công thức và ý nghĩa |
 |---|---|
@@ -159,7 +159,7 @@ Quy ước: **A** là các booking hợp lệ của City Hotel có ngày đến 
 | Average guests/day | Tổng khách của City Hotel chia số ngày lịch đầy đủ trong kỳ |
 | Peak demand day | Ngày có tổng khách cao nhất sau khi áp dụng filter; trả các ngày đồng hạng |
 
-Calendar/context gồm full date, year/quarter/month, ISO week/year, day of week, is_weekend, is_holiday/holiday_name khi xác định được; weather là bổ sung.
+Calendar/context gồm full date, year/quarter/month, ISO week/year, day of week, is_weekend và holiday/weather theo coverage đã xác nhận. Weather là nguồn Staging bắt buộc nhưng cách dùng trong từng KPI/feature được chốt downstream.
 
 **Quy tắc tổng hợp:** cộng các measure dạng count/sum; tính lại tỷ lệ và trung bình từ tổng tử số/mẫu số, không lấy trung bình các tỷ lệ/trung bình theo ngày. Mẫu số bằng 0 trả null. Kỳ thiếu dữ liệu phải có nhãn coverage. So sánh holiday/weekend nên có cả tổng khách và khách trung bình/ngày để xét khác biệt số ngày.
 
@@ -175,7 +175,7 @@ Các bộ lọc chung: khoảng ngày đến, country, weekday/weekend và holid
 | Drill-down | Đi xuống mức chi tiết, giữ bộ lọc hiện tại | Năm → quý → tháng → ngày |
 | Pivot | Đổi trục trình bày trên cùng dữ liệu tổng hợp | Hàng = tháng, cột = weekday/weekend; đổi sang hàng = weekday/weekend, cột = tháng |
 
-Đầu ra tối thiểu: biểu đồ xu hướng khách/booking, bảng pivot. Holiday/weather là phân tích bổ sung theo điều kiện dữ liệu; kết quả thể hiện quan hệ quan sát được, không khẳng định quan hệ nhân quả. Nghiên cứu bổ sung thêm, hoặc điều chỉnh lại các business needs.
+Đầu ra tối thiểu: biểu đồ xu hướng khách/booking, bảng pivot. Holiday/weather được giữ trong nguồn và context; phân tích chỉ hiển thị khi coverage/quality đủ, không khẳng định quan hệ nhân quả.
 
 **Nghiệm thu:** mỗi operator có ví dụ thao tác và truy vấn đối soát; chart và bảng thống nhất số liệu, drill-down rồi roll-up không làm đổi tổng.
 
@@ -254,8 +254,8 @@ Giữ deadline của kế hoạch gốc, thu gọn đầu việc về Operations
 | Thời gian năm 2026 | Công việc / artifact bắt buộc | Gate |
 |---|---|---|
 | 06/10–07/10 | Chốt Operations Mart cho City Hotel, target, grain, bộ KPI và danh sách nguồn | Business baseline |
-| 08/10–13/10 | Thu Booking/Calendar/Holiday, profiling, data dictionary, mapping nguồn và địa điểm | Data sources ready |
-| 14/10–19/10 | Staging, ingestion metadata, quy tắc cleaning, đối soát batch | Staging ready |
+| 08/10–13/10 | Thu Booking/Holiday/Weather, profiling, data dictionary, mapping nguồn và địa điểm | DATA READY |
+| 14/10–19/10 | Ba loader Staging, ingestion metadata, missing/invalid issue, đối soát từng nguồn và test PostgreSQL | STAGING READY |
 | 20/10–25/10 | Dimension/fact ETL, PK/FK, kiểm tra grain và KPI | DW ready |
 | 26/10–29/10 | Operations Mart, OLAP operators, backend/frontend skeleton và dashboard đầu tiên | Mart + OLAP ready |
 | 30/10–02/11 | Weekly report, feature dataset, seasonal naive và mô hình đầu tiên | Reporting + model baseline |
@@ -271,16 +271,7 @@ Giữ deadline của kế hoạch gốc, thu gọn đầu việc về Operations
 - Reporting khớp Analytics/DW; forecast có cutoff, đủ 7 ngày, metrics và so sánh baseline.
 - Có demo ổn định, tài liệu chạy dự án và ghi rõ giới hạn dữ liệu/giả định.
 
-## 11. Mở rộng và quản lý phiên bản
+## 11. Quản lý thay đổi
 
-Khi thêm domain, cập nhật yêu cầu nghiệp vụ, grain, bảng/ETL, API/UI và tiêu chí nghiệm thu của domain đó; tái sử dụng DW cùng các dimension phù hợp. Mọi thay đổi ảnh hưởng target hoặc công thức KPI phải tăng version và cập nhật các đầu ra liên quan.
-
-**Version:** 1.0.1  
-**Ngày chốt:** 06/10/2026 (Asia/Ho_Chi_Minh)  
-**Phạm vi chốt:** Operations Mart cho City Hotel — OLAP Operators, Reporting KPI, Mining dự đoán lượng khách 7 ngày tới và rule DSS cơ bản.
-
-| Version | Ngày chốt | Nội dung |
-|---|---|---|
-| 1.0.0 | 06/10/2026 | Thu gọn từ master plan về một Operations Mart; giữ kiến trúc tổng quát; xác định grain, KPI, ETL, OLAP, reporting, forecast và các gate triển khai |
-| 1.0.1 | 06/10/2026 | Giới hạn phạm vi City Hotel; cập nhật lọc ETL, KPI, ví dụ OLAP, forecast và API/UI; giữ hotel key để hỗ trợ mở rộng |
+Khi thêm domain hoặc đổi công thức KPI/target, phải cập nhật contract, kiểm thử và các đầu ra liên quan trước khi triển khai. Contract hiện hành cho DATA READY → STAGING READY nằm ở [data dictionary](data_dictionary/operations_sources.md), [Source → Staging](etl_spec/operations_source_to_target.md) và [kế hoạch Member 2](member2_execution_plan.md).
 
