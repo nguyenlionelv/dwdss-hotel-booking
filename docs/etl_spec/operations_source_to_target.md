@@ -40,7 +40,9 @@ raw_records = staged_city + out_of_scope_hotel + unidentified_hotel + structural
 
 Các số trên là số đã profile từ file cụ thể, không hard-code làm quy tắc tổng quát. Missing/invalid của City là **nhãn chất lượng có thể chồng lấp**, không trừ khỏi `staged_city`. Đối soát Holiday riêng: `raw_holiday_rows = staged_holiday + structural_rejects` (batch hiện tại 38 = 38 + 0). Đối soát Weather riêng: `daily_entries = staged_weather + structural_rejects` (batch hiện tại 793 = 793 + 0), đồng thời đối chiếu ngày từ 2015-07-01 đến 2017-08-31 và báo ngày/giá trị thiếu. Quality report từng nguồn tách `missing`, `invalid`, `out_of_scope`/`unidentified`, `structural_reject`, coverage và duplicate key.
 
-Nạp vào batch/shadow và chỉ chuyển `published`/công bố view chính thức khi đủ ba nguồn, checksum, đối soát, ràng buộc khóa, kiểm thử context join và quality checks thành công. Batch lỗi không thay thế snapshot đang công bố. Chạy lại cùng file/checksum không tăng row hoặc KPI; chạy lại sau failure phải có trạng thái rõ ràng và không tạo bản sao. Không xóa dữ liệu nguồn để “sửa” số liệu.
+Baseline triển khai: bảng nguồn giữ row bất biến theo `(file checksum, row ID)`, `staging.load_batch`/`load_batch_source` ghi lần nạp và ba nguồn, `staging.active_snapshot` trỏ một batch `published`. `v_booking_current`, `v_holiday_current`, `v_weather_current` chỉ expose checksum của batch active; `_batch_id` trên row vật lý là batch nạp row lần đầu. Một transaction nạp row mới, issue/counts, đối soát và chuyển active pointer; fatal error rollback transaction đó, ghi batch `failed`/reject riêng, không đổi snapshot đang công bố. Session lock tuần tự hóa các lần nạp và lần chạy kế tiếp đánh dấu attempt `loading` bị ngắt thành `failed`. Cùng source set fingerprint đã published trả `no-op`; version contract/source mới có batch mới nhưng không nhân đôi row cùng checksum. Không xóa dữ liệu nguồn để “sửa” số liệu.
+
+`staging.v_daily_context_current` là projection bàn giao, một dòng cho mỗi `(City Hotel, local_date)` trong khoảng arrival date; nhiều lễ cùng ngày được gộp tên. Ngày không có lễ trả `is_holiday=NULL` ở Staging, chỉ downstream được xác nhận coverage rồi mới suy non-holiday. Weather nhiều record cùng ngày giữ tất cả trong Staging, projection trả Weather `NULL` và `weather_ambiguous=true`; không chọn bản ghi tùy tiện.
 
 ## Bằng chứng nghiệm thu trên PostgreSQL
 
@@ -53,3 +55,5 @@ Nạp vào batch/shadow và chỉ chuyển `published`/công bố view chính th
 7. Có lệnh chạy từ raw → PostgreSQL, migration/setup, query/report quality, log batch thành công/thất bại và kết quả test có thể tái lập. Chỉ sau đó mới gọi gate **STAGING READY**.
 
 STAGING READY không đòi đã xây DW/Mart; quyết định transform và eligibility downstream của Member 2 là handoff riêng sau gate này.
+
+**Hiện thực và hướng dẫn chạy:** `database/staging/001_staging.sql`, `pipeline/source_to_staging/{common,booking,holiday,weather,run}.py`, `scripts/{setup_db,run_pipeline}.py`, `pipeline/quality/staging_checks.py`, `database/validation/staging_checks.sql` và [runbook](../staging_runbook.md). Source set/checksum cố định cho lần bàn giao tại [operations_source_set.json](../data_dictionary/operations_source_set.json); expected count không áp dụng cho file checksum khác.

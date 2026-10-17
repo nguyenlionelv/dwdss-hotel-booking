@@ -6,7 +6,7 @@ Tài liệu này là contract hiện hành cho Source → Staging của **một 
 
 - `NULL` trong cột giá trị Staging nghĩa là **không xác định**, không phải 0, `false`, ngày thường hay chuỗi `Unknown`. Không suy diễn/impute trong loader; không bỏ record chỉ vì missing.
 - Chỉ nhận diện token missing **theo từng field** trong bảng dưới. Không áp dụng `NA`, `NULL` hoặc chuỗi rỗng toàn cục. Lưu nguyên token nguồn ở cột raw tương ứng hoặc payload raw. Giá trị hiện diện nhưng sai kiểu/miền là **invalid**, không đổi thành missing.
-- Mỗi bảng có `_source_id`, `_source_file`, `_source_file_sha256`, `_source_row_id`, `_batch_id`, `_ingested_at timestamptz`. `_source_id` phân biệt Booking/Holiday/Weather và phiên bản nguồn. `_source_row_id` là thứ tự record logic trong file gốc **trước mọi phép lọc**, tính từ 2 với header CSV ở vị trí 1; Weather dùng thứ tự phần tử daily từ 1. Đây là định danh nguồn, không phải reservation ID.
+- Mỗi bảng có `_source_id`, `_source_file`, `_source_file_sha256`, `_source_row_id`, `_batch_id`, `_ingested_at timestamptz`. `_source_id` phân biệt Booking/Holiday/Weather; checksum phân biệt phiên bản file. `_source_row_id` là thứ tự record logic trong file gốc **trước mọi phép lọc**, tính từ 2 với header CSV ở vị trí 1; Weather dùng thứ tự phần tử daily từ 1. Đây là định danh nguồn, không phải reservation ID.
 - Khóa nạp lại của từng nguồn là `(_source_file_sha256, _source_row_id)`; không dùng hash thuộc tính để xóa reservation trông giống nhau. Dòng lỗi vẫn gắn đủ metadata và raw value.
 - Cột typed nullable; parse failure lưu raw token và issue, không âm thầm ép về 0/false/mean/`Unknown`. Record đọc được nhưng sai nghiệp vụ vẫn ở Staging. Record/file không đọc được vào reject hoặc batch failure, không tính là Staging.
 

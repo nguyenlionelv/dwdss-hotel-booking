@@ -1,41 +1,38 @@
-# Member 2 — kế hoạch đạt STAGING READY
+# Member 2 — STAGING READY và bàn giao
 
-**Phạm vi:** ba nguồn thực Booking, Holiday, Weather cho **một Operations Mart của City Hotel**. Event, Resort Hotel và các mart khác không thuộc luồng triển khai. Workbook phân công chỉ dùng tham khảo nhân sự; [data dictionary](data_dictionary/operations_sources.md), [Source → Staging contract](etl_spec/operations_source_to_target.md), [source manifest](data_dictionary/source_manifest_20261017.md) là quy tắc hiện hành. Deadline toàn dự án: 10/11/2026.
+Phạm vi đã triển khai trên `DE-BI/phase-1`: Source → Staging cho **Booking City Hotel, Holiday PT/Lisboa, Weather ERA5 Lisbon**. Event, Resort downstream, DW, Operations Mart và ML không thuộc gate này. Source set/chữ ký file nằm ở [operations_source_set.json](data_dictionary/operations_source_set.json); [data dictionary](data_dictionary/operations_sources.md) và [source-to-target contract](etl_spec/operations_source_to_target.md) là quy tắc hiện hành. [Runbook](staging_runbook.md) có lệnh chạy, truy vấn kiểm tra và gói bàn giao. Raw ba nguồn giữ nguyên và khớp checksum trong [source manifest](data_dictionary/source_manifest_20261017.md).
 
-## Trạng thái đầu vào
+## Trạng thái sáu task phụ thuộc
 
-| Hạng mục | Tình trạng / bằng chứng |
-|---|---|
-| Raw Booking | Có `hotel_bookings.csv` gốc, 119.390 record/32 cột, City 79.330, Resort 40.060; checksum trong manifest. Giữ nguyên file toàn bộ, chỉ lọc khi nạp Staging. |
-| Raw Holiday | Có 38 dòng PT/Lisboa do `python-holidays` 0.106 sinh cho 2015–2017; cấu hình và checksum trong manifest. |
-| Raw Weather | Có 793 ngày ERA5 đại diện Lisbon, 2015-07-01–2017-08-31; request/response và checksum trong manifest. |
-| Profiling | `pipeline/quality/profile_sources.py` và artifact tại `artifacts/profiling/run_20261017_full/` đọc token missing theo field, báo City 79.330 và out-of-scope 40.060. Đây là profiling nguồn, chưa là bằng chứng nạp PostgreSQL. |
-| Staging/PostgreSQL | `pipeline/source_to_staging/*.py` còn TODO; chưa có DDL `database/staging`, batch/issue/reject table, test PostgreSQL. **STAGING READY chưa đạt.** |
-
-Trong file hiện tại, `children='NA'` xuất hiện ở 4 City record, `country='NULL'` ở 24; `agent='NULL'` 8.131, `company='NULL'` 75.641. Có 167 City record có tổng khách bằng 0; đây là quan sát/quality issue cần xem xét, **không** phải lý do tự động xóa hoặc cách ly. Raw có các reservation trùng toàn bộ thuộc tính; không khẳng định là nạp trùng nếu `_source_row_id` khác. Số 79.330 City là mục tiêu đối soát Staging cho file này.
-
-## Chuỗi việc cần làm
-
-| Thứ tự | Việc Member 2 thực hiện | Đầu ra / điều kiện xong |
+| Task | Output đã có | Acceptance/evidence |
 |---|---|---|
-| 1. Chốt contract | Xác nhận grain, kiểu và raw field của ba bảng, missing token theo field, issue code/severity, schema control/metadata với Member 1. Không đặt rule downstream vào loader. | Contract được review; mapping/DDL đủ cho ba nguồn, không có Event. |
-| 2. Hoàn thiện profiling thành test | Thêm test fixture invalid/structural, kiểm tra source-row-ID trước lọc và holiday trùng ngày. | Profiling đo được missing/invalid/out-of-scope riêng và có mẫu truy vết; không thay thế test PostgreSQL. |
-| 3. Dựng PostgreSQL schema | Tạo `staging.stg_booking`, `stg_holiday`, `stg_weather`, batch/source registry, `quality_issue`, `reject`. Typed nullable + raw payload/token; unique `(checksum, row_id)` theo bảng; trạng thái batch (`loading`, `failed`, `published`). | Migration chạy từ database trống; constraint và index có test. |
-| 4. Viết ba loader | Booking gán row ID toàn CSV trước lọc, chỉ insert `City Hotel`; đếm Resort/hotel khác và unidentified riêng. Holiday/Weather nạp record đọc được từ raw đúng manifest. Tất cả lưu provenance/checksum/batch/time; field-specific missing → SQL `NULL`, invalid → issue và raw value. | Chạy từ file raw thực, không có silent imputation, record đọc được vẫn trong Staging. |
-| 5. Kiểm soát lỗi và công bố | Structural parse/file error → reject hoặc batch failed; business-invalid → Staging + issue. Nạp transactional/shadow; chỉ publish khi đối soát cả ba nguồn và kiểm thử thành công; failed batch không thay snapshot cũ. | Log rõ batch status, lý do và số reject/issue. |
-| 6. Quality/reconciliation | Booking: raw = City staged + hotel ngoài phạm vi + hotel không định danh + structural reject. Holiday và Weather có phương trình riêng. Báo missing/invalid/out-of-scope riêng, coverage ngày và context uniqueness. | Báo cáo SQL/CSV cho từng nguồn, không dùng “quarantine” như một nhóm bù số dòng. |
-| 7. Test PostgreSQL & runbook | First load, same-source rerun, rerun sau failure, hai reservation giống thuộc tính, missing/invalid/parse failure/reject, multiple holidays, weekday/weekend/holiday, `NULL` weather, join many-to-one, record lineage. Ghi lệnh setup/load/test/query và output thực tế. | Bằng chứng test trên PostgreSQL; người khác có thể tái lập từ raw đúng checksum. |
+| 1. Contract triển khai | Dictionary + source-to-target, source set JSON đóng đinh ba checksum/config và expected count theo từng file. | City filter trước Staging; missing theo field, invalid khác missing; 32 Booking fields, 7 Holiday fields, 3 Weather daily variables có kiểu và raw representation. Member 1 cần review **giao diện exposed downstream**, không mở lại phạm vi. |
+| 2. Staging DDL | `database/staging/001_staging.sql`, `scripts/setup_db.py`; ba bảng Staging, batch/source, quality issue, reject, active snapshot và bốn active views. | Migration chạy thành công trên PostgreSQL 17.11 và chạy lại idempotent trong integration test. Typed business fields nullable + `raw_record jsonb`; constraint chỉ chặn sai cấu trúc/nguồn, không làm mất record invalid đọc được. |
+| 3. Batch/transaction/rerun | `pipeline/source_to_staging/common.py`, `run.py`; content-addressed source rows, fingerprint ba nguồn + contract version, session lock, rollback, active pointer. | Batch `published` chỉ sau đủ ba nguồn/đối soát; same-source rerun `no-op`; fault injection/retry và interrupted attempt test pass; failed batch không thay snapshot cũ. |
+| 4. Ba loader | `pipeline/source_to_staging/{booking,holiday,weather}.py`, `scripts/run_pipeline.py`, `pipeline/requirements.txt`. | Booking giữ CSV ordinal trước lọc, chỉ City vào Staging; Holiday giữ nhiều lễ/ngày; Weather giữ từng daily entry và metadata request/grid/model/units. Missing `children='NA'` thành SQL NULL mà record vẫn còn; invalid fixture giữ raw + issue; structural fixture ghi failed batch/reject. |
+| 5. Quality/reconciliation | `pipeline/quality/staging_checks.py`, `database/validation/staging_checks.sql`; daily context view một dòng/ngày. | [Quality report](../artifacts/staging/quality_report.json) `passed=true`: Booking 119.390 = 79.330 City + 40.060 Resort + 0 unidentified/reject; Holiday 38; Weather 793; join 79.330 → 79.330. Missing/invalid/ngoài phạm vi là nhóm báo cáo riêng, không trừ nhầm issue count khỏi source count. |
+| 6. PostgreSQL test/runbook | `tests/pipeline/test_staging_unit.py`, `test_staging_postgres.py`, [runbook](staging_runbook.md) và [JUnit evidence](../artifacts/staging/pytest.xml). | `python -m pytest -q` **5 passed** trên PostgreSQL 17.11 (test DB tách biệt); first load published batch `4dcc2cfc-bed5-4e22-8a4d-fd4ac3f11715`, [rerun evidence](../artifacts/staging/rerun.json) `no-op`. |
 
-## Gate STAGING READY — chỉ công bố khi đủ
+## Baseline kỹ thuật đã chốt
 
-- Ba nguồn Booking/Holiday/Weather nạp thành công vào PostgreSQL với schema/grain/type/missing representation đã chốt; raw không bị sửa.
-- Booking chỉ có City Hotel, `_source_row_id` vẫn theo raw trước lọc. Với file hiện tại: `119.390 = 79.330 City staged + 40.060 ngoài phạm vi + 0 hotel không định danh + 0 structural reject`. Holiday `38 = 38 + 0`; Weather `793 = 793 + 0`. Nếu số đo mới khác, giải thích bằng evidence chứ không ép dữ liệu về số cũ.
-- Quality report theo nguồn và field tách missing, invalid, ngoài phạm vi, unidentified và structural reject. Missing `children` không cách ly; invalid đọc được vẫn trong Staging cùng issue/raw value.
-- Rerun cùng source/checksum không làm tăng số liệu; booking giống thuộc tính nhưng khác source-row ID không bị xóa. Bất kỳ lỗi nào làm batch thất bại không được công bố snapshot dở dang.
-- Có batch/provenance, hướng dẫn chạy và kết quả kiểm thử **thực trên PostgreSQL**. Profiling local hoặc Docker Compose chỉ khởi động DB chưa đủ để đạt gate.
+- Khóa vật lý mỗi nguồn là `(_source_file_sha256, _source_row_id)`; CSV data record đầu là 2 (header=1), Weather daily index đầu là 1. City đầu tiên ở raw Booking vị trí **40062**. `_batch_id` trên row là batch nạp row lần đầu; `staging.active_snapshot` + `load_batch_source` xác định ba checksum đang có hiệu lực. Không xóa reservation trùng thuộc tính nhưng khác vị trí raw.
+- `stg_booking` chỉ có `hotel='City Hotel'`; Resort đếm out-of-scope ở batch source. Raw Booking vẫn đủ 119.390 record. Typed SQL NULL vì missing được đối chiếu token trong `raw_record`; parse failure có issue `invalid` và raw token, không bị coi là missing. 4 `children='NA'` và 24 `country='NULL'` ở City vẫn giữ record. 167 `ZERO_GUESTS` là warning issue, **không cách ly**.
+- Holiday giữ một source row cho mỗi lễ; context gộp nhiều tên cùng ngày trước join. `is_holiday` khi không có record là SQL NULL ở Staging, chưa suy thành ngày thường. Weekday Mon–Fri/weekend Sat–Sun từ arrival date; holiday độc lập.
+- Weather daily ở `Europe/Lisbon`, ERA5, request 38.72509/-9.1498, returned grid 38.75/-9.25, °C/mm và date range theo source metadata. Duplicate weather date vẫn giữ Staging + issue; context cho ngày ambiguous trả Weather NULL, không nhân bản booking. Missing precipitation không thành 0.
+- Transaction nạp row mới + issue/counts + publish một lần; fatal rollback, log failed/reject riêng. Source set cũ cùng fingerprint no-op; contract/source version mới có batch mới nhưng cùng checksum không tăng số row vật lý.
 
-## Handoff sau gate (không phải rule nạp Staging)
+## Gate và bằng chứng hiện tại
 
-Member 2 cùng Member 1 chốt **quy tắc riêng từng field** cho Staging → DW, KPI và ML: cách dùng record có ngày/flag/guest invalid; cách tính tổng khi một guest component `NULL`; ADR/country thiếu; coverage Holiday/Weather; và eligibility của fact/target. Quy tắc phải nêu đầu vào, đầu ra, số record ảnh hưởng và test. Không mặc định thiếu là 0/False/`Unknown`, không đổi Staging, không lặp lại rule “thiếu children thì cách ly”. Sau đó mới xây DW, context daily unique, Operations Mart và đối soát KPI; historical ERA5 chỉ là context phân tích, không dùng như forecast thời tiết tại cutoff ML.
+| Kiểm tra | Kết quả |
+|---|---|
+| Raw/checksum | Ba file khớp source set/manifest; không tải lại hoặc sửa raw. |
+| PostgreSQL schema/load | PostgreSQL 17.11; ba bảng Staging + control/issue/reject/views có dữ liệu thật; active batch `4dcc2cfc-bed5-4e22-8a4d-fd4ac3f11715`, contract `staging-v1.1`. |
+| Active counts | Booking **79.330**, Holiday **38**, Weather **793**; Resort trong `v_booking_current` **0**; structural reject của active batch **0**. |
+| Missing/invalid | `children` SQL NULL **4** (raw token `NA` giữ nguyên), `country` NULL **24**; quality issue `MISSING_CHILDREN` **4**, `ZERO_GUESTS` **167**; không mất City record. |
+| Context | **793** ngày duy nhất, Weather ambiguous **0**, unknown precipitation **0** trong source hiện tại; join Booking trước/sau **79.330/79.330**. Fixture test có nhiều lễ/ngày, weather duplicate, holiday/Weather unknown, invalid theo từng nguồn. |
+| Rerun/failure | Rerun current source `no-op`; PostgreSQL integration test chứng minh mid-load rollback/retry, checksum mismatch và malformed Weather thành failed/reject, active pointer giữ nguyên. |
+| Run/evidence | `docs/staging_runbook.md`, `artifacts/staging/{first_load.json,quality_report.json,rerun.json,pytest.xml}` và SQL validation. |
 
-**Phụ thuộc:** Member 1 duyệt thiết kế fact/KPI và tích hợp; Member 3 dùng Mart/feature contract đã được chốt. Các file TODO cho mart khác và Event không chặn STAGING READY. Raw bị Git-ignore nên máy khác phải thu thập lại đúng hash hoặc nhận bản chuyển giao được duyệt. Bộ dữ liệu này mô tả booking/dự kiến đến, không xác nhận check-in thực tế hay occupancy.
+**Kết luận:** gate **STAGING READY về mặt triển khai và kiểm thử PostgreSQL đã đạt** cho ba checksum trong source set hiện hành. Bề mặt bàn giao là `staging.v_booking_current`, `v_holiday_current`, `v_weather_current`, `v_daily_context_current`, không phải đọc trực tiếp bảng vật lý nhiều phiên bản.
+
+**Cần Member 1 review khi nhận bàn giao:** tên/kiểu cột exposed và lineage sang DW; cách dùng context holiday khi nhiều tên cùng ngày; quy tắc eligibility/biến đổi downstream cho ngày/flag/guest invalid, guest component missing, country/ADR NULL và điều kiện xác nhận non-holiday. Các quyết định đó **chưa áp dụng ở Staging** và không phải lý do sửa raw hoặc lọc bớt City record. Chưa xác minh tái lập trên máy Member 1 vì raw bị Git-ignore; runbook yêu cầu chuyển giao đúng checksum.

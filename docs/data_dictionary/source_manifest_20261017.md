@@ -4,6 +4,8 @@ All timestamps are UTC. Raw files are ignored by Git and must not be force-added
 
 Current ingestion scope: keep the full Booking raw file unchanged, but load only `hotel = 'City Hotel'` into Staging. Holiday and Weather remain required sources; Event is out of scope. See [data contract](operations_sources.md) for missing/invalid and provenance rules.
 
+The executable source selection (three paths, checksums, settings and checksum-bound expected counts) is [operations_source_set.json](operations_source_set.json). Update it only after reviewing a new source version; do not substitute files by name alone.
+
 ## Booking
 
 | Attribute | Value |

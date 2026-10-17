@@ -19,4 +19,6 @@ React + Vite · FastAPI · PostgreSQL 17 · Python ETL/ML · Docker Compose.
 | Tài liệu | Nội dung |
 |---|---|
 | [Detailed plan](docs/detailed_plan.md) | Phạm vi, kiến trúc, yêu cầu nghiệp vụ và tiến độ |
- [Master plan](docs/Hotel_booking_Overall_plan.md) là tài liệu tham khảo về kiến trúc và định hướng mở rộng; phạm vi triển khai theo các tài liệu hiện hành ở trên. 
+| [STAGING READY / Member 2](docs/member2_execution_plan.md) | Trạng thái gate, số liệu đối soát và bàn giao |
+| [Staging runbook](docs/staging_runbook.md) | Lệnh nạp ba nguồn, kiểm tra PostgreSQL và rerun |
+[Master plan](docs/Hotel_booking_Overall_plan.md) là tài liệu tham khảo về kiến trúc và định hướng mở rộng; phạm vi triển khai theo các tài liệu hiện hành ở trên.
