@@ -1,0 +1,177 @@
+{
+  "source": "dwdss-hotel-booking\\data\\raw\\booking\\mathsian_hotel-bookings_20261017\\hotel_bookings.csv",
+  "source_sha256": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+  "columns": [
+    "hotel",
+    "is_canceled",
+    "lead_time",
+    "arrival_date_year",
+    "arrival_date_month",
+    "arrival_date_week_number",
+    "arrival_date_day_of_month",
+    "stays_in_weekend_nights",
+    "stays_in_week_nights",
+    "adults",
+    "children",
+    "babies",
+    "meal",
+    "country",
+    "market_segment",
+    "distribution_channel",
+    "is_repeated_guest",
+    "previous_cancellations",
+    "previous_bookings_not_canceled",
+    "reserved_room_type",
+    "assigned_room_type",
+    "booking_changes",
+    "deposit_type",
+    "agent",
+    "company",
+    "days_in_waiting_list",
+    "customer_type",
+    "adr",
+    "required_car_parking_spaces",
+    "total_of_special_requests",
+    "reservation_status",
+    "reservation_status_date"
+  ],
+  "required_columns": [
+    "hotel",
+    "arrival_date_year",
+    "arrival_date_month",
+    "arrival_date_day_of_month",
+    "is_canceled",
+    "adults",
+    "children",
+    "babies",
+    "stays_in_weekend_nights",
+    "stays_in_week_nights",
+    "lead_time",
+    "adr",
+    "country"
+  ],
+  "counts": {
+    "source_rows": 119390,
+    "non_city_rows": 40060,
+    "city_rows": 79330,
+    "city_rows_no_detected_issues": 79159,
+    "city_rows_with_issues": 171
+  },
+  "hotel_counts": {
+    "Resort Hotel": 40060,
+    "City Hotel": 79330
+  },
+  "null_counts": {},
+  "null_rates": {
+    "hotel": 0.0,
+    "is_canceled": 0.0,
+    "lead_time": 0.0,
+    "arrival_date_year": 0.0,
+    "arrival_date_month": 0.0,
+    "arrival_date_week_number": 0.0,
+    "arrival_date_day_of_month": 0.0,
+    "stays_in_weekend_nights": 0.0,
+    "stays_in_week_nights": 0.0,
+    "adults": 0.0,
+    "children": 0.0,
+    "babies": 0.0,
+    "meal": 0.0,
+    "country": 0.0,
+    "market_segment": 0.0,
+    "distribution_channel": 0.0,
+    "is_repeated_guest": 0.0,
+    "previous_cancellations": 0.0,
+    "previous_bookings_not_canceled": 0.0,
+    "reserved_room_type": 0.0,
+    "assigned_room_type": 0.0,
+    "booking_changes": 0.0,
+    "deposit_type": 0.0,
+    "agent": 0.0,
+    "company": 0.0,
+    "days_in_waiting_list": 0.0,
+    "customer_type": 0.0,
+    "adr": 0.0,
+    "required_car_parking_spaces": 0.0,
+    "total_of_special_requests": 0.0,
+    "reservation_status": 0.0,
+    "reservation_status_date": 0.0
+  },
+  "type_diagnostics": {
+    "is_canceled": {
+      "parseable_int": 119390
+    },
+    "adults": {
+      "parseable_int": 119390
+    },
+    "children": {
+      "parseable_int": 119386,
+      "non_integer": 4
+    },
+    "babies": {
+      "parseable_int": 119390
+    },
+    "stays_in_weekend_nights": {
+      "parseable_int": 119390
+    },
+    "stays_in_week_nights": {
+      "parseable_int": 119390
+    },
+    "lead_time": {
+      "parseable_int": 119390
+    }
+  },
+  "identical_attribute_rows_after_first": 31994,
+  "note_on_duplicates": "Identical CSV attributes DO NOT prove the same reservation. Never auto-drop them.",
+  "city_issue_counts_by_rule": {
+    "zero_total_guests": 167,
+    "missing_or_invalid_children": 4
+  },
+  "city_example_csv_line_numbers": {
+    "zero_total_guests": [
+      40394,
+      40924,
+      41022,
+      41058,
+      42454,
+      42593,
+      42873,
+      42936,
+      47168,
+      47182,
+      47446,
+      49266,
+      50703,
+      50704,
+      54027,
+      54039,
+      54049,
+      54095,
+      55811,
+      60653,
+      61246,
+      61247,
+      61251,
+      62969,
+      63798
+    ],
+    "missing_or_invalid_children": [
+      40602,
+      40669,
+      40681,
+      41162
+    ]
+  },
+  "arrival_date_coverage_by_hotel": {
+    "Resort Hotel": {
+      "min": "2015-07-01",
+      "max": "2017-08-31",
+      "valid_rows": 40060
+    },
+    "City Hotel": {
+      "min": "2015-07-01",
+      "max": "2017-08-31",
+      "valid_rows": 79330
+    }
+  },
+  "scope_note": "Profiling only: no source rows changed, filtered, quarantined, or loaded into staging."
+}
