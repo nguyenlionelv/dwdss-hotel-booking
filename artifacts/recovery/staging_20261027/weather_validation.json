@@ -1,0 +1,47 @@
+{
+  "checks": {
+    "date_sequence_exact": true,
+    "arrays_aligned": true,
+    "no_duplicate_dates": true,
+    "finite_temperature": true,
+    "finite_nonnegative_precipitation": true,
+    "location_matches": true,
+    "timezone_matches": true,
+    "temperature_unit_matches": true,
+    "precipitation_unit_matches": true,
+    "model_provenance_matches": true,
+    "metadata_checksum_matches": true
+  },
+  "passed": true,
+  "rows": 793,
+  "start_date": "2015-07-01",
+  "end_date": "2017-08-31",
+  "sha256": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3",
+  "temperature_min": 6.3,
+  "temperature_max": 26.5,
+  "precipitation_min": 0.0,
+  "precipitation_max": 33.0,
+  "old_profile_sample_comparison": {
+    "2015-07-01": {
+      "temperature_matches_old_sample": true,
+      "precipitation_matches_old_sample": true
+    },
+    "2015-07-04": {
+      "temperature_matches_old_sample": true,
+      "precipitation_matches_old_sample": true
+    },
+    "2015-12-08": {
+      "temperature_matches_old_sample": true,
+      "precipitation_matches_old_sample": true
+    },
+    "2015-08-15": {
+      "temperature_matches_old_sample": true,
+      "precipitation_matches_old_sample": true
+    },
+    "2015-07-02": {
+      "temperature_matches_old_sample": true,
+      "precipitation_matches_old_sample": true
+    }
+  },
+  "comparison_limit": "Only dates present in archived samples are compared; original full Weather JSON is unavailable, so full business-value equivalence is not asserted."
+}

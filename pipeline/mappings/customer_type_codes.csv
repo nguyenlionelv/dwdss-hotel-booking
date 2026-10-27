@@ -1,0 +1,6 @@
+source_code,target_code,target_name,status,note
+CONTRACT,CONTRACT,Contract,known,Source booking category; dataset Table 1
+GROUP,GROUP,Group,known,Source booking category; dataset Table 1
+TRANSIENT,TRANSIENT,Transient,known,Source booking category; dataset Table 1
+TRANSIENT-PARTY,TRANSIENT-PARTY,Transient-Party,known,Source booking category; dataset Table 1
+UNKNOWN,UNKNOWN,Unknown,unknown,Keep known repeat status when customer type is unknown

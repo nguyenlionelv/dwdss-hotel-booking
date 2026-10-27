@@ -1,0 +1,201 @@
+{
+  "generated_at_utc": "2026-10-27T02:18:04.272544+00:00",
+  "database_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+  "batch_id": "735da72d-5c48-4690-984c-13b5c44b9325",
+  "batch_status": "published",
+  "source_set_fingerprint": "5d2b572acc4a467e19028ab43902686d826538f819d072e5b1971345e577a339",
+  "contract_version": "staging-v1.1",
+  "published_at": "2026-10-27T02:15:57.315890+00:00",
+  "sources": {
+    "booking": {
+      "file": "data/raw/booking/mathsian_hotel-bookings_20261017/hotel_bookings.csv",
+      "sha256": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+      "source_metadata": {
+        "file": "data/raw/booking/mathsian_hotel-bookings_20261017/hotel_bookings.csv",
+        "sha256": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+        "provider": "Kaggle mathsian/hotel-bookings",
+        "hotel_scope": "City Hotel",
+        "dataset_version": 5
+      },
+      "raw_count": 119390,
+      "staged_count": 79330,
+      "out_of_scope_count": 40060,
+      "unidentified_count": 0,
+      "reject_count": 0,
+      "missing_counts": {
+        "agent": {
+          "NULL": 8131
+        },
+        "company": {
+          "NULL": 75641
+        },
+        "country": {
+          "NULL": 24
+        },
+        "children": {
+          "NA": 4
+        }
+      },
+      "invalid_counts": {
+        "ZERO_GUESTS": 167
+      },
+      "reconciles": true
+    },
+    "holiday": {
+      "file": "data/raw/holiday/pt_lisboa_holidays_2015_2017_20261017.csv",
+      "sha256": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+      "source_metadata": {
+        "file": "data/raw/holiday/pt_lisboa_holidays_2015_2017_20261017.csv",
+        "years": [
+          2015,
+          2016,
+          2017
+        ],
+        "sha256": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+        "country": "PT",
+        "category": "PUBLIC",
+        "language": "pt_PT",
+        "observed": false,
+        "subdivision": "11",
+        "metadata_file": "data/raw/holiday/pt_lisboa_holidays_2015_2017_20261017.metadata.json",
+        "generator_version": "0.106",
+        "acquisition_metadata": {
+          "years": [
+            2015,
+            2016,
+            2017
+          ],
+          "country": "PT",
+          "category": "PUBLIC",
+          "csv_file": "dwdss-hotel-booking\\data\\raw\\holiday\\pt_lisboa_holidays_2015_2017_20261017.csv",
+          "observed": false,
+          "generator": "python-holidays",
+          "row_count": 38,
+          "csv_sha256": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+          "local_rule": "Keep national rows once and add only Lisboa-specific/different rows.",
+          "subdivision": "11 (Lisboa)",
+          "documentation": "https://holidays.readthedocs.io/en/main/auto_gen_docs/portugal/",
+          "library_version": "0.106",
+          "generated_at_utc": "2026-10-17T06:18:06.031959+00:00"
+        }
+      },
+      "raw_count": 38,
+      "staged_count": 38,
+      "out_of_scope_count": 0,
+      "unidentified_count": 0,
+      "reject_count": 0,
+      "missing_counts": {
+        "subdivision": {
+          "": 35
+        }
+      },
+      "invalid_counts": {},
+      "reconciles": true
+    },
+    "weather": {
+      "file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261027.json",
+      "sha256": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3",
+      "source_metadata": {
+        "file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261027.json",
+        "model": "ERA5",
+        "sha256": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3",
+        "end_date": "2017-08-31",
+        "timezone": "Europe/Lisbon",
+        "start_date": "2015-07-01",
+        "metadata_file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261027.metadata.json",
+        "daily_variables": {
+          "precipitation_sum": "mm",
+          "temperature_2m_mean": "°C"
+        },
+        "returned_coordinate": {
+          "latitude": 38.75,
+          "longitude": -9.25
+        },
+        "acquisition_metadata": {
+          "model": "ERA5",
+          "units": {
+            "time": "iso8601",
+            "precipitation_sum": "mm",
+            "temperature_2m_mean": "°C"
+          },
+          "timezone": "Europe/Lisbon",
+          "weather_file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261027.json",
+          "documentation": "https://open-meteo.com/en/docs/historical-weather-api",
+          "returned_days": 793,
+          "geocoding_file": "data/raw/weather/open_meteo_lisbon_geocoding_20261027.json",
+          "weather_sha256": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3",
+          "daily_variables": [
+            "temperature_2m_mean",
+            "precipitation_sum"
+          ],
+          "weather_request": "https://archive-api.open-meteo.com/v1/archive?latitude=38.72509&longitude=-9.1498&start_date=2015-07-01&end_date=2017-08-31&daily=temperature_2m_mean%2Cprecipitation_sum&timezone=Europe%2FLisbon&models=era5",
+          "geocoding_sha256": "64f8b1b14d04b678d3ae9606ed92afa968533a9aff35ae4cfb65636a93cca563",
+          "retrieved_at_utc": "2026-10-27T02:03:21.293151+00:00",
+          "geocoding_request": "https://geocoding-api.open-meteo.com/v1/search?name=Lisbon&count=10&language=en&format=json&countryCode=PT",
+          "coordinate_semantics": "Representative Lisbon city coordinate, not the anonymized hotel's exact location.",
+          "selected_city_result": {
+            "id": 2267057,
+            "name": "Lisbon",
+            "admin1": "Lisbon District",
+            "admin2": "Lisbon Municipality",
+            "country": "Portugal",
+            "latitude": 38.72509,
+            "timezone": "Europe/Lisbon",
+            "admin1_id": 2267056,
+            "admin2_id": 6458923,
+            "elevation": 68.0,
+            "longitude": -9.1498,
+            "country_id": 2264397,
+            "population": 517802,
+            "country_code": "PT",
+            "feature_code": "PPLC"
+          }
+        },
+        "requested_coordinate": {
+          "latitude": 38.72509,
+          "longitude": -9.1498
+        }
+      },
+      "raw_count": 793,
+      "staged_count": 793,
+      "out_of_scope_count": 0,
+      "unidentified_count": 0,
+      "reject_count": 0,
+      "missing_counts": {},
+      "invalid_counts": {},
+      "reconciles": true
+    }
+  },
+  "active_counts": {
+    "booking": 79330,
+    "holiday": 38,
+    "weather": 793
+  },
+  "non_city_booking_rows": 0,
+  "issues": [
+    {
+      "source_id": "booking",
+      "issue_type": "invalid",
+      "rule_code": "ZERO_GUESTS",
+      "issue_count": 167,
+      "affected_records": 167
+    },
+    {
+      "source_id": "booking",
+      "issue_type": "missing",
+      "rule_code": "MISSING_CHILDREN",
+      "issue_count": 4,
+      "affected_records": 4
+    }
+  ],
+  "structural_rejects": 0,
+  "context": {
+    "days": 793,
+    "unique_days": 793,
+    "ambiguous_weather_days": 0,
+    "unknown_precipitation_days": 0,
+    "booking_rows_after_join": 79330
+  },
+  "passed": true,
+  "errors": []
+}

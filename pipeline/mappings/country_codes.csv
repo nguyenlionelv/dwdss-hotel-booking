@@ -1,0 +1,168 @@
+source_code,target_code,target_name,status,note
+ABW,ABW,Aruba,known,ISO alpha-3; archived pycountry reference
+AGO,AGO,Angola,known,ISO alpha-3; archived pycountry reference
+AIA,AIA,Anguilla,known,ISO alpha-3; archived pycountry reference
+ALB,ALB,Albania,known,ISO alpha-3; archived pycountry reference
+AND,AND,Andorra,known,ISO alpha-3; archived pycountry reference
+ARE,ARE,United Arab Emirates,known,ISO alpha-3; archived pycountry reference
+ARG,ARG,Argentina,known,ISO alpha-3; archived pycountry reference
+ARM,ARM,Armenia,known,ISO alpha-3; archived pycountry reference
+ASM,ASM,American Samoa,known,ISO alpha-3; archived pycountry reference
+ATA,ATA,Antarctica,known,ISO alpha-3; archived pycountry reference
+ATF,ATF,French Southern Territories,known,ISO alpha-3; archived pycountry reference
+AUS,AUS,Australia,known,ISO alpha-3; archived pycountry reference
+AUT,AUT,Austria,known,ISO alpha-3; archived pycountry reference
+AZE,AZE,Azerbaijan,known,ISO alpha-3; archived pycountry reference
+BEL,BEL,Belgium,known,ISO alpha-3; archived pycountry reference
+BEN,BEN,Benin,known,ISO alpha-3; archived pycountry reference
+BFA,BFA,Burkina Faso,known,ISO alpha-3; archived pycountry reference
+BGD,BGD,Bangladesh,known,ISO alpha-3; archived pycountry reference
+BGR,BGR,Bulgaria,known,ISO alpha-3; archived pycountry reference
+BHR,BHR,Bahrain,known,ISO alpha-3; archived pycountry reference
+BIH,BIH,Bosnia and Herzegovina,known,ISO alpha-3; archived pycountry reference
+BLR,BLR,Belarus,known,ISO alpha-3; archived pycountry reference
+BOL,BOL,"Bolivia, Plurinational State of",known,ISO alpha-3; archived pycountry reference
+BRA,BRA,Brazil,known,ISO alpha-3; archived pycountry reference
+BRB,BRB,Barbados,known,ISO alpha-3; archived pycountry reference
+CAF,CAF,Central African Republic,known,ISO alpha-3; archived pycountry reference
+CHE,CHE,Switzerland,known,ISO alpha-3; archived pycountry reference
+CHL,CHL,Chile,known,ISO alpha-3; archived pycountry reference
+CHN,CHN,China,known,ISO alpha-3; archived pycountry reference
+CIV,CIV,Côte d'Ivoire,known,ISO alpha-3; archived pycountry reference
+CMR,CMR,Cameroon,known,ISO alpha-3; archived pycountry reference
+CN,CHN,China,known,Explicit ISO alpha-2 alias CN -> CHN; preserve country_raw
+COL,COL,Colombia,known,ISO alpha-3; archived pycountry reference
+COM,COM,Comoros,known,ISO alpha-3; archived pycountry reference
+CPV,CPV,Cabo Verde,known,ISO alpha-3; archived pycountry reference
+CRI,CRI,Costa Rica,known,ISO alpha-3; archived pycountry reference
+CUB,CUB,Cuba,known,ISO alpha-3; archived pycountry reference
+CYP,CYP,Cyprus,known,ISO alpha-3; archived pycountry reference
+CZE,CZE,Czechia,known,ISO alpha-3; archived pycountry reference
+DEU,DEU,Germany,known,ISO alpha-3; archived pycountry reference
+DMA,DMA,Dominica,known,ISO alpha-3; archived pycountry reference
+DNK,DNK,Denmark,known,ISO alpha-3; archived pycountry reference
+DOM,DOM,Dominican Republic,known,ISO alpha-3; archived pycountry reference
+DZA,DZA,Algeria,known,ISO alpha-3; archived pycountry reference
+ECU,ECU,Ecuador,known,ISO alpha-3; archived pycountry reference
+EGY,EGY,Egypt,known,ISO alpha-3; archived pycountry reference
+ESP,ESP,Spain,known,ISO alpha-3; archived pycountry reference
+EST,EST,Estonia,known,ISO alpha-3; archived pycountry reference
+ETH,ETH,Ethiopia,known,ISO alpha-3; archived pycountry reference
+FIN,FIN,Finland,known,ISO alpha-3; archived pycountry reference
+FRA,FRA,France,known,ISO alpha-3; archived pycountry reference
+FRO,FRO,Faroe Islands,known,ISO alpha-3; archived pycountry reference
+GAB,GAB,Gabon,known,ISO alpha-3; archived pycountry reference
+GBR,GBR,United Kingdom,known,ISO alpha-3; archived pycountry reference
+GEO,GEO,Georgia,known,ISO alpha-3; archived pycountry reference
+GGY,GGY,Guernsey,known,ISO alpha-3; archived pycountry reference
+GHA,GHA,Ghana,known,ISO alpha-3; archived pycountry reference
+GIB,GIB,Gibraltar,known,ISO alpha-3; archived pycountry reference
+GLP,GLP,Guadeloupe,known,ISO alpha-3; archived pycountry reference
+GNB,GNB,Guinea-Bissau,known,ISO alpha-3; archived pycountry reference
+GRC,GRC,Greece,known,ISO alpha-3; archived pycountry reference
+GTM,GTM,Guatemala,known,ISO alpha-3; archived pycountry reference
+GUY,GUY,Guyana,known,ISO alpha-3; archived pycountry reference
+HKG,HKG,Hong Kong,known,ISO alpha-3; archived pycountry reference
+HND,HND,Honduras,known,ISO alpha-3; archived pycountry reference
+HRV,HRV,Croatia,known,ISO alpha-3; archived pycountry reference
+HUN,HUN,Hungary,known,ISO alpha-3; archived pycountry reference
+IDN,IDN,Indonesia,known,ISO alpha-3; archived pycountry reference
+IMN,IMN,Isle of Man,known,ISO alpha-3; archived pycountry reference
+IND,IND,India,known,ISO alpha-3; archived pycountry reference
+IRL,IRL,Ireland,known,ISO alpha-3; archived pycountry reference
+IRN,IRN,"Iran, Islamic Republic of",known,ISO alpha-3; archived pycountry reference
+IRQ,IRQ,Iraq,known,ISO alpha-3; archived pycountry reference
+ISL,ISL,Iceland,known,ISO alpha-3; archived pycountry reference
+ISR,ISR,Israel,known,ISO alpha-3; archived pycountry reference
+ITA,ITA,Italy,known,ISO alpha-3; archived pycountry reference
+JAM,JAM,Jamaica,known,ISO alpha-3; archived pycountry reference
+JEY,JEY,Jersey,known,ISO alpha-3; archived pycountry reference
+JOR,JOR,Jordan,known,ISO alpha-3; archived pycountry reference
+JPN,JPN,Japan,known,ISO alpha-3; archived pycountry reference
+KAZ,KAZ,Kazakhstan,known,ISO alpha-3; archived pycountry reference
+KEN,KEN,Kenya,known,ISO alpha-3; archived pycountry reference
+KHM,KHM,Cambodia,known,ISO alpha-3; archived pycountry reference
+KIR,KIR,Kiribati,known,ISO alpha-3; archived pycountry reference
+KNA,KNA,Saint Kitts and Nevis,known,ISO alpha-3; archived pycountry reference
+KOR,KOR,"Korea, Republic of",known,ISO alpha-3; archived pycountry reference
+KWT,KWT,Kuwait,known,ISO alpha-3; archived pycountry reference
+LAO,LAO,Lao People's Democratic Republic,known,ISO alpha-3; archived pycountry reference
+LBN,LBN,Lebanon,known,ISO alpha-3; archived pycountry reference
+LBY,LBY,Libya,known,ISO alpha-3; archived pycountry reference
+LCA,LCA,Saint Lucia,known,ISO alpha-3; archived pycountry reference
+LIE,LIE,Liechtenstein,known,ISO alpha-3; archived pycountry reference
+LKA,LKA,Sri Lanka,known,ISO alpha-3; archived pycountry reference
+LTU,LTU,Lithuania,known,ISO alpha-3; archived pycountry reference
+LUX,LUX,Luxembourg,known,ISO alpha-3; archived pycountry reference
+LVA,LVA,Latvia,known,ISO alpha-3; archived pycountry reference
+MAC,MAC,Macao,known,ISO alpha-3; archived pycountry reference
+MAR,MAR,Morocco,known,ISO alpha-3; archived pycountry reference
+MCO,MCO,Monaco,known,ISO alpha-3; archived pycountry reference
+MDV,MDV,Maldives,known,ISO alpha-3; archived pycountry reference
+MEX,MEX,Mexico,known,ISO alpha-3; archived pycountry reference
+MKD,MKD,North Macedonia,known,ISO alpha-3; archived pycountry reference
+MLI,MLI,Mali,known,ISO alpha-3; archived pycountry reference
+MLT,MLT,Malta,known,ISO alpha-3; archived pycountry reference
+MMR,MMR,Myanmar,known,ISO alpha-3; archived pycountry reference
+MNE,MNE,Montenegro,known,ISO alpha-3; archived pycountry reference
+MOZ,MOZ,Mozambique,known,ISO alpha-3; archived pycountry reference
+MRT,MRT,Mauritania,known,ISO alpha-3; archived pycountry reference
+MUS,MUS,Mauritius,known,ISO alpha-3; archived pycountry reference
+MYS,MYS,Malaysia,known,ISO alpha-3; archived pycountry reference
+MYT,MYT,Mayotte,known,ISO alpha-3; archived pycountry reference
+NAM,NAM,Namibia,known,ISO alpha-3; archived pycountry reference
+NCL,NCL,New Caledonia,known,ISO alpha-3; archived pycountry reference
+NGA,NGA,Nigeria,known,ISO alpha-3; archived pycountry reference
+NIC,NIC,Nicaragua,known,ISO alpha-3; archived pycountry reference
+NLD,NLD,Netherlands,known,ISO alpha-3; archived pycountry reference
+NOR,NOR,Norway,known,ISO alpha-3; archived pycountry reference
+NZL,NZL,New Zealand,known,ISO alpha-3; archived pycountry reference
+OMN,OMN,Oman,known,ISO alpha-3; archived pycountry reference
+PAK,PAK,Pakistan,known,ISO alpha-3; archived pycountry reference
+PAN,PAN,Panama,known,ISO alpha-3; archived pycountry reference
+PER,PER,Peru,known,ISO alpha-3; archived pycountry reference
+PHL,PHL,Philippines,known,ISO alpha-3; archived pycountry reference
+POL,POL,Poland,known,ISO alpha-3; archived pycountry reference
+PRI,PRI,Puerto Rico,known,ISO alpha-3; archived pycountry reference
+PRT,PRT,Portugal,known,ISO alpha-3; archived pycountry reference
+PRY,PRY,Paraguay,known,ISO alpha-3; archived pycountry reference
+PYF,PYF,French Polynesia,known,ISO alpha-3; archived pycountry reference
+QAT,QAT,Qatar,known,ISO alpha-3; archived pycountry reference
+ROU,ROU,Romania,known,ISO alpha-3; archived pycountry reference
+RUS,RUS,Russian Federation,known,ISO alpha-3; archived pycountry reference
+RWA,RWA,Rwanda,known,ISO alpha-3; archived pycountry reference
+SAU,SAU,Saudi Arabia,known,ISO alpha-3; archived pycountry reference
+SDN,SDN,Sudan,known,ISO alpha-3; archived pycountry reference
+SEN,SEN,Senegal,known,ISO alpha-3; archived pycountry reference
+SGP,SGP,Singapore,known,ISO alpha-3; archived pycountry reference
+SLE,SLE,Sierra Leone,known,ISO alpha-3; archived pycountry reference
+SLV,SLV,El Salvador,known,ISO alpha-3; archived pycountry reference
+SRB,SRB,Serbia,known,ISO alpha-3; archived pycountry reference
+STP,STP,Sao Tome and Principe,known,ISO alpha-3; archived pycountry reference
+SUR,SUR,Suriname,known,ISO alpha-3; archived pycountry reference
+SVK,SVK,Slovakia,known,ISO alpha-3; archived pycountry reference
+SVN,SVN,Slovenia,known,ISO alpha-3; archived pycountry reference
+SWE,SWE,Sweden,known,ISO alpha-3; archived pycountry reference
+SYC,SYC,Seychelles,known,ISO alpha-3; archived pycountry reference
+SYR,SYR,Syrian Arab Republic,known,ISO alpha-3; archived pycountry reference
+TGO,TGO,Togo,known,ISO alpha-3; archived pycountry reference
+THA,THA,Thailand,known,ISO alpha-3; archived pycountry reference
+TJK,TJK,Tajikistan,known,ISO alpha-3; archived pycountry reference
+TMP,TLS,Timor-Leste,known,Historical TMP -> TLS; ISO newsletter V-5 2002-05-20; preserve country_raw
+TUN,TUN,Tunisia,known,ISO alpha-3; archived pycountry reference
+TUR,TUR,Türkiye,known,ISO alpha-3; archived pycountry reference
+TWN,TWN,"Taiwan, Province of China",known,ISO alpha-3; archived pycountry reference
+TZA,TZA,"Tanzania, United Republic of",known,ISO alpha-3; archived pycountry reference
+UGA,UGA,Uganda,known,ISO alpha-3; archived pycountry reference
+UKR,UKR,Ukraine,known,ISO alpha-3; archived pycountry reference
+UMI,UMI,United States Minor Outlying Islands,known,ISO alpha-3; archived pycountry reference
+URY,URY,Uruguay,known,ISO alpha-3; archived pycountry reference
+USA,USA,United States,known,ISO alpha-3; archived pycountry reference
+UZB,UZB,Uzbekistan,known,ISO alpha-3; archived pycountry reference
+VEN,VEN,"Venezuela, Bolivarian Republic of",known,ISO alpha-3; archived pycountry reference
+VGB,VGB,"Virgin Islands, British",known,ISO alpha-3; archived pycountry reference
+VNM,VNM,Viet Nam,known,ISO alpha-3; archived pycountry reference
+ZAF,ZAF,South Africa,known,ISO alpha-3; archived pycountry reference
+ZMB,ZMB,Zambia,known,ISO alpha-3; archived pycountry reference
+ZWE,ZWE,Zimbabwe,known,ISO alpha-3; archived pycountry reference
+UNK,UNK,Unknown,unknown,D03 unknown member; missing/unmapped produce an issue

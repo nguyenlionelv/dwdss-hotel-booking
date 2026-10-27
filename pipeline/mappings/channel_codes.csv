@@ -1,0 +1,7 @@
+source_code,target_code,target_name,status,note
+CORPORATE,CORPORATE,Corporate,known,Source label; dataset Table 1
+DIRECT,DIRECT,Direct,known,Source label; dataset Table 1
+GDS,GDS,GDS,known,Source label; dataset Table 1
+TA/TO,TA/TO,TA/TO,known,Source label; dataset Table 1
+UNDEFINED,UNKNOWN,Unknown,unknown,Source explicitly undefined; retain issue
+UNKNOWN,UNKNOWN,Unknown,unknown,Unknown dimension member

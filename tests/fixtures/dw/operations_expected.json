@@ -1,0 +1,62 @@
+{
+  "version": "operations-expectations-v1",
+  "note": "Hand-calculated acceptance examples, independent of preflight output. Defaults apply only to this synthetic fixture.",
+  "defaults": {"adults": 2, "children": 0, "babies": 0, "stays_in_week_nights": 1, "stays_in_weekend_nights": 0, "lead_time": 10, "adr": 100, "is_canceled": 0},
+  "design_rows": [
+    {"row_id": 2, "date": "2017-08-01", "adults": 2, "children": 1, "country": "PRT", "adr": 100},
+    {"row_id": 3, "date": "2017-08-01", "is_canceled": 1, "country": "GBR", "adr": 80},
+    {"row_id": 4, "date": "2017-08-01", "adults": 1, "country": "GBR", "adr": 120},
+    {"row_id": 5, "date": "2017-08-02", "children": null, "country": "PRT", "adr": 90},
+    {"row_id": 6, "date": "2017-08-02", "country": null, "adr": -5},
+    {"row_id": 7, "date": "2017-08-02", "adults": 0, "country": "PRT", "adr": 50},
+    {"row_id": 8, "date": "2017-08-02", "is_canceled": 2, "country": "PRT", "adr": 70}
+  ],
+  "design_expected": {
+    "source_count": 7, "accepted_candidate_count": 6, "rejected_candidate_count": 1,
+    "2017-08-01": {
+      "observed_fact_booking_count": 3, "total_bookings": 3, "non_canceled_bookings": 2, "total_cancellations": 1,
+      "guest_valid_booking_count": 2, "stay_valid_booking_count": 2, "lead_time_valid_count": 2, "adr_valid_count": 2,
+      "observed_total_adults": 3, "observed_total_children": 1, "observed_total_babies": 0, "observed_total_guests": 4,
+      "observed_total_stay_nights": 2, "sum_lead_time": 20, "sum_adr": 220,
+      "cancellation_rate": 0.3333333333333333, "avg_party_size": 2, "avg_stay_nights": 1, "avg_lead_time": 10, "avg_adr": 110,
+      "booking_data_status": "COMPLETE", "guest_data_status": "COMPLETE", "stay_data_status": "COMPLETE", "target_guests": 4
+    },
+    "2017-08-02": {
+      "observed_fact_booking_count": 3, "rejected_booking_count": 1, "total_bookings": 3, "non_canceled_bookings": 3, "total_cancellations": 0,
+      "guest_valid_booking_count": 1, "stay_valid_booking_count": 3, "lead_time_valid_count": 3, "adr_valid_count": 2,
+      "guest_ineligible_booking_count": 2, "stay_ineligible_booking_count": 0,
+      "observed_total_adults": 2, "observed_total_children": 0, "observed_total_babies": 0, "observed_total_guests": 2,
+      "observed_total_stay_nights": 3, "sum_lead_time": 30, "sum_adr": 140,
+      "cancellation_rate": 0, "avg_party_size": 2, "avg_stay_nights": 1, "avg_lead_time": 10, "avg_adr": 70,
+      "booking_data_status": "PARTIAL", "guest_data_status": "PARTIAL", "stay_data_status": "PARTIAL", "target_guests": null
+    },
+    "2017-08-03": {
+      "total_bookings": 0, "non_canceled_bookings": 0, "total_cancellations": 0,
+      "guest_valid_booking_count": 0, "stay_valid_booking_count": 0, "lead_time_valid_count": 0, "adr_valid_count": 0,
+      "observed_total_adults": 0, "observed_total_children": 0, "observed_total_babies": 0, "observed_total_guests": 0,
+      "observed_total_stay_nights": 0, "sum_lead_time": 0, "sum_adr": 0,
+      "cancellation_rate": null, "avg_party_size": null, "avg_stay_nights": null, "avg_lead_time": null, "avg_adr": null,
+      "booking_data_status": "COMPLETE", "guest_data_status": "COMPLETE", "stay_data_status": "COMPLETE", "target_guests": 0
+    }
+  },
+  "measure_cases": [
+    {"name": "unknown_empty", "coverage": "UNKNOWN", "rows": [], "expected": {"total_bookings": null, "observed_total_guests": null, "sum_adr": null, "guest_valid_booking_count": 0, "guest_data_status": "UNKNOWN", "target_guests": null}},
+    {"name": "missing_empty", "coverage": "MISSING", "rows": [], "expected": {"total_bookings": null, "observed_total_guests": null, "sum_adr": null, "avg_adr": null, "guest_data_status": "MISSING", "target_guests": null}},
+    {"name": "partial_empty", "coverage": "PARTIAL", "rows": [], "expected": {"total_bookings": null, "observed_total_guests": null, "guest_data_status": "PARTIAL", "target_guests": null}},
+    {"name": "partial_known_subset", "coverage": "PARTIAL", "rows": [{"adults": 3, "adr": 0}], "expected": {"total_bookings": 1, "guest_valid_booking_count": 1, "observed_total_guests": 3, "sum_adr": 0, "avg_adr": 0, "guest_data_status": "PARTIAL", "target_guests": null}},
+    {"name": "unknown_capture_with_known_guest_defect", "coverage": "UNKNOWN", "rows": [{"children": null}], "expected": {"total_bookings": 1, "observed_total_guests": null, "guest_valid_booking_count": 0, "guest_data_status": "PARTIAL", "target_guests": null}},
+    {"name": "only_zero_guests", "coverage": "COMPLETE", "rows": [{"adults": 0}], "expected": {"total_bookings": 1, "guest_valid_booking_count": 0, "observed_total_guests": null, "avg_party_size": null, "guest_data_status": "PARTIAL", "target_guests": null}},
+    {"name": "only_canceled_missing_guest", "coverage": "COMPLETE", "rows": [{"is_canceled": 1, "children": null}], "expected": {"total_bookings": 1, "non_canceled_bookings": 0, "total_cancellations": 1, "observed_total_guests": 0, "guest_data_status": "COMPLETE", "target_guests": 0, "avg_party_size": null}},
+    {"name": "invalid_separate_measures", "coverage": "COMPLETE", "rows": [{"stays_in_week_nights": null, "lead_time": -1, "adr": null}], "expected": {"observed_total_guests": 2, "guest_data_status": "COMPLETE", "target_guests": 2, "stay_data_status": "PARTIAL", "stay_valid_booking_count": 0, "observed_total_stay_nights": null, "lead_time_valid_count": 0, "sum_lead_time": null, "adr_valid_count": 0, "sum_adr": null, "avg_stay_nights": null, "avg_lead_time": null, "avg_adr": null}},
+    {"name": "zero_nights_valid", "coverage": "COMPLETE", "rows": [{"stays_in_week_nights": 0, "adr": 0}], "expected": {"stay_valid_booking_count": 1, "observed_total_stay_nights": 0, "avg_stay_nights": 0, "adr_valid_count": 1, "sum_adr": 0, "avg_adr": 0}},
+    {"name": "rejected_without_fact", "coverage": "COMPLETE", "rejected_count": 1, "rows": [], "expected": {"total_bookings": null, "observed_total_guests": null, "booking_data_status": "PARTIAL", "guest_data_status": "PARTIAL", "target_guests": null}}
+  ],
+  "country_acceptance_for_later_mart_tests": {
+    "countries": ["GBR", "PRT", "UNK"], "dates": ["2017-08-01", "2017-08-02", "2017-08-03"], "row_count": 9,
+    "guest_sum_2017-08-01": {"GBR": 1, "PRT": 3, "UNK": 0},
+    "guest_sum_2017-08-02": {"GBR": null, "PRT": null, "UNK": 2},
+    "day_quality_2017-08-02_all_countries": "PARTIAL",
+    "filtered_day_count_per_country": 3,
+    "note": "Country zero-booking cells are zero only with COMPLETE source coverage and no day-level core rejection. Conservatively keep null for empty cells on a day with rejected rows; day-level PARTIAL remains on every country row."
+  }
+}

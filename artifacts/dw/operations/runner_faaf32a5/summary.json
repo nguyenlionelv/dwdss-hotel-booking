@@ -1,0 +1,41 @@
+{
+  "status": "completed",
+  "output_dir": "D:\\Users\\BuiTrongNguyen\\CodexProject\\dwdss-hotel-booking\\artifacts\\dw\\operations\\runner_faaf32a5",
+  "steps": [
+    {
+      "name": "preflight",
+      "report": "inputs/preflight.json",
+      "exit_code": 0
+    },
+    {
+      "name": "migration",
+      "report": "migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "load",
+      "report": "first_load.json",
+      "exit_code": 0
+    },
+    {
+      "name": "quality",
+      "report": "quality_report.json",
+      "exit_code": 0
+    },
+    {
+      "name": "rerun",
+      "report": "rerun.json",
+      "exit_code": 0
+    },
+    {
+      "name": "tests",
+      "report": "pytest.xml",
+      "exit_code": 0
+    }
+  ],
+  "tests_run": true,
+  "run_id": "4481d8b1-a6c7-451d-87a6-057d8273e7b2",
+  "data_version": "b49e51b6-ac15-4227-8b82-77d465e4cc93",
+  "load_status": "no-op",
+  "verified": true
+}

@@ -1,0 +1,57 @@
+{
+  "config_version": "dw-inputs-v2",
+  "contract_version": "dw-operations-6dim-v1",
+  "rule_version": "D01-D08-20261026-v1",
+  "source_manifest": "docs/data_dictionary/operations_source_set.json",
+  "hotel_scope": "City Hotel",
+  "timezone": "Europe/Lisbon",
+  "calendar": {
+    "start": "2015-07-01",
+    "end": "2017-09-07",
+    "label_language": "en"
+  },
+  "actual": {
+    "start": "2015-07-01",
+    "end": "2017-08-31"
+  },
+  "data_coverage_end": "2017-08-31",
+  "data_coverage_end_note": "End of selected observation interval; Booking COMPLETE within this interval under user-accepted assumption booking-completeness-assumption-v1",
+  "country_calendar": "actual_dates_x_accepted_countries_including_UNK",
+  "room_namespace": "shared_anonymized_source_codes",
+  "mappings": {
+    "country": {
+      "file": "pipeline/mappings/country_codes.csv",
+      "sha256": "9e6d8252968ac676b331bed6ea514370663268dc240de6a451d73e20e40a054e",
+      "version": "country-v1",
+      "unknown_code": "UNK"
+    },
+    "channel": {
+      "file": "pipeline/mappings/channel_codes.csv",
+      "sha256": "d12552cd3cbb944698a127093c4bc9e8faa8935a1ab97917760d47a03450b340",
+      "version": "channel-v1",
+      "unknown_code": "UNKNOWN"
+    },
+    "market_segment": {
+      "file": "pipeline/mappings/market_segment_codes.csv",
+      "sha256": "45254e1827d51449ccd9123ec3e08623259567b4817ccfa0012410fadeb48210",
+      "version": "market_segment-v1",
+      "unknown_code": "UNKNOWN"
+    },
+    "customer_type": {
+      "file": "pipeline/mappings/customer_type_codes.csv",
+      "sha256": "9c6674c727f5bead0a60d263374819a4184618e5d940d4c6273716238cbe011e",
+      "version": "customer_type-v1",
+      "unknown_code": "UNKNOWN"
+    },
+    "room_type": {
+      "file": "pipeline/mappings/room_type_codes.csv",
+      "sha256": "dcd8b4955efc7538ddb2ef5968bbc1eb07c5334fea49d84a9ea1353d1b6ea781",
+      "version": "room_type-v1",
+      "unknown_code": "UNKNOWN"
+    }
+  },
+  "coverage": {
+    "file": "pipeline/config/coverage_selected_source_set.json",
+    "sha256": "7d2c242539ad27dbf5003ece43a7cb9e0b155a03f955fce4b60e290452ebf109"
+  }
+}

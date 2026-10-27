@@ -1,0 +1,57 @@
+{
+  "status": "published",
+  "batch_id": "735da72d-5c48-4690-984c-13b5c44b9325",
+  "source_set_fingerprint": "5d2b572acc4a467e19028ab43902686d826538f819d072e5b1971345e577a339",
+  "sources": {
+    "booking": {
+      "sha256": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+      "raw_count": 119390,
+      "staged_count": 79330,
+      "out_of_scope_count": 40060,
+      "unidentified_count": 0,
+      "reject_count": 0,
+      "missing_counts": {
+        "company": {
+          "NULL": 75641
+        },
+        "agent": {
+          "NULL": 8131
+        },
+        "children": {
+          "NA": 4
+        },
+        "country": {
+          "NULL": 24
+        }
+      },
+      "invalid_counts": {
+        "ZERO_GUESTS": 167
+      }
+    },
+    "holiday": {
+      "sha256": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+      "raw_count": 38,
+      "staged_count": 38,
+      "out_of_scope_count": 0,
+      "unidentified_count": 0,
+      "reject_count": 0,
+      "missing_counts": {
+        "subdivision": {
+          "": 35
+        }
+      },
+      "invalid_counts": {}
+    },
+    "weather": {
+      "sha256": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3",
+      "raw_count": 793,
+      "staged_count": 793,
+      "out_of_scope_count": 0,
+      "unidentified_count": 0,
+      "reject_count": 0,
+      "missing_counts": {},
+      "invalid_counts": {}
+    },
+    "context_join_booking_rows": 79330
+  }
+}

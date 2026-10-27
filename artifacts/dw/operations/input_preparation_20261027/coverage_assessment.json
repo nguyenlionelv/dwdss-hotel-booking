@@ -1,0 +1,59 @@
+{
+  "version": "coverage-assessment-v1",
+  "source_set_fingerprint": "5d2b572acc4a467e19028ab43902686d826538f819d072e5b1971345e577a339",
+  "references": {
+    "dataset_paper": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6297060/",
+    "country_reference": {
+      "url": "https://raw.githubusercontent.com/pycountry/pycountry/main/src/pycountry/databases/iso3166-1.json",
+      "file": "artifacts/dw/operations/input_preparation_20261027/references/iso3166-1.json",
+      "sha256": "f01b812b57fba9f31ff621bf33e7c7570a01964dbeb5be2167e94decf538c89f"
+    },
+    "historical_country_alias": "https://www.iso.org/files/live/sites/isoorg/files/archive/pdf/en/newsletter_v-5_east_timor.pdf",
+    "acquisition_metadata": {
+      "holiday": {
+        "file": "data/raw/holiday/pt_lisboa_holidays_2015_2017_20261017.metadata.json",
+        "sha256": "b027053d17e56d3ac718133a5963cfb5ef18825e9f4465443e09315f6d82a076"
+      },
+      "weather": {
+        "file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261027.metadata.json",
+        "sha256": "7c3134ba378bccc6588b4131548b939ab86c9ad28c58e6d807abd4a2cd560bb1"
+      }
+    }
+  },
+  "booking": {
+    "status": "UNKNOWN",
+    "observation_start": "2015-07-01",
+    "observation_end": "2017-08-31",
+    "reason": "Published observation interval and matching dataset summaries do not certify exhaustive per-day reservation capture. No explicit Booking completeness evidence/approved assumption is available.",
+    "not_inferred_from": [
+      "row count",
+      "min/max arrival",
+      "Staging quality passed"
+    ]
+  },
+  "holiday": {
+    "status": "COMPLETE",
+    "start": "2015-01-01",
+    "end": "2017-12-31",
+    "scopes": [
+      "national",
+      "Lisboa"
+    ],
+    "generator_version": "0.106",
+    "replay_matches_selected_csv_bytes": true,
+    "sha256": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+    "scope": "Full generated public calendar, observed=false; not an independent legal audit"
+  },
+  "weather": {
+    "status": "COMPLETE",
+    "start": "2015-07-01",
+    "end": "2017-08-31",
+    "scope": "Selected ERA5 daily series for the requested interval; not a future weather forecast",
+    "checks": "Manifest raw/metadata verification plus independent per-day unique/finite/nonnegative checks in preflight"
+  },
+  "room_namespace": {
+    "decision": "shared_anonymized_source_codes",
+    "reference": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6297060/",
+    "reason": "Table 1 describes assigned room code as a comparison to reserved room code; use union of both roles, including assigned-only K; names remain null"
+  }
+}
