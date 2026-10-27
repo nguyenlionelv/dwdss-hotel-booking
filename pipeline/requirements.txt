@@ -1,1 +1,1 @@
-# Add and pin ingestion, ETL, and database dependencies when pipeline implementation begins.
+psycopg[binary]==3.3.6

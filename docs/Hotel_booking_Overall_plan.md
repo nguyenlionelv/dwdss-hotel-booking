@@ -1,5 +1,7 @@
 # DWDSS Hotel Booking — Master Plan (High-Level → Low-Level → Code-Level)
 
+> **Phạm vi triển khai hiện hành:** Tài liệu này là nguồn ý tưởng kiến trúc rộng, không phải contract nạp dữ liệu. Dự án hiện chỉ có một Operations Mart cho City Hotel và ba nguồn Booking (chỉ City Hotel vào Staging), Holiday PT/Lisboa, Weather lịch sử Lisbon; Event ngoài phạm vi. Không áp dụng các ví dụ bên dưới về điền `children=0`, `country="Unknown"`, holiday thiếu=`False`, lọc City ở Staging→DW, hoặc bốn mart/ba bài toán ML. Quy tắc thực thi hiện hành: [detailed plan](detailed_plan.md), [data contract](data_dictionary/operations_sources.md), [Source → Staging](etl_spec/operations_source_to_target.md), [kế hoạch Member 2](member2_execution_plan.md).
+
 > **Deadline:** 10/11/2026  
 > **Mục tiêu:** Xây dựng một hệ thống Data Warehouse & Decision Support System cho domain Hotel Booking theo luồng:
 >

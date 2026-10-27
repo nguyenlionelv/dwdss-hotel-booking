@@ -1,0 +1,7 @@
+sample_type,status,_source_row_id,hotel,arrival_date,day_name,is_weekend,is_holiday,holiday_name,temperature_2m_mean,precipitation_sum,is_canceled,adults,children,babies
+weekday_non_holiday,found,40062,City Hotel,2015-07-01,Wednesday,False,False,,19.1,0.1,0,1,0.0,0
+weekend_non_holiday,found,40088,City Hotel,2015-07-04,Saturday,True,False,,21.1,0.0,1,1,0.0,0
+holiday_weekday,found,46076,City Hotel,2015-12-08,Tuesday,False,True,Imaculada Conceição,14.8,0.0,0,2,0.0,0
+holiday_weekend,found,41354,City Hotel,2015-08-15,Saturday,True,True,Assunção de Nossa Senhora,19.4,0.0,0,2,0.0,0
+rainy_day,found,40062,City Hotel,2015-07-01,Wednesday,False,False,,19.1,0.1,0,1,0.0,0
+dry_day,found,40066,City Hotel,2015-07-02,Thursday,False,False,,19.3,0.0,1,2,0.0,0

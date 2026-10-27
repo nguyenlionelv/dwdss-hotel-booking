@@ -23,6 +23,7 @@ data/raw/**/*.json
 data/raw/**/*.jsonl
 data/raw/**/*.parquet
 data/raw/**/*.xlsx
+data/raw/**/*.zip
 ml/artifacts/*.joblib
 ml/artifacts/*.pkl
 artifacts/forecasts/*
