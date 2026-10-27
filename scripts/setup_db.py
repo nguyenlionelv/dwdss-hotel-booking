@@ -1,4 +1,4 @@
-"""Apply the Staging schema or ordered DW migrations to PostgreSQL."""
+"""Apply the Staging schema or versioned DW/Operations Mart migrations."""
 
 from __future__ import annotations
 
@@ -14,12 +14,13 @@ sys.path.insert(0, str(ROOT))
 
 from pipeline.source_to_staging.common import connect  # noqa: E402
 from pipeline.staging_to_dw.migrations import apply_dw_migrations  # noqa: E402
+from pipeline.dw_to_mart.migrations import apply_mart_migration  # noqa: E402
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dbname", help="Override POSTGRES_DB, useful for isolated integration tests")
-    parser.add_argument("--schema", choices=("staging", "dw"), default="staging")
+    parser.add_argument("--schema", choices=("staging", "dw", "mart"), default="staging")
     parser.add_argument("--report", type=Path, help="New JSON evidence file; an existing report is never overwritten")
     args = parser.parse_args()
     if args.report and args.report.exists():
@@ -28,6 +29,8 @@ def main() -> int:
         with connect(args.dbname) as conn:
             if args.schema == "dw":
                 result = apply_dw_migrations(conn)
+            elif args.schema == "mart":
+                result = apply_mart_migration(conn)
             else:
                 ddl = (ROOT / "database/staging/001_staging.sql").read_text(encoding="utf-8")
                 conn.execute(ddl)

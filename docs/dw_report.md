@@ -1,10 +1,10 @@
-# Báo cáo triển khai Data Warehouse
+# Báo cáo triển khai Data Warehouse và Operations Mart
 
 ## 1. Phạm vi
 
 Data Warehouse phục vụ phân tích vận hành City Hotel theo ngày đến. Mô hình gồm một FactBooking ở grain một reservation record nguồn, sáu dimension và một DailyContext ở grain một ngày. Các bảng kỹ thuật lưu phiên bản nạp, source coverage, chất lượng và lỗi truy vết.
 
-DW đã được nạp và kiểm chứng trên PostgreSQL local. Operations Mart chưa được triển khai. Phạm vi tiếp theo gồm tổng hợp theo ngày và ngày × country trong cùng domain Operations; API, feature dataset và mô hình ML được tích hợp ở giai đoạn sau.
+DW đã được nạp và kiểm chứng trên PostgreSQL local. Operations Mart đã hiện thực tổng hợp theo ngày và ngày × country trong cùng domain Operations, tích hợp publish đồng bộ với DW. Kết quả và evidence Mart tại mục 13; API, OLAP/Reporting, feature dataset và mô hình ML được tích hợp ở giai đoạn sau.
 
 | Tài liệu DW | Chức năng |
 |---|---|
@@ -14,7 +14,7 @@ DW đã được nạp và kiểm chứng trên PostgreSQL local. Operations Mar
 
 Các tài liệu nguồn, Staging và hợp đồng tích hợp thuộc giai đoạn trước tiếp tục được giữ tại vị trí hiện có.
 
-Trong phạm vi DW, `dw_design.md` quy định mô hình và baseline hiện hành; báo cáo xác định kết quả đã có bằng chứng; runbook mô tả thao tác vận hành. Phần Mart và feature/ML trong thiết kế là yêu cầu cho các giai đoạn sau, không biểu diễn chức năng đã triển khai hoặc điều kiện bổ sung để công nhận DW READY.
+Trong phạm vi DW/Mart, `dw_design.md` quy định mô hình và baseline hiện hành; báo cáo xác định kết quả đã có bằng chứng; runbook mô tả thao tác vận hành. Evidence DW trước khi tích hợp Mart được giữ nguyên ở mục 10–11; serving version và kiểm chứng Mart theo mục 13. Feature/ML chưa triển khai và không là điều kiện bổ sung để công nhận DW/Mart READY.
 
 ## 2. Quá trình triển khai
 
@@ -28,8 +28,9 @@ Trong phạm vi DW, `dw_design.md` quy định mô hình và baseline hiện hà
 | Snapshot và loader | Đọc nhất quán published Staging; dựng/nạp đủ dimension, fact, context, coverage và daily quality; kiểm tra trước atomic publish |
 | Nghiệm thu | Nạp source thật, đối soát độc lập, chạy PostgreSQL tests, kiểm tra no-op, rollback, recovery và concurrency; lưu evidence từng giai đoạn |
 | Điều phối bằng một lệnh | `scripts/run_dw.py` gọi các CLI theo thứ tự, dừng khi lỗi, lưu report chung và xác nhận load/quality/rerun cùng phiên bản; tùy chọn chạy bộ test |
+| Operations Mart | Hai bảng tổng hợp ngày/country, migration ledger/state, SQL refresh, quality độc lập, publish đồng bộ DW/Mart và runner `--with-mart`; kết quả tại mục 13 |
 
-Chuẩn bị đầu vào có evidence 36 test cases. Migration được kiểm chứng riêng bằng 50 PostgreSQL cases. Transformer có 107 unit cases. Bộ nghiệm thu loader DW gốc có 223 tests. Khi bổ sung runner, có thêm 13 cases điều phối và một case PostgreSQL, tổng bộ hiện hành là 237 tests; không cộng số test các lần chạy vì có cases được chạy nhiều lần.
+Chuẩn bị đầu vào có evidence 36 test cases. Migration được kiểm chứng riêng bằng 50 PostgreSQL cases. Transformer có 107 unit cases. Bộ nghiệm thu loader DW gốc có 223 tests. Khi bổ sung runner DW, có thêm 13 cases điều phối và một case PostgreSQL, bộ trước Mart có 237 tests. Kết quả bổ sung Mart theo mục 13; không cộng số test các lần chạy vì có cases được chạy nhiều lần.
 
 ## 3. Đầu vào và source lineage
 
@@ -152,7 +153,7 @@ Daily quality có đủ calendar, gồm ngày không booking. Technical counts b
 
 ## 8. Quy tắc tổng hợp cho Operations Mart
 
-Đây là hợp đồng cho bước Mart; SQL/refresh Mart chưa được triển khai.
+Đây là hợp đồng đã dùng cho SQL/refresh Mart; implementation và evidence tại mục 13.
 
 A là accepted facts trong nhóm ngày/country; B là A không hủy; G/S/L/R lần lượt là B đủ điều kiện guest/stay/lead time/ADR. Mỗi sum/valid count dùng đúng tập tương ứng. Roll-up cộng sum/count rồi tính lại average/rate, không lấy trung bình các average.
 
@@ -195,9 +196,15 @@ Country filter giữ nguyên số ngày lịch. Ngày source COMPLETE và không
 | [run.py](../pipeline/staging_to_dw/run.py) | Lock, lifecycle, fingerprint, refresh và publish |
 | [dw_checks.py](../pipeline/quality/dw_checks.py) | Quality CLI chỉ đọc |
 | [check_dw_inputs.py](../scripts/check_dw_inputs.py) | Preflight CLI và report |
-| [setup_db.py](../scripts/setup_db.py) | Migration CLI `--schema dw`, dùng chung với Staging |
+| [setup_db.py](../scripts/setup_db.py) | Migration CLI `--schema dw`/`mart`, dùng chung với Staging |
 | [run_pipeline.py](../scripts/run_pipeline.py) | Pipeline CLI `--to dw`, dùng chung với Staging |
-| [run_dw.py](../scripts/run_dw.py) | Chạy preflight/migration/load/quality/rerun bằng một lệnh; tùy chọn tests |
+| [run_dw.py](../scripts/run_dw.py) | Chạy preflight/migration/load/quality/rerun bằng một lệnh; `--with-mart`, tùy chọn tests |
+| [dw_to_mart/migrations.py](../pipeline/dw_to_mart/migrations.py) | Migration ledger/checksum Mart, cùng writer lock |
+| [operations.py](../pipeline/dw_to_mart/operations.py) | Columns/fingerprint, SQL refresh, state và clear children trước DW |
+| [dw_to_mart/checks.py](../pipeline/dw_to_mart/checks.py) | Đối soát từng cell với phép tính Python độc lập và metadata DW |
+| [dw_to_mart/run.py](../pipeline/dw_to_mart/run.py) | Khởi tạo/no-op Mart trên published DW đã validate |
+| [refresh_marts.py](../scripts/refresh_marts.py) | CLI Operations, report mới, báo lỗi sau commit riêng |
+| [mart_checks.py](../pipeline/quality/mart_checks.py) | Quality DW/Mart trong cùng transaction chỉ đọc |
 
 Tái sử dụng [common.py](../pipeline/source_to_staging/common.py) cho kết nối/config/source helpers và [booking.py](../pipeline/source_to_staging/booking.py) cho fields/tháng. Không thêm pandas, ORM hoặc dependency điều phối.
 
@@ -209,6 +216,8 @@ Tái sử dụng [common.py](../pipeline/source_to_staging/common.py) cho kết 
 | [002_dimensions.sql](../database/dw/002_dimensions.sql) | Sáu dimension, constraints và unknown members |
 | [003_fact_context_quality.sql](../database/dw/003_fact_context_quality.sql) | Fact, context, quality và lineage |
 | [dw_checks.sql](../database/validation/dw_checks.sql) | SQL đối soát, được quality CLI bind tham số |
+| [operations_mart.sql](../database/marts/operations_mart.sql) | Hai serving tables, CHECK/FK/keys/index, migration ledger và dataset state |
+| [refresh_operations.sql](../database/marts/refresh_operations.sql) | GROUPING SETS ngày/country, join calendar/context sau aggregate, eligibility/NULL/0 |
 | [dw_operations.json](../pipeline/config/dw_operations.json) | Config `dw-inputs-v2`, calendar/actual, asset versions/hashes |
 | [coverage_selected_source_set.json](../pipeline/config/coverage_selected_source_set.json) | Coverage `selected-coverage-v2`, source checksums và evidence |
 | [country_codes.csv](../pipeline/mappings/country_codes.csv) | Country aliases/labels/unknown |
@@ -234,7 +243,7 @@ Có thêm 5 Staging regression tests trong bộ pipeline, tổng cộng 237. Int
 
 <a id="results"></a>
 
-## 10. Kết quả nghiệm thu DW
+## 10. Kết quả nghiệm thu DW trước khi tích hợp Mart
 
 | Nội dung | Kết quả |
 |---|---|
@@ -323,10 +332,78 @@ XML thử nghiệm, report từng bước đã được bộ nghiệm thu cuối
 
 Việc tổ chức lại tài liệu và artifact loại bỏ tổng cộng 47 file: sáu tài liệu DW trung gian, 38 artifact/helper bị thay thế và ba placeholder; dọn 11 thư mục rỗng và 12 thư mục pytest tạm của DW. Riêng lần rà soát artifact bổ sung loại bỏ 19 file và bốn thư mục rỗng, giảm từ 33 còn 14 artifact DW. Kiểm tra liên kết, config/coverage và checksum runtime/evidence cuối đạt. Không thay đổi thuật toán, SQL migration, dữ liệu nguồn hoặc database; kết quả 223 tests là evidence của bộ runtime đã nghiệm thu, không phải lần chạy test mới cho thay đổi tài liệu.
 
+<a id="operations-mart"></a>
+
 ## 13. Operations Mart
 
-Triển khai `mart.daily_hotel_operations` và `mart.daily_hotel_operations_by_country` theo thiết kế/mục 8. Aggregate fact trước khi join context; kiểm tra không nhân/mất booking và roll-up từ sum/count.
+### 13.1. Hiện thực
 
-Refresh/validation Mart phải cùng transaction và `data_version` với DW trước khi phục vụ. Loader hiện ngăn rebuild DW khi đối tượng Mart phục vụ đã tồn tại mà chưa tích hợp refresh đồng bộ. Nghiệm thu Mart cần PostgreSQL tests, đối soát ngày/country, rollback, rerun và evidence riêng.
+Hai đầu ra là bảng tổng hợp lưu sẵn `mart.daily_hotel_operations` (ngày đến) và `mart.daily_hotel_operations_by_country` (ngày đến × country). SQL dùng GROUPING SETS để aggregate fact ở hai grain trước khi join calendar/context/quality; chỉ materialize actual dates. Có đủ accepted countries + UNK, không thêm country chỉ thuộc rejected rows hoặc toàn danh mục thế giới.
 
-Ngưỡng model, split hoặc feature window của mẫu ML không chặn nghiệm thu DW/Mart. API/ML contract được liên kết sau khi đầu ra Mart đã hiện thực.
+Giữ counts/sums riêng, KPI NUMERIC, eligibility theo G/S/L/R và quy tắc NULL/0 ở mục 8. `target_guests` chỉ có giá trị khi guest COMPLETE theo thiết kế 9.3, chưa là feature dataset. Context và quality cấp ngày lặp qua country để giữ trạng thái khi lọc; không SUM các trường đó. Khi toàn bộ booking trong nhóm không đủ điều kiện một measure, daily sum vẫn NULL dù các country rỗng hợp lệ có thể là 0; không dùng SUM các ô rỗng để kết luận measure đã biết.
+
+`mart.schema_migration` kiểm tra checksum DDL; `mart.dataset_state` giữ DW run, data version, actual range, runtime/config fingerprint và counts. Cùng fingerprint thì no-op sau validation. Khởi tạo Mart có thể dùng DW đã published cùng config; khi Mart đã phục vụ, refresh riêng từ chối đổi fingerprint trong cùng version, yêu cầu rebuild DW/Mart.
+
+DW loader tích hợp xóa Mart children trước DW parents, rebuild và validate cả hai lớp trong cùng transaction rồi mới publish state/active run. Mọi writer dùng cùng advisory lock. Lỗi giữ nguyên snapshot phục vụ cũ; schema Mart không có ledger/checksum đúng bị chặn. Runner thêm `--with-mart`; CLI riêng và lệnh quality theo [runbook mục 9](dw_runbook.md#9-xây-và-kiểm-tra-operations-mart).
+
+### 13.2. Serving snapshot đã kiểm chứng
+
+**Audit bổ sung:** quality hiện tại phát hiện một calendar violation trong bảng Mart ngày; DW và bảng country vẫn đúng ở trường đang đối chiếu. Bảng dưới ghi kết quả tại lần publish nghiệm thu ban đầu. Chưa xác nhận lại MART READY cho dữ liệu hiện tại cho đến khi xử lý sai lệch và quality đạt lại; chi tiết ở mục 13.4.
+
+| Nội dung | Kết quả |
+|---|---|
+| Trạng thái tại lần publish ban đầu | MART READY trên PostgreSQL local; hai đầu ra đã publish, quality và rerun đạt |
+| DW run đang phục vụ | `c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873` |
+| DW/Mart data version | `75deb861-6eb3-4475-8b15-f23bcef91b9b` |
+| Staging batch | `735da72d-5c48-4690-984c-13b5c44b9325`, giữ nguyên |
+| Actual range | 01/07/2015–31/08/2017; không có bảy ngày horizon trong actual |
+| Daily / country rows | 793 / 131.638 = 793 × 166, gồm UNK |
+| Tổng booking / không hủy / hủy | 79.330 / 46.228 / 33.102 |
+| Observed eligible guests không hủy | 89.456, giữ quality; không phải tổng demand đầy đủ trên mọi ngày |
+| Observed eligible nights không hủy | 135.153 |
+| Tổng ADR hợp lệ không hủy | 4.888.423,70; không phải doanh thu |
+| Guest quality | 679 COMPLETE + 114 PARTIAL; target NULL ở 114 ngày PARTIAL |
+| Quality độc lập | 21 checks Mart + 36 checks DW đạt, violation counts bằng 0 |
+| Regression trên runtime cuối | 268 passed, không failed/error/skipped |
+| Rerun | No-op, cùng run/version/fingerprint/counts |
+| Staging trước/sau | Snapshot, registry, issues, counts và content hashes của ba current views khớp |
+
+Các con số gắn đúng source/config và serving run này, không là hằng số thuật toán. DW run/version ở mục 10–11 là evidence nghiệm thu trước Mart, không thay cho serving snapshot hiện hành ở đây.
+
+### 13.3. Tests, hiệu năng và bằng chứng
+
+Thư mục bàn giao: [run_20261027_1abfd3ce](../artifacts/mart/operations/run_20261027_1abfd3ce/). Bằng chứng publish thành công nằm trong `serving_final`; không ghi đè lần chạy trước.
+
+| Evidence | Nội dung |
+|---|---|
+| [summary.json](../artifacts/mart/operations/run_20261027_1abfd3ce/summary.json) | Bàn giao cuối: MART READY, 268 tests, 57 checks, Staging không đổi |
+| [serving_final/summary.json](../artifacts/mart/operations/run_20261027_1abfd3ce/serving_final/summary.json) | Sáu bước mã thoát 0, verified/mart_verified, run/version và counts nhất quán |
+| [first_load.json](../artifacts/mart/operations/run_20261027_1abfd3ce/serving_final/first_load.json) | Publish DW/Mart cùng transaction, quality trước commit |
+| [quality_report.json](../artifacts/mart/operations/run_20261027_1abfd3ce/serving_final/quality_report.json) | Quality chỉ đọc của hai lớp, 57 checks đạt |
+| [rerun.json](../artifacts/mart/operations/run_20261027_1abfd3ce/serving_final/rerun.json) | No-op cùng phiên bản và số liệu |
+| [pytest.xml](../artifacts/mart/operations/run_20261027_1abfd3ce/pytest.xml) | Regression 267 passed trước bổ sung guard phiên bản và sửa statistics |
+| [pytest_mart_stats.xml](../artifacts/mart/operations/run_20261027_1abfd3ce/pytest_mart_stats.xml) | 27 Mart PostgreSQL tests đạt trên runtime cuối sau sửa statistics |
+| [pytest_final.xml](../artifacts/mart/operations/run_20261027_1abfd3ce/pytest_final.xml) | Regression cuối: toàn bộ 268 tests đạt sau các thay đổi runtime |
+| [performance_verification.json](../artifacts/mart/operations/run_20261027_1abfd3ce/performance_verification.json) | Plan trước/sau cập nhật statistics; không suy thời gian nạp từ timestamp transaction |
+| [staging_before.json](../artifacts/mart/operations/run_20261027_1abfd3ce/staging_before.json), [staging_after.json](../artifacts/mart/operations/run_20261027_1abfd3ce/staging_after.json) | Hai snapshot đối chiếu bằng nhau, gồm content hashes |
+| [cancelled_build_rollback.json](../artifacts/mart/operations/run_20261027_1abfd3ce/cancelled_build_rollback.json) | Hủy truy vấn build chậm giữ nguyên DW cũ và rollback toàn bộ Mart chưa publish |
+
+Tests kiểm tra expected values độc lập từ fixture, country calendar/UNK, coverage và NULL/0, eligibility riêng, Decimal precision, holiday scopes và weather ambiguous, migration checksum/no-op, report errors, validation phát hiện sửa sai, rollback ở clear/facts/Mart refresh/validation/publish, MVCC readers và competing writers. Bốn tests runner bổ sung kiểm tra mismatch Mart counts/fingerprint/version; không cộng lặp số test giữa các lần chạy.
+
+Lần build thật đầu tiên phát hiện statistics còn giữ run ID cũ khiến planner ước lượng run mới chỉ một fact và chọn Nested Loop lặp aggregate theo từng ô country/ngày. Truy vấn được hủy có kiểm soát, attempt ghi failed (57014), snapshot cũ giữ nguyên; evidence trong `serving` và rollback JSON được giữ. Runtime cuối ANALYZE sáu bảng DW đầu vào trước SQL refresh; build thật hoàn tất và plan sau là Hash Join. Đây là cập nhật statistics sau full refresh, không đổi eligibility hoặc dữ liệu nguồn.
+
+`summary.json` là bản bàn giao hiện hành, thay bản phụ trợ `handoff_summary.json`. Khoảng `finished_at-started_at` DW trong report phụ trợ ban đầu dùng timestamp transaction `now()`, không phản ánh wall-clock duration; không dùng số đo đó để kết luận tốc độ. Evidence hiệu năng chính thức chỉ đối chiếu execution plans trong `performance_verification.json`.
+
+Phạm vi kết thúc ở dữ liệu Operations Mart. Chưa xây OLAP operators, Reporting/API, feature dataset, model hoặc DSS rules. Ngưỡng model, split hoặc feature window không chặn nghiệm thu DW/Mart; API/ML contract được liên kết ở giai đoạn sau.
+
+### 13.4. Audit hiện trạng sau EDA
+
+Khi xác nhận lại nghiệm thu, truy vấn chỉ đọc và quality độc lập phát hiện ngày 18/06/2017 (Chủ Nhật): `dw.dim_date.is_weekend=true`, toàn bộ Mart country của ngày này có `is_weekend=true`, nhưng `mart.daily_hotel_operations.is_weekend=false`. CSV export cũng mang giá trị false. Có một calendar violation ở Mart ngày; không có weekend-calendar violation ở bảng country.
+
+[Quality audit](../artifacts/mart/operations/audit_20261027_86fd5e83/quality_report.json) trả `passed=false`, lỗi duy nhất `daily_hotel_operations_calendar: 1 violations`; phần DW vẫn `passed=true`. Run/version và counts vẫn khớp lần bàn giao, cho thấy chỉ đối chiếu metadata/counts không đủ chứng nhận nội dung hiện tại. Chưa xác định nguyên nhân thay đổi giá trị; không quy lỗi cho pipeline hoặc người dùng khi chưa có bằng chứng.
+
+Audit không sửa dữ liệu PostgreSQL hoặc CSV. Cần xử lý sự không nhất quán, kiểm tra lại CSV sử dụng cho EDA và chạy quality độc lập đạt lại trước khi chốt nghiệm thu hiện trạng. Evidence nghiệm thu ban đầu được giữ nguyên để truy vết.
+
+Đối chiếu nguyên nhân: code DimDate tính `is_weekend = iso.weekday >= 6`; SQL Mart sao chép cột từ DimDate cho cả hai grain. Evidence quality ban đầu có calendar violations bằng 0, hiện chỉ bảng ngày lệch một dòng. `pg_stat_user_tables` ghi nhận bảng ngày có `n_tup_ins=793`, `n_tup_upd=1`, `n_tup_del=0`; đây là bằng chứng phù hợp với một cập nhật sau publish, không xác định được tác nhân hoặc câu lệnh cụ thể. PostgreSQL đang `log_statement=none`, không có pg_stat_statements/pgaudit hoặc track commit timestamp, và không còn lệnh ghi Mart trong trạng thái session hiện thấy, nên chưa truy vết được ai/thao tác nào đã đổi cột.
+
+Schema Mart có quality check độc lập phát hiện sai lệch nhưng chưa có CHECK tại bảng buộc `is_weekend` khớp ngày lịch; do đó một UPDATE trực tiếp có thể ghi false cho Chủ Nhật mà DB không chặn ngay. Đây là khoảng trống bảo vệ dữ liệu cần bổ sung bằng migration mới; không sửa checksum DDL đã áp dụng hoặc quy kết thao tác thay đổi khi chưa có bằng chứng.

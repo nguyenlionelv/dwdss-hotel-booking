@@ -124,3 +124,25 @@ def test_launch_failure_or_interruption_is_recorded(tmp_path, monkeypatch, error
     assert run_dw.main(["--output-dir", str(output)]) == expected_exit
     summary = json.loads((output / "summary.json").read_text(encoding="utf-8"))
     assert summary["status"] == expected_status and summary["failed_step"] == "preflight"
+
+
+@pytest.mark.parametrize("changed",[None,"counts","build_fingerprint","data_version"])
+def test_verify_mart_reports_rejects_inconsistent_snapshot(tmp_path,changed):
+    dw = {"run_id":"run","data_version":"version","counts":{"fact_booking":6}}
+    mart = {"run_id":"run","data_version":"version","counts":{"daily_hotel_operations":3},
+            "build_fingerprint":"fingerprint","passed":True}
+    reports = {"inputs/preflight.json":{"passed":True},
+               "first_load.json":{**dw,"status":"published","mart":mart},
+               "quality_report.json":{**mart,"dw_quality":dw,"errors":[]},
+               "rerun.json":{**dw,"status":"no-op","mart":dict(mart)}}
+    if changed:
+        reports["rerun.json"]["mart"][changed] = "changed"
+    for name,value in reports.items():
+        path = tmp_path/name
+        path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(json.dumps(value),encoding="utf-8")
+    if changed:
+        with pytest.raises(ValueError,match="Mart version/counts"):
+            run_dw.verify_reports(tmp_path)
+    else:
+        assert run_dw.verify_reports(tmp_path)["mart_verified"] is True

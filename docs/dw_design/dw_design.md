@@ -4,7 +4,7 @@
 
 Đây là bản thiết kế hợp nhất hiện hành, quy định mô hình, baseline dữ liệu và tiêu chí nghiệm thu. Grain là mức chi tiết mà một dòng đại diện. Trạng thái triển khai được xác định bằng code và evidence trong [báo cáo DW](../dw_report.md#results), không suy từ việc tài liệu thiết kế đã được chấp nhận.
 
-**Trạng thái triển khai 26/10/2026:** **DW READY trên local**, đã nạp đủ 1 Fact + 6 Dim + DailyContext, quality/rerun/tests đạt. Operations Mart chưa triển khai. [Runbook và evidence DW](../dw_runbook.md) là căn cứ nghiệm thu; các baseline ngày 26/10 bên dưới giữ lịch sử quyết định dữ liệu.
+**Trạng thái triển khai:** DW đã nạp đủ 1 Fact + 6 Dim + DailyContext; Operations Mart đã hiện thực hai đầu ra ngày/country và publish đồng bộ DW/Mart. Kết quả kiểm chứng, trạng thái READY và evidence theo [báo cáo mục 13](../dw_report.md#operations-mart); lệnh vận hành theo [runbook](../dw_runbook.md). Các baseline ngày 26/10 bên dưới giữ lịch sử quyết định dữ liệu.
 
 ## 1. Phạm vi và trạng thái quyết định
 
@@ -16,12 +16,12 @@
 | Grain fact | Một reservation record nguồn được nhận vào fact; không phải một người/phòng/ngày lưu trú |
 | Ngày phân tích | Arrival date; `date_key` trong fact là khóa ngày đến |
 | DailyContext | Tên logic; tên bảng vật lý giữ `dw.daily_hotel_context`, một dòng/ngày của City Hotel |
-| Đầu ra Mart theo thiết kế | Chỉ **Operations Mart**, gồm tổng ngày và breakdown country; chưa triển khai |
+| Đầu ra Mart theo thiết kế | Chỉ **Operations Mart**, gồm tổng ngày và breakdown country |
 | Định hướng forecast ở giai đoạn sau | Proxy lượng khách không hủy theo ngày đến, 7 ngày sau cutoff dữ liệu |
 | Ngoài phạm vi đầu ra | Customer, Revenue & Cancellation, Booking/Commercial Mart và mô hình tương ứng |
 | Không bổ sung | DimDepositType, DimMeal, DimAgent, DimCompany, DimPartyType |
 
-**Phạm vi đã thống nhất:** cấu trúc 1/6/1, City Hotel, arrival date và đầu ra Operations. Áp dụng D01–D08 tại [mục 12](#decisions-baseline), gồm bổ sung D05 về giả định Booking completeness. D01 giữ lineage và validation dù cả 4 dòng thiếu children của source hiện hành đều đã hủy. D02 giữ booking kèm warning và guest-ineligible. Mapping, coverage evidence, migration và loader DW đã được triển khai/kiểm chứng; **DW READY trên local**, Mart chưa triển khai. API/ML contract được liên kết ở giai đoạn sau; ngưỡng model, split hoặc feature window của mẫu ML không chặn nghiệm thu DW/Mart.
+**Phạm vi đã thống nhất:** cấu trúc 1/6/1, City Hotel, arrival date và đầu ra Operations. Áp dụng D01–D08 tại [mục 12](#decisions-baseline), gồm bổ sung D05 về giả định Booking completeness. D01 giữ lineage và validation dù cả 4 dòng thiếu children của source hiện hành đều đã hủy. D02 giữ booking kèm warning và guest-ineligible. Mapping, coverage evidence, migration và loader DW đã được triển khai/kiểm chứng; **DW READY trên local**. Operations Mart đã hiện thực; evidence nghiệm thu theo báo cáo mục 13. API/ML contract được liên kết ở giai đoạn sau; ngưỡng model, split hoặc feature window của mẫu ML không chặn nghiệm thu DW/Mart.
 
 Bốn chiều Channel/Segment/Profile/Room **được xây và nạp ngay trong DW** dù chưa dùng trong Operations Mart. Không chờ Customer Mart mới triển khai; cũng không tạo Customer views/API/forecast ở giai đoạn này.
 
@@ -378,8 +378,11 @@ Grain **một ngày đến**, UNIQUE date_key, có đủ calendar của khoảng
 | Count | total_bookings, non_canceled_bookings, total_cancellations, guest_valid_booking_count, stay_valid_booking_count, lead_time_valid_count, adr_valid_count |
 | Sum | observed_total_adults, observed_total_children, observed_total_babies, observed_total_guests, observed_total_stay_nights, sum_lead_time, sum_adr |
 | KPI | cancellation_rate, avg_party_size, avg_stay_nights, avg_lead_time, avg_adr |
+| Target theo quality | target_guests: observed guest chỉ khi guest COMPLETE, theo mục 9.3 |
 
 Counts/sums dùng BIGINT trừ ADR dùng NUMERIC; ratio/averages có thể trả DOUBLE PRECISION hoặc NUMERIC theo API contract được thống nhất. Giá trị không xác định giữ NULL; mẫu số=0 → NULL. API muốn dùng tên `total_guests` có thể alias observed_total_guests nhưng luôn đi cùng status, không tự biến PARTIAL thành actual đầy đủ.
+
+Hiện thực dùng hai bảng tổng hợp lưu sẵn, KPI kiểu NUMERIC. `mart.schema_migration` giữ checksum DDL; `mart.dataset_state` giữ run/version, fingerprint runtime/config, khoảng actual, counts và thời điểm publish. Các bảng kỹ thuật không thêm domain/grain nghiệp vụ. Khi DW đã published và chưa có Mart state, có thể khởi tạo Mart trên cùng version sau validation; khi đã phục vụ, thay runtime/rules phải rebuild DW/Mart để cấp version mới.
 
 ### 9.2. `mart.daily_hotel_operations_by_country`
 
@@ -387,7 +390,7 @@ Grain `(date_key,country_key)`. Thêm country_code/name vào bộ calendar/conte
 
 Operations hiện chỉ dùng **Date + Country + DailyContext**. Không đưa channel/segment/profile/room vào grain hoặc API filter để tránh tự mở phạm vi nghiệp vụ. DW vẫn nạp và validate đủ sáu chiều.
 
-**Chi tiết triển khai:** giữ đủ ngày actual × country của accepted candidate + UNK, rồi LEFT JOIN aggregate fact. Country filter giữ nguyên số ngày lịch. Với ô country rỗng, chỉ trả 0 khi source Booking COMPLETE và ngày không có core rejection; còn lại giữ NULL cho serving measures. Quality/counters cấp ngày tiếp tục đi cùng mỗi country, không được cộng lặp. Xem [country calendar](../dw_report.md#country-calendar) và fixture expected values; SQL Mart chưa triển khai.
+**Chi tiết triển khai:** giữ đủ ngày actual × country của accepted candidate + UNK, rồi LEFT JOIN aggregate fact. Country filter giữ nguyên số ngày lịch. Với ô country rỗng, chỉ trả 0 khi source Booking COMPLETE và ngày không có core rejection; còn lại giữ NULL cho serving measures. Quality/counters cấp ngày tiếp tục đi cùng mỗi country, không được cộng lặp. Xem [country calendar](../dw_report.md#country-calendar) và fixture expected values; SQL/refresh đã hiện thực tại `database/marts` và `pipeline/dw_to_mart`.
 
 ### 9.3. Công thức với eligibility từng measure — baseline tạm chốt
 
@@ -484,7 +487,7 @@ Code level: tách module dựng `mart.demand_features` và các hàm feature dù
 
 ### 10.1. Cấu trúc file mục tiêu
 
-Đầu vào/preflight, migrations, transformer, snapshot reader, full DW loader và SQL/Python quality checks đã hiện thực/kiểm chứng ngày 26/10/2026. Phần Mart trong cấu trúc mục tiêu dưới đây còn phải triển khai. Xem [DW runbook](../dw_runbook.md) và [báo cáo triển khai](../dw_report.md).
+Đầu vào/preflight, migrations, transformer, snapshot reader, full DW loader và SQL/Python quality checks đã hiện thực/kiểm chứng ngày 26/10/2026. Operations Mart bổ sung theo cấu trúc dưới đây. Xem [runbook](../dw_runbook.md) và [báo cáo triển khai](../dw_report.md).
 
 ```text
 database/dw/
@@ -492,7 +495,8 @@ database/dw/
   002_dimensions.sql                # đủ 6 Dim, không phải chỉ Date/Country
   003_fact_context_quality.sql
 database/validation/dw_checks.sql
-database/marts/operations_mart.sql       # chưa triển khai
+database/marts/operations_mart.sql
+database/marts/refresh_operations.sql
 pipeline/config/dw_operations.json
 pipeline/config/coverage_selected_source_set.json
 pipeline/mappings/{country_codes,channel_codes,market_segment_codes,customer_type_codes,room_type_codes}.csv
@@ -509,7 +513,9 @@ pipeline/staging_to_dw/
   quality.py
   checks.py
 pipeline/quality/dw_checks.py
-pipeline/dw_to_mart/operations.py        # chưa triển khai
+pipeline/dw_to_mart/{operations,migrations,checks,run}.py
+pipeline/quality/mart_checks.py
+scripts/refresh_marts.py
 scripts/setup_db.py
 scripts/run_pipeline.py
 scripts/check_dw_inputs.py
@@ -517,6 +523,7 @@ scripts/run_dw.py
 tests/pipeline/test_dw_transform.py
 tests/pipeline/test_dw_postgres.py
 tests/pipeline/test_dw_cli.py
+tests/pipeline/test_mart_postgres.py
 artifacts/dw/operations/<run-id>/{first_load.json,quality_report.json,rerun.json,pytest.xml}
 ```
 
@@ -536,7 +543,7 @@ Không thêm migration/CLI `customer_extension` hoặc `operations_customer` tro
 | 7 | Xây Operations Mart | Aggregate fact theo ngày/country, join calendar/context đúng grain, cùng data_version |
 | 8 | Kiểm thử và bàn giao | PostgreSQL tests, first/quality/rerun evidence thật, runbook tái lập |
 
-Các bước 0–6 và phần kiểm thử/bàn giao DW ở bước 8 đã hoàn tất trên local. Bước 7 và phần nghiệm thu Mart ở bước 8 chưa thực hiện. Theo phân vai hiện có: M1 phụ trách schema/architecture và nghiệm thu; M2 phụ trách mappings/ETL/quality/BI; M3 tiếp nhận Operations Mart và liên kết feature/API contract ở giai đoạn sau. Không phát sinh Customer Mart.
+Các bước 0–6 và phần kiểm thử/bàn giao DW ở bước 8 đã hoàn tất trên local. Bước 7 đã hiện thực; kết quả test/publish và evidence Mart được cập nhật tại [báo cáo mục 13](../dw_report.md#operations-mart). Theo phân vai hiện có: M1 phụ trách schema/architecture và nghiệm thu; M2 phụ trách mappings/ETL/quality/BI; M3 tiếp nhận Operations Mart và liên kết feature/API contract ở giai đoạn sau. Không phát sinh Customer Mart hoặc chức năng OLAP/Reporting ở bước 7.
 
 ### 10.3. Trách nhiệm module và interfaces hiện hành
 
@@ -631,13 +638,13 @@ Giả sử Booking coverage 01–03/08/2017 được xác nhận đầy đủ; f
 
 Theo baseline eligibility đã tạm chốt: staged=7, fact=6, rejected=1; fact có 5 non-canceled và 1 canceled. Guest hợp lệ toàn kỳ=6. Ngày 01/08 guest=4 COMPLETE; ngày 02/08 observed guest=2 PARTIAL, target=NULL; ngày 03/08 không Booking COMPLETE → guest=0. Ngày 02/08 avg_party_size của phần guest-known=2/1=2, không chia ba booking không hủy. Fixture này vẫn kiểm tra tình huống phòng bị; trên dataset thật, cả 4 booking thiếu children đều đã hủy như ghi chú D01.
 
-Fixture theo [operations_expected.json](../../tests/fixtures/dw/operations_expected.json), dùng source row IDs từ 2 vì CSV header chiếm record đầu. Các nhánh DW đã được kiểm thử riêng: unknown arrival date, missing/invalid, guest phân số/overflow, numeric NaN/infinity, ISO year boundary, duplicate weather, holiday invalid scope/date, profile biết một phần, invalid repeat, room missing/room code một role, hai reservation giống thuộc tính khác source row, rollback các phase DW và lỗi ghi evidence sau commit. Rollback sau refresh Mart cần bổ sung khi hiện thực Mart. Không suy count dataset thật từ fixture.
+Fixture theo [operations_expected.json](../../tests/fixtures/dw/operations_expected.json), dùng source row IDs từ 2 vì CSV header chiếm record đầu. Các nhánh DW đã được kiểm thử riêng: unknown arrival date, missing/invalid, guest phân số/overflow, numeric NaN/infinity, ISO year boundary, duplicate weather, holiday invalid scope/date, profile biết một phần, invalid repeat, room missing/room code một role, hai reservation giống thuộc tính khác source row, rollback các phase DW và lỗi ghi evidence sau commit. Mart bổ sung tests expected ngày/country, NULL/0, precision, rollback sau refresh/validation/publish, reader/writer đồng thời và lỗi evidence. Không suy count dataset thật từ fixture.
 
 <a id="decisions-baseline"></a>
 
 ## 12. Baseline quyết định tạm chốt ngày 26/10/2026
 
-Baseline D01–D08 được khởi lập khi thiết kế và đã được áp dụng trong DW; D05 được bổ sung giả định Booking completeness như mục 7. Bảng dưới thể hiện quy tắc hiện hành. DW đã có evidence nghiệm thu local tại [báo cáo](../dw_report.md#results); Mart chưa triển khai. Các record minh họa và ghi chú D01/D02 tiếp tục áp dụng khi bàn giao.
+Baseline D01–D08 được khởi lập khi thiết kế và đã được áp dụng trong DW; D05 được bổ sung giả định Booking completeness như mục 7. Bảng dưới thể hiện quy tắc hiện hành. DW có evidence nghiệm thu local tại [báo cáo](../dw_report.md#results); Mart có kết quả riêng tại [mục 13](../dw_report.md#operations-mart). Các record minh họa và ghi chú D01/D02 tiếp tục áp dụng khi bàn giao.
 
 | ID | Nội dung | Quyết định hiện hành |
 |---|---|---|
@@ -672,7 +679,7 @@ Không đưa quyết định bổ sung DimDepositType hay triển khai Customer 
 | D05 | Row 92619: arrival=31/08/2017, canceled=0, guest=1. Có 79 booking City đến ngày này, cũng là ngày cuối nguồn. | Record không tự chứng minh completeness; Booking COMPLETE trong khoảng actual dựa trên giả định đã chấp nhận riêng. Ngày 01/09 ngoài phạm vi vẫn UNKNOWN, không tự gán guest=0. |
 | D06 | City có 0 ngày đến invalid/thiếu thành phần. Row 40062 có year=2015, month=July, day=1 hợp lệ. | Nhánh rejection chưa kích hoạt; không có record lỗi thật để minh họa nhánh này. Giữ kiểm tra phòng bị. |
 | D07 | Row 40397: 24/07/2015, canceled=0, adults=2, children=1, babies=0, reserved=D, assigned=F. | FAMILY; mismatch sau xác minh mapping/hệ mã, không suy upgrade hoặc sự kiện chuyển phòng. |
-| D08 | Row 40062 được định danh bằng checksum nguồn + row_id=40062. | DW đã kiểm chứng rerun no-op cùng run/data version, không thêm reservation. Publish đồng bộ DW/Mart là phần cần triển khai tiếp. |
+| D08 | Row 40062 được định danh bằng checksum nguồn + row_id=40062. | DW đã kiểm chứng rerun no-op cùng run/data version, không thêm reservation. Loader đã tích hợp refresh/validation/publish đồng bộ DW/Mart; evidence theo báo cáo mục 13. |
 
 ### 12.3. Ghi chú cho các bước triển khai tiếp theo
 

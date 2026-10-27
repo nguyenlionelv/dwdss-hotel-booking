@@ -22,6 +22,9 @@ from .migrations import MIGRATION_DIR, MIGRATION_FILES, WRITER_LOCK
 from .quality import QUALITY_COLUMNS, build_coverage, build_daily_quality
 from .snapshot import pin_published_snapshot, read_snapshot
 from .transform import transform_booking
+from pipeline.dw_to_mart.migrations import mart_installed, verify_mart_schema
+from pipeline.dw_to_mart.operations import clear_operations, publish_state, refresh_operations, runtime_version
+from pipeline.dw_to_mart.checks import validate_operations
 
 
 RUNTIME_FILES = (
@@ -35,6 +38,7 @@ RUNTIME_FILES = (
 
 def build_fingerprints(bundle: dict, header: dict) -> tuple[str, str]:
     hashes = {name: sha256(ROOT / name) for name in RUNTIME_FILES}
+    hashes["operations_mart_runtime"] = runtime_version()
     hashes.update({f"database/dw/{name}": sha256(MIGRATION_DIR / name) for name in MIGRATION_FILES})
     code = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
     material = {"code": code, "staging_batch_id": str(header["batch_id"]), "config_sha256": bundle["config_sha256"],
@@ -87,9 +91,29 @@ def run(config_path: Path = DEFAULT_CONFIG, *, dbname: str | None = None,
                 active = conn.execute("""SELECT r.run_id,r.data_version,r.build_fingerprint,r.row_counts
                                          FROM dw.active_dataset a JOIN dw.load_run r USING(run_id)
                                          WHERE a.singleton_id=1 AND r.status='published'""").fetchone()
+                with_mart = mart_installed(conn)
+                if with_mart:
+                    verify_mart_schema(conn)
                 if active and active[2] == fingerprint:
+                    if with_mart:
+                        # A freshly installed Mart still needs its first build on a DW no-op.
+                        state = conn.execute("SELECT 1 FROM mart.dataset_state WHERE singleton_id=1").fetchone()
+                        if not state:
+                            dw_quality = validate_loaded(conn,active[0],bundle)
+                            if not dw_quality["passed"]:
+                                raise ValueError("DW validation failed before Mart initialization")
+                            refresh_operations(conn,active[0],active[1],bundle)
+                            mart_quality = validate_operations(conn,active[0],bundle,require_state=False)
+                            if not mart_quality["passed"]:
+                                raise ValueError("Mart validation failed: " + "; ".join(mart_quality["errors"]))
+                            publish_state(conn,active[0],active[1],bundle,mart_quality["counts"])
+                        else:
+                            mart_quality = validate_operations(conn,active[0],bundle)
+                            if not mart_quality["passed"]:
+                                raise ValueError("Published Mart validation failed: " + "; ".join(mart_quality["errors"]))
                     return {"status": "no-op", "run_id": str(active[0]), "data_version": str(active[1]),
-                            "staging_batch_id": str(header["batch_id"]), "build_fingerprint": fingerprint, "counts": active[3]}
+                            "staging_batch_id": str(header["batch_id"]), "build_fingerprint": fingerprint, "counts": active[3],
+                            **({"mart":mart_quality} if with_mart else {})}
                 run_id, data_version = uuid4(), uuid4()
                 conn.execute("""INSERT INTO dw.load_run
                                 (run_id,data_version,staging_batch_id,source_set_fingerprint,build_fingerprint,
@@ -105,9 +129,6 @@ def run(config_path: Path = DEFAULT_CONFIG, *, dbname: str | None = None,
                     snapshot = read_snapshot(conn, bundle)
                     if snapshot.header["batch_id"] != header["batch_id"]:
                         raise ValueError("Staging publication changed while preparing the DW run")
-                    if any(conn.execute("SELECT to_regclass(%s) IS NOT NULL", (name,)).fetchone()[0] for name in
-                           ("mart.daily_hotel_operations", "mart.daily_hotel_operations_by_country")):
-                        raise ValueError("Operations Mart exists; integrate its refresh before publishing a new DW version")
                     grouped_issues = snapshot.booking_issues()
                     blocked = False
                     for source in snapshot.bookings:
@@ -133,6 +154,8 @@ def run(config_path: Path = DEFAULT_CONFIG, *, dbname: str | None = None,
                     qualities = build_daily_quality(dimensions["dim_date"], snapshot.bookings, candidate["facts"], candidate["rejections"], bundle["coverage"])
                     checkpoint("transform", inject_failure_after, inject_interruption_after)
                     with conn.cursor() as cur:
+                        if with_mart:
+                            clear_operations(conn)
                         clear_serving_tables(cur)
                         checkpoint("clear", inject_failure_after, inject_interruption_after)
                         lookups = insert_dimensions(cur, dimensions)
@@ -147,6 +170,15 @@ def run(config_path: Path = DEFAULT_CONFIG, *, dbname: str | None = None,
                     if not quality["passed"]:
                         raise ValueError("DW validation failed: " + "; ".join(quality["errors"]))
                     checkpoint("validation", inject_failure_after, inject_interruption_after)
+                    mart_quality = None
+                    if with_mart:
+                        refresh_operations(conn,run_id,data_version,bundle)
+                        checkpoint("mart_refresh", inject_failure_after, inject_interruption_after)
+                        mart_quality = validate_operations(conn,run_id,bundle,require_state=False)
+                        if not mart_quality["passed"]:
+                            raise ValueError("Mart validation failed: " + "; ".join(mart_quality["errors"]))
+                        checkpoint("mart_validation", inject_failure_after, inject_interruption_after)
+                        publish_state(conn,run_id,data_version,bundle,mart_quality["counts"])
                     conn.execute("UPDATE dw.load_run SET status='published',finished_at=now(),row_counts=%s WHERE run_id=%s",
                                  (Jsonb(quality["counts"]), run_id))
                     conn.execute("""INSERT INTO dw.active_dataset(singleton_id,run_id) VALUES (1,%s)
@@ -156,6 +188,7 @@ def run(config_path: Path = DEFAULT_CONFIG, *, dbname: str | None = None,
                         "staging_batch_id": str(header["batch_id"]), "source_set_fingerprint": bundle["source_set_fingerprint"],
                         "build_fingerprint": fingerprint, "config_sha256": bundle["config_sha256"], "code_version": code_version,
                         "counts": quality["counts"], "quality": quality,
+                        **({"mart":mart_quality} if mart_quality is not None else {}),
                         "input_versions": {"config": bundle["config"], "coverage": bundle["coverage"]}}
             except Exception as exc:
                 with conn.transaction():

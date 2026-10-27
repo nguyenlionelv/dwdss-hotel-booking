@@ -1,8 +1,8 @@
-# Hướng dẫn vận hành Staging → DW
+# Hướng dẫn vận hành Staging → DW → Operations Mart
 
 ## 1. Phạm vi
 
-Pipeline nạp City Hotel từ published Staging vào sáu dimension, FactBooking, DailyContext và các bảng chất lượng, truy vết DW. Thiết kế tại [dw_design.md](dw_design/dw_design.md); quá trình triển khai, danh mục file và kết quả tại [dw_report.md](dw_report.md). Operations Mart chưa được triển khai.
+Pipeline nạp City Hotel từ published Staging vào sáu dimension, FactBooking, DailyContext và các bảng chất lượng, truy vết DW. Operations Mart gồm hai bảng tổng hợp lưu sẵn theo ngày và ngày × country. Thiết kế tại [dw_design.md](dw_design/dw_design.md); quá trình triển khai, danh mục file và kết quả tại [dw_report.md](dw_report.md). Hướng dẫn Mart tại mục 9; chưa triển khai OLAP/Reporting/API/ML.
 
 ## 2. Chuẩn bị
 
@@ -165,6 +165,59 @@ Dữ liệu nghiệp vụ lưu trong PostgreSQL, không tự xuất CSV/Parquet.
 | Load/quality thất bại | Xem error summary và issues; lỗi trước commit giữ snapshot đang phục vụ |
 | Tiến trình bị ngắt | Xử lý nguyên nhân rồi chạy lại; loader đánh dấu attempt loading bị ngắt là failed trước lần nạp mới |
 | Report không ghi được sau DB commit | Kiểm tra active run bằng SQL/quality vì DB có thể đã published; lưu evidence mới, không reset dữ liệu |
-| Đã có Mart và cần rebuild DW | Tích hợp refresh/validation Mart cùng transaction/data_version trước khi publish DW mới |
+| Đã có Mart và cần rebuild DW | Loader tự refresh/validate Mart cùng transaction/data_version; dùng runner `--with-mart` để lưu quality độc lập cho cả hai lớp |
 
 Full refresh có thể cấp surrogate keys mới. Đối chiếu bằng source keys/natural codes; ứng dụng đọc nhiều query cho một kết quả phải dùng cùng transaction/snapshot và `data_version`.
+
+## 9. Xây và kiểm tra Operations Mart
+
+### 9.1. Chạy toàn bộ DW/Mart bằng một lệnh
+
+Điều kiện đầu vào như mục 2. Không nạp lại Staging khi published snapshot không đổi.
+
+```powershell
+.\.venv\Scripts\python.exe scripts/run_dw.py --with-mart
+```
+
+Runner chạy preflight → migration DW → migration Mart → load DW/Mart → quality độc lập DW/Mart → rerun. Muốn chạy thêm toàn bộ tests, thêm `--with-tests`. Có thể chọn `--config`, `--dbname` và `--output-dir` mới như mục 3. Tất cả lệnh dùng Python trong `.venv`.
+
+Kết quả `summary.json` phải có `status=completed`, `verified=true`, `mart_verified=true`; load/quality/rerun cùng run/data version, cùng Mart fingerprint/counts. Hai bảng Mart có đủ actual dates; country có actual dates × accepted countries + UNK. Không đưa bảy ngày horizon vào actual.
+
+Khi Mart schema đã cài, DW loader luôn refresh/validate Mart trong cùng data transaction trước publish, kể cả chạy `--to dw` riêng. Cùng fingerprint thì no-op có kiểm tra Mart; nếu chưa có `dataset_state`, loader dựng Mart lần đầu trên phiên bản DW hiện hành sau khi validate DW. Thay runtime/rule/config/source khiến DW build mới và Mart cùng dùng version mới. Schema Mart không có ledger hoặc checksum lệch bị chặn, không tự nhận làm schema hợp lệ.
+
+### 9.2. Chỉ khởi tạo hoặc kiểm tra Mart trên DW đã published
+
+```powershell
+$martEvidence = Join-Path 'artifacts/mart/operations' ('run_' + [guid]::NewGuid().ToString('N'))
+.\.venv\Scripts\python.exe scripts/setup_db.py --schema mart --report (Join-Path $martEvidence 'migration.json')
+.\.venv\Scripts\python.exe scripts/refresh_marts.py --report (Join-Path $martEvidence 'first_load.json')
+.\.venv\Scripts\python.exe pipeline/quality/mart_checks.py --report (Join-Path $martEvidence 'quality_report.json')
+.\.venv\Scripts\python.exe scripts/refresh_marts.py --report (Join-Path $martEvidence 'rerun.json')
+```
+
+Chạy từng lệnh và chỉ tiếp tục khi mã thoát là `0`. Setup yêu cầu DW schema đã có. Refresh yêu cầu DW published hợp lệ với đúng config/source selection; nhận `--config`, `--dbname`. Không có DW thì chạy mục 9.1. Cách này giữ nguyên DW run/data version, chỉ dựng Mart từ snapshot DW đã được kiểm tra; không tải raw hay nạp Staging/DW lại.
+
+Lần đầu refresh trả `published`; chạy lại cùng Mart fingerprint trả `no-op` sau validation, không đổi `dataset_state.published_at`. Mart bị sửa sai trong khi fingerprint không đổi sẽ báo lỗi thay vì coi no-op thành công. Quality trả `passed=true`, `errors=[]`, các checks bằng 0 và có `dw_quality` của cùng snapshot. Lỗi ghi report sau commit trả mã khác 0 nhưng không hoàn tác dữ liệu đã publish; dùng quality kiểm tra và lưu report mới.
+
+Nếu đã có state nhưng Mart fingerprint thay đổi, refresh riêng từ chối thay nội dung trong cùng `data_version`; chạy mục 9.1 để rebuild DW/Mart và cấp phiên bản mới.
+
+### 9.3. Kiểm tra phiên bản phục vụ
+
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY;
+SELECT s.dw_run_id, s.data_version, s.actual_start, s.actual_end, s.row_counts,
+       s.published_at, r.status, a.run_id = s.dw_run_id AS matches_active_dw
+FROM mart.dataset_state AS s
+JOIN dw.load_run AS r ON r.run_id = s.dw_run_id AND r.data_version = s.data_version
+JOIN dw.active_dataset AS a ON a.singleton_id = s.singleton_id
+WHERE s.singleton_id = 1;
+COMMIT;
+```
+
+Phải có đúng một state, DW `published`, `matches_active_dw=true`. Hai đầu ra `mart.daily_hotel_operations` và `mart.daily_hotel_operations_by_country` là bảng lưu sẵn. Country lặp context/quality cấp ngày để giữ trạng thái khi lọc; không SUM các trường đó qua country. Các cột sum/valid count dùng để tính lại average/rate; mẫu số 0 giữ NULL. `target_guests` theo mục 9.3 thiết kế chỉ có giá trị khi guest COMPLETE; chưa tạo feature dataset.
+
+### 9.4. Evidence và xử lý lỗi Mart
+
+Giữ thư mục run mới cho từng lần kiểm chứng. Runner bổ sung `mart_migration.json`; `first_load.json`/`rerun.json` có phần `mart`, quality report có các checks Mart và `dw_quality`. `summary.json` ghi Mart counts/fingerprint. Bộ test có fixture ngày/country, coverage, eligibility, precision, rollback, validation failure, reader/writer đồng thời và CLI/report errors.
+
+Lỗi trước commit giữ nguyên cả DW/Mart/state đang phục vụ; attempt DW mới được ghi failed. Không xóa schema/database hoặc sửa ledger để vượt lỗi. Khi chỉ đổi config, chạy lại DW/Mart bằng mục 9.1; refresh Mart riêng sẽ từ chối config khác DW đã published. Khi đổi source, đánh giá lại coverage và expected values trước, theo mục 8 và runbook Staging.

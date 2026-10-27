@@ -308,7 +308,7 @@ def test_cli_report_failure_does_not_change_published_run_to_failed(database, tm
     assert run(config, dbname=database)["status"] == "no-op"
 
 
-def test_independent_quality_detects_tampering_and_mart_blocks_refresh(database, tmp_path):
+def test_independent_quality_detects_tampering_and_unmanaged_mart_blocks_refresh(database, tmp_path):
     manifest = make_sources(tmp_path)
     stage(manifest, dbname=database)
     config = config_for(tmp_path, manifest)
@@ -325,7 +325,7 @@ def test_independent_quality_detects_tampering_and_mart_blocks_refresh(database,
         conn.execute("CREATE SCHEMA mart")
         conn.execute("CREATE TABLE mart.daily_hotel_operations(date_key integer PRIMARY KEY)")
     change_config(config,"mart-v3")
-    with pytest.raises(ValueError,match="Operations Mart exists"):
+    with pytest.raises(ValueError,match="Operations Mart exists without its migration ledger"):
         run(config,dbname=database)
     assert active_state(database) == before
 

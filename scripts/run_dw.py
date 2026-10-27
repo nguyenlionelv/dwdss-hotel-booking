@@ -26,10 +26,20 @@ def verify_reports(output: Path) -> dict:
     for key in ("run_id", "data_version"):
         if not loaded.get(key) or any(report.get(key) != loaded[key] for report in (quality, rerun)):
             raise ValueError("DW version changed between load, quality and rerun; inspect the reports")
-    if any(report.get("counts") != loaded.get("counts") for report in (quality, rerun)):
+    quality_dw = quality.get("dw_quality",quality)
+    if any(report.get("counts") != loaded.get("counts") for report in (quality_dw, rerun)):
         raise ValueError("DW counts differ between load, quality and rerun")
+    mart = {}
+    if "dw_quality" in quality:
+        first_mart,last_mart = loaded.get("mart",{}),rerun.get("mart",{})
+        if any(report.get("passed") is not True for report in (first_mart,last_mart)):
+            raise ValueError("Operations Mart checks did not pass on load and rerun")
+        for key in ("run_id","data_version","build_fingerprint","counts"):
+            if any(report.get(key) != quality.get(key) for report in (first_mart,last_mart)):
+                raise ValueError("Mart version/counts changed between load, quality and rerun")
+        mart = {"mart_verified":True,"mart_counts":quality["counts"],"mart_build_fingerprint":quality["build_fingerprint"]}
     return {"run_id": loaded["run_id"], "data_version": loaded["data_version"],
-            "load_status": loaded["status"], "verified": True}
+            "load_status": loaded["status"], "verified": True, **mart}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -38,6 +48,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dbname", help="Override POSTGRES_DB for DW commands")
     parser.add_argument("--output-dir", type=Path, help="New evidence directory; existing directories are refused")
     parser.add_argument("--with-tests", action="store_true", help="Run the pipeline test suite after DW checks")
+    parser.add_argument("--with-mart", action="store_true", help="Install and verify Operations Mart together with DW")
     args = parser.parse_args(argv)
     output = (args.output_dir or ROOT / "artifacts/dw/operations" / ("run_" + uuid4().hex)).resolve()
     config = args.config.resolve()
@@ -56,11 +67,14 @@ def main(argv: list[str] | None = None) -> int:
                        "--report", str(output / "migration.json")], "migration.json"),
         ("load", ["scripts/run_pipeline.py", "--to", "dw", *selected, *database,
                   "--report", str(output / "first_load.json")], "first_load.json"),
-        ("quality", ["pipeline/quality/dw_checks.py", *selected, *database,
+        ("quality", ["pipeline/quality/mart_checks.py" if args.with_mart else "pipeline/quality/dw_checks.py", *selected, *database,
                      "--report", str(output / "quality_report.json")], "quality_report.json"),
         ("rerun", ["scripts/run_pipeline.py", "--to", "dw", *selected, *database,
                    "--report", str(output / "rerun.json")], "rerun.json"),
     ]
+    if args.with_mart:
+        steps.insert(2,("mart_migration",["scripts/setup_db.py","--schema","mart",*database,
+                                        "--report",str(output/"mart_migration.json")],"mart_migration.json"))
     if args.with_tests:
         test_temp = ROOT / "artifacts/tests" / ("dw_" + uuid4().hex)
         steps.append(("tests", ["-m", "pytest", "-q", "tests/pipeline", "--basetemp", str(test_temp),

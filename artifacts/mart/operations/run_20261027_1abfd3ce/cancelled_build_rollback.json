@@ -1,0 +1,9 @@
+{
+  "old_dw_unchanged": true,
+  "mart_counts_after_rollback": {
+    "daily_hotel_operations": 0,
+    "daily_hotel_operations_by_country": 0,
+    "dataset_state": 0
+  },
+  "cancelled_attempt_recorded_failed": true
+}

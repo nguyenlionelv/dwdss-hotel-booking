@@ -1,0 +1,47 @@
+{
+  "status": "completed",
+  "output_dir": "D:\\Users\\BuiTrongNguyen\\CodexProject\\dwdss-hotel-booking\\artifacts\\mart\\operations\\run_20261027_1abfd3ce\\serving_final",
+  "steps": [
+    {
+      "name": "preflight",
+      "report": "inputs/preflight.json",
+      "exit_code": 0
+    },
+    {
+      "name": "migration",
+      "report": "migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "mart_migration",
+      "report": "mart_migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "load",
+      "report": "first_load.json",
+      "exit_code": 0
+    },
+    {
+      "name": "quality",
+      "report": "quality_report.json",
+      "exit_code": 0
+    },
+    {
+      "name": "rerun",
+      "report": "rerun.json",
+      "exit_code": 0
+    }
+  ],
+  "tests_run": false,
+  "run_id": "c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873",
+  "data_version": "75deb861-6eb3-4475-8b15-f23bcef91b9b",
+  "load_status": "published",
+  "verified": true,
+  "mart_verified": true,
+  "mart_counts": {
+    "daily_hotel_operations": 793,
+    "daily_hotel_operations_by_country": 131638
+  },
+  "mart_build_fingerprint": "0cc427c2611864d4e8ba000d16a60643dd42009064dd964075acf1aa65fd3d39"
+}
