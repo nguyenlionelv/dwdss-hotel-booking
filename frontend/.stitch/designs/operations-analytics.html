@@ -1,0 +1,899 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="web_dashboard" name="shell-type">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      }
+      body {
+        overscroll-behavior: none;
+      }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+    .quixotic-shadow {
+      box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+    }
+    .quixotic-shadow-sm {
+      box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
+    }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "canvas": "#f4f5f8",
+            "canvas-alt": "#eceef3",
+            "surface-pure": "#ffffff",
+            "emerald-brand": "#059669",
+            "emerald-accent": "#10b981",
+            "emerald-soft": "#ecfdf5",
+            "emerald-dark": "#065f46",
+            "navy-dark": "#0f172a",
+            "primary": "#0059b5",
+            "primary-container": "#0071e3",
+            "on-surface": "#0f172a",
+            "on-surface-variant": "#64748b",
+            "outline-soft": "#e2e8f0"
+          },
+          borderRadius: {
+            "DEFAULT": "0.375rem",
+            "xl": "1rem",
+            "2xl": "1.25rem",
+            "3xl": "1.75rem",
+            "4xl": "2.25rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            tabular: ['"Plus Jakarta Sans"', 'Inter', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-[#f4f5f8] text-[#0f172a] antialiased min-h-screen selection:bg-emerald-500 selection:text-white">
+<!-- Left Sidebar (Clean floating rounded style from Quixotic inspiration) -->
+<aside class="fixed left-4 top-4 bottom-4 w-64 bg-surface-pure rounded-3xl quixotic-shadow z-50 flex flex-col justify-between py-6 px-4 border border-outline-soft/40">
+<div class="flex flex-col gap-7">
+<!-- Logo Branding -->
+<div class="flex items-center gap-3 px-3 py-1"><div class="w-10 h-10 rounded-2xl bg-[#0059b5] text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+<span class="material-symbols-outlined text-[24px]">hub</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[19px] font-extrabold tracking-tight text-navy-dark leading-tight">DWDSS</span>
+<span class="text-[10px] font-bold text-[#0059b5] uppercase tracking-wider">HOTEL INTELLIGENCE</span>
+</div></div>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-1.5" data-active-classes="bg-emerald-brand text-white shadow-lg shadow-emerald-600/20 font-semibold">
+<div class="px-3 pb-1 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enterprise Navigation</div>
+<a aria-current="page" class="group flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 bg-[#0059b5] text-white shadow-lg shadow-emerald-600/20 font-semibold text-[14px]" data-path="operations-analytics" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">query_stats</span>
+<span class="">Operations Analytics</span>
+</div>
+<span class="material-symbols-outlined text-[16px] opacity-75">north_east</span>
+</a>
+<a class="group flex items-center justify-between px-4 py-3 rounded-2xl text-slate-500 hover:text-navy-dark hover:bg-slate-50 transition-all duration-200 text-[14px] font-medium" data-path="operations-reports" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-emerald-brand">table_chart</span>
+<span class="">Operations Reports</span>
+</div>
+</a>
+<a class="group flex items-center justify-between px-4 py-3 rounded-2xl text-slate-500 hover:text-navy-dark hover:bg-slate-50 transition-all duration-200 text-[14px] font-medium" data-path="decision-support-system" href="#"><div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-emerald-brand">query_stats</span>
+<span class="">DSS Demand Forecast</span>
+</div></a>
+<div class="my-3 mx-2 h-[1px] bg-slate-100"></div>
+<div class="px-3 pb-1 text-[11px] font-bold text-slate-400 tracking-widest uppercase">Phase 2 (Out of Scope)</div>
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-slate-300 cursor-not-allowed select-none text-[13.5px]">
+<span class="material-symbols-outlined text-[19px]">group</span>
+<span class="">Guest &amp; Customer</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-slate-300 cursor-not-allowed select-none text-[13.5px]">
+<span class="material-symbols-outlined text-[19px]">payments</span>
+<span class="">Revenue &amp; Cancel</span>
+</div>
+</nav>
+</div>
+<!-- Sidebar Bottom Card / Meta -->
+<div class="p-4 rounded-2xl bg-[#f8fafc] border border-slate-100 flex flex-col gap-2">
+<div class="flex items-center justify-between"><div class="w-10 h-10 rounded-2xl bg-[#0059b5] text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+<span class="material-symbols-outlined text-[24px]">hub</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[19px] font-extrabold tracking-tight text-navy-dark leading-tight">DWDSS</span>
+<span class="text-[10px] font-bold text-[#0059b5] uppercase tracking-wider">HOTEL INTELLIGENCE</span>
+</div></div>
+<p class="text-[12px] text-slate-500 leading-snug">Decision-grade analytics runtime for enterprise hospitality.</p>
+</div>
+</aside>
+<!-- Main Content Wrap -->
+<div class="pl-72 min-h-screen flex flex-col bg-[#f4f5f8]">
+<!-- Top Header Bar -->
+<header class="h-20 px-8 flex items-center justify-between sticky top-0 bg-[#f4f5f8]/85 backdrop-blur-xl z-40"><div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-pure quixotic-shadow-sm border border-slate-100 text-slate-700">
+<span class="material-symbols-outlined text-[#0059b5] text-[19px]">location_city</span>
+<span class="text-[13px] font-semibold text-navy-dark">City Hotel — Lisbon, Portugal</span>
+<span class="text-[11px] text-slate-400 font-medium pl-1.5 border-l border-slate-200">Europe/Lisbon</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-pure quixotic-shadow-sm border border-slate-100">
+<span class="material-symbols-outlined text-slate-400 text-[17px]">date_range</span>
+<span class="text-[13px] text-slate-600 font-medium">01/07/2015 – 31/08/2017</span>
+<span class="text-[11px] text-emerald-700 font-bold px-2 py-0.5 rounded-full bg-emerald-50">(793 days actual)</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-pure border border-slate-100 quixotic-shadow-sm">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+</span>
+<span class="text-[12px] text-slate-600 font-semibold">Mart Healthy / Ready</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-pure border border-slate-100 flex items-center justify-center text-slate-600 hover:text-navy-dark hover:bg-slate-50 transition quixotic-shadow-sm" title="Search">
+<span class="material-symbols-outlined text-[19px]">search</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-surface-pure border border-slate-100 flex items-center justify-center text-slate-600 hover:text-navy-dark hover:bg-slate-50 transition quixotic-shadow-sm relative" title="Notifications">
+<span class="material-symbols-outlined text-[19px]">notifications</span>
+<span class="w-2 h-2 rounded-full bg-emerald-500 absolute top-2.5 right-2.5 ring-2 ring-white"></span>
+</button>
+<div class="flex items-center gap-2 pl-1">
+<img alt="Admin Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzOTsbKYOs_1QlL8cPX2wCXw4vi-bhmBYCmujMLK8YG647rH7hlooM3bm_1eafCuoKa-5eocoxoOybOpMijckvh8W0ptdG9UeJiHwRR69r5jGXqacC8SJSMnQ-0-SoAqXMz_sEBAqY8ePHGvhIQ0PXtcB7RfUYBy0444qd7NtgyYzHzmpg02E3UvN9B9qdjUfH9bpGrBnPN8oK39v1AbkAcXVJBukO4Ri4uXbJOmOu">
+</div>
+</div></header>
+<!-- Main Content Area -->
+<main class="w-full px-8 pb-16 flex-1">
+<div class="flex flex-col w-full gap-7">
+<!-- Header Title Bar with Quixotic Welcome & Time Filter Button -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pt-2 pb-1">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2.5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[12px] font-bold border border-emerald-100">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                OLAP v4.2 Runtime
+              </span>
+<span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Lisbon Fact Table Mart</span>
+</div>
+<h1 class="text-[32px] font-extrabold text-navy-dark tracking-tight leading-tight">Operations Analytics</h1>
+<p class="text-[14px] text-slate-500 max-w-2xl">
+              Khảo sát đa chiều vận hành khách sạn &amp; thực thi 5 thao tác OLAP (Slice, Dice, Roll-up, Drill-down, Pivot).
+            </p>
+</div>
+<!-- Quick Presets Pills -->
+<div class="flex items-center gap-1.5 p-1.5 rounded-full bg-surface-pure border border-slate-100 quixotic-shadow-sm self-start lg:self-center">
+<button class="px-4 py-2 rounded-full text-[13px] font-medium text-slate-600 hover:text-navy-dark hover:bg-slate-100 transition-all">Toàn kỳ (793 ngày)</button>
+<button class="px-4 py-2 rounded-full text-[13px] font-bold bg-navy-dark text-white shadow-sm">Năm 2016</button>
+<button class="px-4 py-2 rounded-full text-[13px] font-medium text-slate-600 hover:text-navy-dark hover:bg-slate-100 transition-all">Năm 2017</button>
+<button class="px-4 py-2 rounded-full text-[13px] font-medium text-slate-600 hover:text-navy-dark hover:bg-slate-100 transition-all">Mùa cao điểm hè</button>
+</div>
+</div>
+<!-- Khối 1: Global Filters Toolbar & Grain Segmented Control (Quixotic rounded clean card) -->
+<div class="p-6 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col gap-5">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<!-- Date Range Picker -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#f8fafc] border border-slate-200/80 text-navy-dark">
+<span class="material-symbols-outlined text-emerald-brand text-[19px]">calendar_today</span>
+<span class="text-[13.5px] font-bold tracking-tight">2016-01-01</span>
+<span class="text-slate-400 text-[13px]">→</span>
+<span class="text-[13.5px] font-bold tracking-tight">2016-12-31</span>
+</div>
+<div class="hidden sm:flex items-center gap-1.5 text-[12px] font-semibold text-slate-500">
+<span class="material-symbols-outlined text-[16px] text-emerald-brand">verified</span>
+                365 ngày khảo sát
+              </div>
+</div>
+<!-- Aggregation Grain Segmented Control (Quixotic Pill Style) -->
+<div class="flex items-center p-1.5 rounded-full bg-[#f1f5f9]">
+<span class="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Grain:</span>
+<button class="px-3.5 py-1.5 rounded-full text-[13px] text-slate-600 hover:text-navy-dark transition-all font-medium">Ngày (day)</button>
+<button class="px-3.5 py-1.5 rounded-full text-[13px] text-slate-600 hover:text-navy-dark transition-all font-medium">Tuần ISO</button>
+<button class="px-4 py-1.5 rounded-full text-[13px] bg-emerald-brand text-white font-bold shadow-sm">Tháng (month)</button>
+<button class="px-3.5 py-1.5 rounded-full text-[13px] text-slate-600 hover:text-navy-dark transition-all font-medium">Quý (quarter)</button>
+<button class="px-3.5 py-1.5 rounded-full text-[13px] text-slate-600 hover:text-navy-dark transition-all font-medium">Năm (year)</button>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-4 pt-1 border-t border-slate-100">
+<!-- Dropdown Pills (Slice & Dice Dimensions) -->
+<div class="flex flex-wrap items-center gap-2.5 pt-2">
+<div class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#f8fafc] border border-slate-200/80 text-navy-dark hover:bg-slate-100/70 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-slate-400 text-[17px]">public</span>
+<span class="text-[13px] text-slate-600">Quốc gia: <strong class="font-bold text-navy-dark">Tất cả (All)</strong></span>
+<span class="material-symbols-outlined text-slate-400 text-[16px]">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#f8fafc] border border-slate-200/80 text-navy-dark hover:bg-slate-100/70 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-slate-400 text-[17px]">today</span>
+<span class="text-[13px] text-slate-600">Loại ngày: <strong class="font-bold text-navy-dark">Tất cả</strong></span>
+<span class="material-symbols-outlined text-slate-400 text-[16px]">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#f8fafc] border border-slate-200/80 text-navy-dark hover:bg-slate-100/70 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-slate-400 text-[17px]">celebration</span>
+<span class="text-[13px] text-slate-600">Ngày lễ: <strong class="font-bold text-navy-dark">Tất cả</strong></span>
+<span class="material-symbols-outlined text-slate-400 text-[16px]">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#f8fafc] border border-slate-200/80 text-navy-dark hover:bg-slate-100/70 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-slate-400 text-[17px]">hotel_class</span>
+<span class="text-[13px] text-slate-600">Phân khúc: <strong class="font-bold text-navy-dark">Transient &amp; Group</strong></span>
+<span class="material-symbols-outlined text-slate-400 text-[16px]">expand_more</span>
+</div>
+</div>
+<!-- Primary Action Buttons -->
+<div class="flex items-center gap-2.5 pt-2">
+<button class="px-5 py-2.5 rounded-full text-[13px] font-semibold text-slate-500 hover:text-navy-dark hover:bg-slate-100 transition-colors">
+                Đặt lại
+              </button>
+<button class="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#0059b5] text-white text-[13.5px] font-bold hover:opacity-90 transition-all shadow-md shadow-emerald-600/20">
+<span class="material-symbols-outlined text-[18px]">filter_alt</span>
+Áp dụng bộ lọc
+</button>
+</div>
+</div>
+</div>
+<!-- Khối 2: Summary Scorecards (Quixotic high-contrast clean KPI Cards with diagonal arrow & emerald pill badges) -->
+<div>
+<div class="flex items-center justify-between mb-3 px-2">
+<span class="text-[12px] font-bold text-slate-400 uppercase tracking-widest">OLAP Cube Roll-up Aggregates • Y2016</span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-emerald-700 text-[12px] font-bold border border-slate-100 quixotic-shadow-sm">
+<span class="material-symbols-outlined text-[15px] text-emerald-500">check_circle</span>
+              COMPLETE (365/365 days actuals)
+            </span>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+<!-- Metric 1: Observed Total Guests (Feature Card like Quixotic Credit Card / Emerald Accent) -->
+<div class="relative p-5 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col justify-between group hover:-translate-y-1 transition duration-200">
+<div class="flex items-start justify-between">
+<span class="text-[12px] font-medium text-slate-400">Total Guests</span>
+<span class="w-7 h-7 rounded-full bg-[#f8fafc] text-slate-400 group-hover:text-emerald-brand flex items-center justify-center transition">
+<span class="material-symbols-outlined text-[16px]">north_east</span>
+</span>
+</div>
+<div class="mt-4 mb-2">
+<div class="text-[28px] font-extrabold text-navy-dark tracking-tight">45,120</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-soft text-emerald-700 text-[11px] font-bold">
+                  +12.4% YoY
+                </span>
+<span class="text-[11px] text-slate-400">vs 2015</span>
+</div>
+</div>
+<!-- Metric 2: Bookings -->
+<div class="relative p-5 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col justify-between group hover:-translate-y-1 transition duration-200">
+<div class="flex items-start justify-between">
+<span class="text-[12px] font-medium text-slate-400">Total / Thành công</span>
+<span class="w-7 h-7 rounded-full bg-[#f8fafc] text-slate-400 group-hover:text-emerald-brand flex items-center justify-center transition">
+<span class="material-symbols-outlined text-[16px]">north_east</span>
+</span>
+</div>
+<div class="mt-4 mb-2">
+<div class="flex items-baseline gap-1 text-[26px] font-extrabold text-navy-dark tracking-tight">
+<span class="">38,140</span>
+<span class="text-[14px] font-semibold text-slate-400">/ 23.4k</span>
+</div>
+</div>
+<div class="text-[11px] font-medium text-slate-500">
+                61.38% hoàn tất lưu trú
+              </div>
+</div>
+<!-- Metric 3: Cancellation Rate -->
+<div class="relative p-5 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col justify-between group hover:-translate-y-1 transition duration-200">
+<div class="flex items-start justify-between">
+<span class="text-[12px] font-medium text-slate-400">Tỷ lệ hủy phòng</span>
+<span class="w-7 h-7 rounded-full bg-[#f8fafc] text-slate-400 group-hover:text-emerald-brand flex items-center justify-center transition">
+<span class="material-symbols-outlined text-[16px]">north_east</span>
+</span>
+</div>
+<div class="mt-4 mb-2">
+<div class="text-[28px] font-extrabold text-navy-dark tracking-tight">38.62%</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[11px] font-bold">
+                  -2.1% tối ưu
+                </span>
+<span class="text-[11px] text-slate-400">14.7k lượt</span>
+</div>
+</div>
+<!-- Metric 4: Avg Party Size -->
+<div class="relative p-5 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col justify-between group hover:-translate-y-1 transition duration-200">
+<div class="flex items-start justify-between">
+<span class="text-[12px] font-medium text-slate-400">Quy mô đoàn TB</span>
+<span class="w-7 h-7 rounded-full bg-[#f8fafc] text-slate-400 group-hover:text-emerald-brand flex items-center justify-center transition">
+<span class="material-symbols-outlined text-[16px]">north_east</span>
+</span>
+</div>
+<div class="mt-4 mb-2">
+<div class="text-[28px] font-extrabold text-navy-dark tracking-tight">1.93</div>
+</div>
+<div class="text-[11px] font-medium text-slate-500">
+                khách / reservation
+              </div>
+</div>
+<!-- Metric 5: Avg Stay Nights -->
+<div class="relative p-5 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col justify-between group hover:-translate-y-1 transition duration-200">
+<div class="flex items-start justify-between">
+<span class="text-[12px] font-medium text-slate-400">Lưu trú TB</span>
+<span class="w-7 h-7 rounded-full bg-[#f8fafc] text-slate-400 group-hover:text-emerald-brand flex items-center justify-center transition">
+<span class="material-symbols-outlined text-[16px]">north_east</span>
+</span>
+</div>
+<div class="mt-4 mb-2">
+<div class="text-[28px] font-extrabold text-navy-dark tracking-tight">3.37</div>
+</div>
+<div class="text-[11px] font-medium text-slate-500">
+                đêm (2.1 wd + 1.3 we)
+              </div>
+</div>
+<!-- Metric 6: Avg ADR (Quixotic Emerald Accent highlight) -->
+<div class="relative p-5 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col justify-between group hover:-translate-y-1 transition duration-200">
+<div class="flex items-start justify-between">
+<span class="text-[12px] font-medium text-slate-400">Giá TB (Avg ADR)</span>
+<span class="w-7 h-7 rounded-full bg-emerald-soft text-emerald-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">north_east</span>
+</span>
+</div>
+<div class="mt-4 mb-2">
+<div class="text-[28px] font-extrabold text-emerald-brand tracking-tight">€105.20</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-soft text-emerald-700 text-[11px] font-bold">
+                  Peak €142.80
+                </span>
+<span class="text-[11px] text-slate-400">T08</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Khối 3: Demand Trend Visualization with Drill-Down & Roll-Up (Inspired directly by Quixotic Engagement Chart) -->
+<div class="p-7 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col gap-6">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-2xl bg-emerald-soft text-emerald-brand flex items-center justify-center mt-0.5">
+<span class="material-symbols-outlined text-[22px]">ssid_chart</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="text-[20px] font-extrabold text-navy-dark tracking-tight">Demand &amp; Rate Curve — 12 Months Drill Path</h2>
+<span class="w-6 h-6 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center">
+<span class="material-symbols-outlined text-[15px]">north_east</span>
+</span>
+</div>
+<p class="text-[13px] text-slate-500 mt-0.5">
+                  Biểu đồ tương quan lượng khách thực tế (Guest Volume Bars) kết hợp đường giá ADR (€) và Tỷ lệ hủy (%)
+                </p>
+</div>
+</div>
+<!-- Interactive Breadcrumb & Pill Filter (Quixotic style: Monthly / Annually segmented buttons) -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#f8fafc] border border-slate-200/70 text-slate-700">
+<span class="material-symbols-outlined text-emerald-brand text-[17px]">touch_app</span>
+<span class="text-[12px] text-slate-400">Drill-down:</span>
+<span class="text-[13px] font-bold text-navy-dark">Tháng 08/2016</span>
+<span class="material-symbols-outlined text-slate-400 text-[14px]">arrow_forward</span>
+<span class="text-[12px] text-emerald-brand font-bold hover:underline cursor-pointer">Đào sâu 31 ngày</span>
+</div>
+</div>
+</div>
+<!-- Chart Legend & Controls -->
+<div class="flex flex-wrap items-center justify-between gap-4 py-1 border-y border-slate-100">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="w-3.5 h-3.5 rounded-full bg-emerald-brand"></span>
+<span class="text-[12.5px] font-semibold text-slate-700">Khách đến (Guests)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-4 h-1 rounded-full bg-[#0059b5]"></span>
+<span class="text-[12.5px] font-semibold text-slate-700">ADR (€ Rate Curve)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-4 h-1 rounded-full bg-rose-500"></span>
+<span class="text-[12.5px] font-semibold text-slate-700">Tỷ lệ hủy (%)</span>
+</div>
+</div>
+<div class="text-[12.5px] text-slate-500 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-amber-500 text-[16px]">lightbulb</span>
+<span class=""><strong class="font-bold text-navy-dark">Mẹo OLAP:</strong> Click vào cột bất kỳ để Drill-down xuống mức Ngày (Day Grain)</span>
+</div>
+</div>
+<!-- Chart SVG Visualization with Quixotic Pill-shaped Rounded Bars & Texture Pattern -->
+<div class="relative w-full h-80 pt-2">
+<svg class="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1000 260">
+<defs>
+<!-- Quixotic soft striped pattern for bars -->
+<pattern height="8" id="diagonalHatch" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse" width="8">
+<line opacity="0.35" stroke="#ffffff" stroke-width="2" x1="0" x2="0" y1="0" y2="8"></line>
+</pattern>
+<linearGradient id="emeraldBarGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#10b981"></stop>
+<stop offset="100%" stop-color="#059669"></stop>
+</linearGradient>
+<linearGradient id="activeEmeraldGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#047857"></stop>
+<stop offset="100%" stop-color="#064e3b"></stop>
+</linearGradient>
+<!-- Quixotic soft area glow under spline -->
+<linearGradient id="blueSplineArea" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#0071e3" stop-opacity="0.18"></stop>
+<stop offset="100%" stop-color="#0071e3" stop-opacity="0.0"></stop>
+</linearGradient>
+</defs>
+<!-- Horizontal Grid Lines -->
+<line opacity="0.5" stroke="#f1f5f9" stroke-dasharray="4 4" x1="50" x2="980" y1="30" y2="30"></line>
+<line opacity="0.5" stroke="#f1f5f9" stroke-dasharray="4 4" x1="50" x2="980" y1="80" y2="80"></line>
+<line opacity="0.5" stroke="#f1f5f9" stroke-dasharray="4 4" x1="50" x2="980" y1="130" y2="130"></line>
+<line opacity="0.5" stroke="#f1f5f9" stroke-dasharray="4 4" x1="50" x2="980" y1="180" y2="180"></line>
+<line opacity="0.8" stroke="#e2e8f0" x1="50" x2="980" y1="225" y2="225"></line>
+<!-- Subtle Filled Area for ADR Curve -->
+<path d="M 92 165 C 169 150, 246 130, 323 115 C 400 100, 477 105, 554 85 C 631 62, 708 82, 785 98 C 862 145, 939 150, 939 150 L 939 225 L 92 225 Z" fill="url(#blueSplineArea)"></path>
+<!-- 12 Quixotic Pill-shaped Rounded Bars (rx=17 for fully rounded pill tops like reference) -->
+<!-- M01: 2,840 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#99f6e4" height="90" rx="17" width="34" x="75" y="135"></rect>
+<rect fill="url(#diagonalHatch)" height="90" rx="17" width="34" x="75" y="135"></rect>
+<!-- M02: 3,120 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#a7f3d0" height="102" rx="17" width="34" x="152" y="123"></rect>
+<rect fill="url(#diagonalHatch)" height="102" rx="17" width="34" x="152" y="123"></rect>
+<!-- M03: 3,790 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#6ee7b7" height="126" rx="17" width="34" x="229" y="99"></rect>
+<rect fill="url(#diagonalHatch)" height="126" rx="17" width="34" x="229" y="99"></rect>
+<!-- M04: 4,050 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#6ee7b7" height="136" rx="17" width="34" x="306" y="89"></rect>
+<rect fill="url(#diagonalHatch)" height="136" rx="17" width="34" x="306" y="89"></rect>
+<!-- M05: 4,380 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#34d399" height="148" rx="17" width="34" x="383" y="77"></rect>
+<rect fill="url(#diagonalHatch)" height="148" rx="17" width="34" x="383" y="77"></rect>
+<!-- M06: 4,210 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#34d399" height="142" rx="17" width="34" x="460" y="83"></rect>
+<rect fill="url(#diagonalHatch)" height="142" rx="17" width="34" x="460" y="83"></rect>
+<!-- M07: 4,750 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#10b981" height="162" rx="17" width="34" x="537" y="63"></rect>
+<rect fill="url(#diagonalHatch)" height="162" rx="17" width="34" x="537" y="63"></rect>
+<!-- M08: 4,920 (Selected Highlight with Dark Forest Emerald + Top Pill Badge like Quixotic "+17.8%") -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="url(#activeEmeraldGrad)" height="172" rx="17" width="36" x="613" y="53"></rect>
+<rect fill="url(#diagonalHatch)" height="172" rx="17" width="36" x="613" y="53"></rect>
+<circle cx="631" cy="53" fill="#ffffff" r="4.5" stroke="#047857" stroke-width="2.5"></circle>
+<!-- M09: 4,310 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#34d399" height="145" rx="17" width="34" x="691" y="80"></rect>
+<rect fill="url(#diagonalHatch)" height="145" rx="17" width="34" x="691" y="80"></rect>
+<!-- M10: 4,180 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#6ee7b7" height="140" rx="17" width="34" x="768" y="85"></rect>
+<rect fill="url(#diagonalHatch)" height="140" rx="17" width="34" x="768" y="85"></rect>
+<!-- M11: 3,250 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#a7f3d0" height="106" rx="17" width="34" x="845" y="119"></rect>
+<rect fill="url(#diagonalHatch)" height="106" rx="17" width="34" x="845" y="119"></rect>
+<!-- M12: 3,260 -->
+<rect class="transition-all hover:opacity-90 cursor-pointer" fill="#a7f3d0" height="107" rx="17" width="34" x="922" y="118"></rect>
+<rect fill="url(#diagonalHatch)" height="107" rx="17" width="34" x="922" y="118"></rect>
+<!-- ADR Spline Curve (€78 to €142) -->
+<path d="M 92 165 C 169 150, 246 130, 323 115 C 400 100, 477 105, 554 85 C 631 62, 708 82, 785 98 C 862 145, 939 150, 939 150" fill="none" stroke="#0071e3" stroke-linecap="round" stroke-width="3"></path>
+<!-- Cancellation Curve (31% to 44%) -->
+<path d="M 92 148 C 169 155, 246 140, 323 135 C 400 125, 477 128, 554 120 C 631 114, 708 122, 785 130 C 862 142, 939 145, 939 145" fill="none" stroke="#f43f5e" stroke-dasharray="4 4" stroke-linecap="round" stroke-width="2.5"></path>
+<!-- Quixotic Floating Badge above Peak Bar -->
+<g transform="translate(606, 12)">
+<rect fill="#065f46" height="24" rx="12" width="50"></rect>
+<text fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-size="10.5" font-weight="700" text-anchor="middle" x="25" y="16">+17.8%</text>
+</g>
+</svg>
+</div>
+<!-- X-Axis Labels -->
+<div class="grid grid-cols-12 text-center font-semibold text-[13px] text-slate-500">
+<span class="">T01</span>
+<span class="">T02</span>
+<span class="">T03</span>
+<span class="">T04</span>
+<span class="">T05</span>
+<span class="">T06</span>
+<span class="">T07</span>
+<span class="font-extrabold text-emerald-brand bg-emerald-50 rounded-full py-0.5">T08 ★</span>
+<span class="">T09</span>
+<span class="">T10</span>
+<span class="">T11</span>
+<span class="">T12</span>
+</div>
+<!-- Mini Meta Bar below chart -->
+<div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+<div class="flex items-center gap-4 text-slate-500 text-[13px]">
+<span class="">Tháng thấp nhất: <strong class="text-navy-dark">T01 (2,840 khách)</strong></span>
+<span class="">•</span>
+<span class="">Tháng cao nhất: <strong class="text-emerald-brand font-bold">T08 (4,920 khách — ADR €142.8)</strong></span>
+<span class="">•</span>
+<span class="">Độ lệch chuẩn: <strong class="text-navy-dark">±642 khách/tháng</strong></span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-4 py-1.5 rounded-full bg-[#f8fafc] hover:bg-slate-100 text-[12px] font-semibold text-slate-700 transition-colors border border-slate-200/70">
+                Roll-up theo Quý (Q1-Q4)
+              </button>
+<button class="px-4 py-1.5 rounded-full bg-emerald-soft text-emerald-700 text-[12px] font-bold hover:bg-emerald-100 transition-colors">
+                Xuất dữ liệu Time-series (.csv)
+              </button>
+</div>
+</div>
+</div>
+<!-- Khối 4: Bảng phân tích chéo Pivot Table (Quixotic Soft Clean Table Presentation) -->
+<div class="p-7 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col gap-6">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-2xl bg-[#ecfdf5] text-emerald-brand flex items-center justify-center mt-0.5">
+<span class="material-symbols-outlined text-[22px]">pivot_table_chart</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="text-[20px] font-extrabold text-navy-dark tracking-tight">Pivot Table — Cross-Tabulation Matrix</h2>
+<span class="w-6 h-6 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center">
+<span class="material-symbols-outlined text-[15px]">north_east</span>
+</span>
+</div>
+<p class="text-[13px] text-slate-500 mt-0.5">
+                  Phân bổ Tổng khách đến (observed_total_guests) chéo giữa Tháng (Rows) và Loại ngày (Columns)
+                </p>
+</div>
+</div>
+<!-- Pivot Interactive Selectors -->
+<div class="flex flex-wrap items-center gap-2">
+<div class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#f8fafc] border border-slate-200/80 text-[12.5px] text-slate-600">
+<span class="text-slate-400">Row Dim:</span>
+<span class="font-bold text-navy-dark">Tháng (arrival_month)</span>
+</div>
+<div class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#f8fafc] border border-slate-200/80 text-[12.5px] text-slate-600">
+<span class="text-slate-400">Col Dim:</span>
+<span class="font-bold text-navy-dark">Loại ngày (is_weekend)</span>
+</div>
+<div class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-soft text-[12.5px] text-emerald-800 font-bold">
+<span class="text-emerald-600">Measure:</span>
+<span class="">Σ Tổng khách đến</span>
+</div>
+</div>
+</div>
+<!-- Clean Table Design with rounded container -->
+<div class="overflow-x-auto rounded-2xl border border-slate-100">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#f8fafc] border-b border-slate-100">
+<th class="py-3.5 px-5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tháng / Kỳ (Month)</th>
+<th class="py-3.5 px-5 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ngày thường (Weekday)</th>
+<th class="py-3.5 px-5 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cuối tuần (Weekend)</th>
+<th class="py-3.5 px-5 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng cộng (Total)</th>
+<th class="py-3.5 px-5 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tỷ trọng Cuối tuần (%)</th>
+<th class="py-3.5 px-5 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">ADR Trung bình</th>
+</tr>
+</thead>
+<tbody class="text-[13.5px] divide-y divide-slate-100">
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 01 (Jan 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,940</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">900</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">2,840</td>
+<td class="py-3 px-5 text-right text-slate-500">31.7%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€78.40</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 02 (Feb 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">2,110</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,010</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">3,120</td>
+<td class="py-3 px-5 text-right text-slate-500">32.4%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€82.10</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 03 (Mar 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">2,560</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,230</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">3,790</td>
+<td class="py-3 px-5 text-right text-slate-500">32.5%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€90.50</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 04 (Apr 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">2,740</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,310</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">4,050</td>
+<td class="py-3 px-5 text-right text-slate-500">32.3%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€98.20</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 05 (May 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">2,960</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,420</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">4,380</td>
+<td class="py-3 px-5 text-right text-slate-500">32.4%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€108.60</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 06 (Jun 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">2,820</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,390</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">4,210</td>
+<td class="py-3 px-5 text-right text-slate-500">33.0%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€118.00</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 07 (Jul 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">3,180</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,570</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">4,750</td>
+<td class="py-3 px-5 text-right text-slate-500">33.1%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€136.20</td>
+</tr>
+<!-- Peak Month Highlight row -->
+<tr class="bg-emerald-50/50 hover:bg-emerald-50 transition-colors">
+<td class="py-3 px-5 font-bold text-emerald-800 flex items-center gap-1.5">
+<span class="">Tháng 08 (Aug 2016)</span>
+<span class="material-symbols-outlined text-[16px] text-amber-500">local_fire_department</span>
+</td>
+<td class="py-3 px-5 text-right font-bold text-emerald-900">3,280</td>
+<td class="py-3 px-5 text-right font-bold text-emerald-900">1,640</td>
+<td class="py-3 px-5 text-right font-extrabold text-emerald-700">4,920</td>
+<td class="py-3 px-5 text-right font-semibold text-emerald-800">33.3%</td>
+<td class="py-3 px-5 text-right font-extrabold text-emerald-700">€142.80</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 09 (Sep 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">2,910</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,400</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">4,310</td>
+<td class="py-3 px-5 text-right text-slate-500">32.5%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€122.40</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 10 (Oct 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">2,810</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,370</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">4,180</td>
+<td class="py-3 px-5 text-right text-slate-500">32.8%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€104.50</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 11 (Nov 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">2,230</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,020</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">3,250</td>
+<td class="py-3 px-5 text-right text-slate-500">31.4%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€86.70</td>
+</tr>
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3 px-5 font-semibold text-navy-dark">Tháng 12 (Dec 2016)</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">2,190</td>
+<td class="py-3 px-5 text-right font-medium text-slate-600">1,070</td>
+<td class="py-3 px-5 text-right font-bold text-navy-dark">3,260</td>
+<td class="py-3 px-5 text-right text-slate-500">32.8%</td>
+<td class="py-3 px-5 text-right font-semibold text-slate-700">€89.90</td>
+</tr>
+</tbody>
+<tfoot>
+<tr class="bg-[#f8fafc] font-bold text-navy-dark border-t-2 border-slate-200">
+<td class="py-3.5 px-5 text-[14px]">Tổng cộng / Toàn năm 2016</td>
+<td class="py-3.5 px-5 text-right">30,370</td>
+<td class="py-3.5 px-5 text-right">14,750</td>
+<td class="py-3.5 px-5 text-right text-emerald-brand font-extrabold text-[15px]">45,120</td>
+<td class="py-3.5 px-5 text-right">32.69%</td>
+<td class="py-3.5 px-5 text-right">€105.20</td>
+</tr>
+</tfoot>
+</table>
+</div>
+<!-- Pivot controls footer -->
+<div class="flex flex-wrap items-center justify-between gap-4 pt-1">
+<div class="flex items-center gap-2 text-slate-500 text-[13px]">
+<span class="material-symbols-outlined text-[17px] text-emerald-brand">swap_horiz</span>
+              Nhấp đúp vào bất kỳ tiêu đề cột để hoán đổi chiều phân tích (Swap Axis OLAP Pivot).
+            </div>
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 rounded-full bg-[#f8fafc] hover:bg-slate-100 text-[12.5px] font-semibold text-slate-700 transition-colors border border-slate-200/80">
+                Sao chép Ma trận
+              </button>
+<button class="px-4 py-2 rounded-full bg-emerald-soft text-emerald-700 text-[12.5px] font-bold hover:bg-emerald-100 transition-colors">
+                Xem SQL Query (MDX)
+              </button>
+</div>
+</div>
+</div>
+<!-- Khối 5: Context & Deep Breakdown Analysis (Quixotic 3-column rounded-3xl cards with diagonal arrows) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Card A: Holiday vs Non-Holiday Impact -->
+<div class="p-6 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col justify-between group hover:-translate-y-1 transition duration-200">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">celebration</span>
+</div>
+<h3 class="text-[16px] font-bold text-navy-dark">Tác động Ngày lễ (Holidays)</h3>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-soft text-emerald-700">
+                    +8.9% Pace
+                  </span>
+<span class="w-6 h-6 rounded-full bg-slate-50 text-slate-400 group-hover:text-emerald-brand flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">north_east</span>
+</span>
+</div>
+</div>
+<p class="text-[13px] text-slate-500 leading-relaxed">
+                So sánh công suất đón khách giữa 28 ngày lễ chính thức của Bồ Đào Nha và 337 ngày thường.
+              </p>
+<!-- Visual Comparison Bars -->
+<div class="flex flex-col gap-3 pt-1">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[12.5px]">
+<span class="font-semibold text-navy-dark">Ngày lễ (28 ngày)</span>
+<span class="font-bold text-emerald-brand">140.0 khách/ngày</span>
+</div>
+<div class="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+<div class="h-full rounded-full bg-emerald-brand" style="width: 100%;"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[12.5px]">
+<span class="font-semibold text-slate-600">Ngày thường (337 ngày)</span>
+<span class="font-semibold text-slate-500">128.6 khách/ngày</span>
+</div>
+<div class="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+<div class="h-full rounded-full bg-slate-300" style="width: 91.8%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pt-5 mt-2 border-t border-slate-100 text-[12px] text-slate-500 leading-relaxed">
+              Khuyến nghị: Tăng ADR thêm <strong class="text-navy-dark font-bold">6.5% - 8%</strong> cho các kỳ lễ 3 ngày để tối ưu yield mà không ảnh hưởng occupancy.
+            </div>
+</div>
+<!-- Card B: Weather Correlation -->
+<div class="p-6 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col justify-between group hover:-translate-y-1 transition duration-200">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">wb_sunny</span>
+</div>
+<h3 class="text-[16px] font-bold text-navy-dark">Tương quan Khí hậu</h3>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#f8fafc] text-slate-500 border border-slate-200">
+                    r = 0.64
+                  </span>
+<span class="w-6 h-6 rounded-full bg-slate-50 text-slate-400 group-hover:text-emerald-brand flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">north_east</span>
+</span>
+</div>
+</div>
+<p class="text-[13px] text-slate-500 leading-relaxed">
+                Dữ liệu thời tiết Lisbon tương quan mật thiết với nhu cầu đặt phòng và tỷ lệ hủy theo ngưỡng nhiệt.
+              </p>
+<!-- Temperature Buckets (Quixotic Soft Pill Cards) -->
+<div class="flex flex-col gap-2 pt-1">
+<div class="flex items-center justify-between p-2.5 rounded-2xl bg-[#f8fafc] border border-slate-100">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500 text-[18px]">thermostat</span>
+<span class="text-[12.5px] font-bold text-navy-dark">Nhiệt độ &gt; 22°C (Mùa nắng)</span>
+</div>
+<span class="text-[12.5px] font-extrabold text-emerald-brand">142.1 khách/ngày</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-2xl bg-[#f8fafc] border border-slate-100">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sky-500 text-[18px]">cloud</span>
+<span class="text-[12.5px] font-medium text-slate-700">15°C – 22°C (Ôn hòa)</span>
+</div>
+<span class="text-[12.5px] font-semibold text-slate-600">138.5 khách/ngày</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-2xl bg-[#f8fafc] border border-slate-100">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-400 text-[18px]">ac_unit</span>
+<span class="text-[12.5px] font-medium text-slate-700">&lt; 15°C (Mùa lạnh)</span>
+</div>
+<span class="text-[12.5px] font-medium text-slate-500">115.2 khách/ngày</span>
+</div>
+</div>
+</div>
+<div class="pt-5 mt-2 border-t border-slate-100 text-[12px] text-slate-500 leading-relaxed">
+              Khách đến đạt đỉnh khi nhiệt độ ổn định trên 24°C kết hợp thời tiết không mưa.
+            </div>
+</div>
+<!-- Card C: Top 5 Source Markets -->
+<div class="p-6 rounded-3xl bg-surface-pure quixotic-shadow border border-slate-100 flex flex-col justify-between group hover:-translate-y-1 transition duration-200">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-xl bg-emerald-soft text-emerald-brand flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">public</span>
+</div>
+<h3 class="text-[16px] font-bold text-navy-dark">Top 5 Quốc gia khách</h3>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-soft text-emerald-700">
+                    COMPLETE
+                  </span>
+<span class="w-6 h-6 rounded-full bg-slate-50 text-slate-400 group-hover:text-emerald-brand flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">north_east</span>
+</span>
+</div>
+</div>
+<p class="text-[13px] text-slate-500 leading-relaxed">
+                Tỷ trọng lượng khách quốc tế và nội địa lưu trú tại City Hotel (Lisbon).
+              </p>
+<!-- Markets List with modern rounded progress bars -->
+<div class="flex flex-col gap-2.5 pt-1">
+<div class="flex items-center justify-between text-[12.5px]">
+<div class="flex items-center gap-2">
+<span class="w-7 font-bold text-emerald-brand">PRT</span>
+<span class="text-navy-dark font-medium">Bồ Đào Nha (Nội địa)</span>
+</div>
+<div class="flex items-center gap-2.5">
+<div class="w-20 h-2 rounded-full bg-slate-100 overflow-hidden">
+<div class="h-full bg-emerald-brand rounded-full" style="width: 34%;"></div>
+</div>
+<span class="font-bold text-navy-dark w-8 text-right">34%</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-[12.5px]">
+<div class="flex items-center gap-2">
+<span class="w-7 font-bold text-slate-400">FRA</span>
+<span class="text-slate-600 font-medium">Pháp</span>
+</div>
+<div class="flex items-center gap-2.5">
+<div class="w-20 h-2 rounded-full bg-slate-100 overflow-hidden">
+<div class="h-full bg-emerald-400 rounded-full" style="width: 14%;"></div>
+</div>
+<span class="font-semibold text-slate-600 w-8 text-right">14%</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-[12.5px]">
+<div class="flex items-center gap-2">
+<span class="w-7 font-bold text-slate-400">GBR</span>
+<span class="text-slate-600 font-medium">Vương quốc Anh</span>
+</div>
+<div class="flex items-center gap-2.5">
+<div class="w-20 h-2 rounded-full bg-slate-100 overflow-hidden">
+<div class="h-full bg-emerald-400 rounded-full" style="width: 12%;"></div>
+</div>
+<span class="font-semibold text-slate-600 w-8 text-right">12%</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-[12.5px]">
+<div class="flex items-center gap-2">
+<span class="w-7 font-bold text-slate-400">ESP</span>
+<span class="text-slate-600 font-medium">Tây Ban Nha</span>
+</div>
+<div class="flex items-center gap-2.5">
+<div class="w-20 h-2 rounded-full bg-slate-100 overflow-hidden">
+<div class="h-full bg-teal-300 rounded-full" style="width: 9%;"></div>
+</div>
+<span class="font-semibold text-slate-600 w-8 text-right">9%</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-[12.5px]">
+<div class="flex items-center gap-2">
+<span class="w-7 font-bold text-slate-400">DEU</span>
+<span class="text-slate-600 font-medium">Cộng hòa LB Đức</span>
+</div>
+<div class="flex items-center gap-2.5">
+<div class="w-20 h-2 rounded-full bg-slate-100 overflow-hidden">
+<div class="h-full bg-teal-300 rounded-full" style="width: 7%;"></div>
+</div>
+<span class="font-semibold text-slate-600 w-8 text-right">7%</span>
+</div>
+</div>
+</div>
+</div>
+<div class="pt-5 mt-2 border-t border-slate-100 text-[12px] text-slate-500 leading-relaxed">
+              Khối EU (FRA, GBR, ESP, DEU) chiếm <strong class="text-navy-dark font-bold">42%</strong> tổng lượng khách với ADR cao hơn trung bình 18.2%.
+            </div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+
+</body></html>

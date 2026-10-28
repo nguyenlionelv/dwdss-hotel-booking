@@ -1,0 +1,811 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="web_dashboard" name="shell-type">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #f4f5f8;
+      }
+      body {
+        overscroll-behavior: none;
+      }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+    .quixotic-card {
+      background: #ffffff;
+      border-radius: 1.5rem; /* 24px */
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 2px 6px 0 rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(230, 233, 240, 0.7);
+    }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "background": "#f4f5f8",
+            "surface": "#f4f5f8",
+            "surface-card": "#ffffff",
+            "primary": "#0059b5",
+            "primary-container": "#0071e3",
+            "on-primary-container": "#fcfbff",
+            "on-surface": "#0f172a",
+            "on-surface-variant": "#64748b",
+            "outline-variant": "#e2e8f0",
+            "error": "#ef4444",
+            "error-container": "#fee2e2",
+            "on-error-container": "#991b1b",
+            "emerald-accent": "#00b074",
+            "emerald-light": "#e6f8f1",
+            "secondary": "#64748b",
+            "secondary-container": "#f1f5f9",
+            "on-secondary-container": "#334155"
+          },
+          borderRadius: {
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            "4xl": "2rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            display: ["Inter", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-[#f4f5f8] font-sans text-slate-800 antialiased selection:bg-blue-100 selection:text-blue-900">
+<!-- Left Sidebar (Quixotic Style: Clean white floating or sleek dock) -->
+<aside class="fixed left-0 top-0 h-full w-72 bg-white/95 backdrop-blur-xl z-50 flex flex-col justify-between py-6 px-5 border-r border-slate-200/70 shadow-[2px_0_24px_rgba(0,0,0,0.02)]">
+<div class="flex flex-col gap-7">
+<!-- Logo Branding -->
+<div class="flex items-center gap-3 px-2 py-1.5">
+<div class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+<span class="material-symbols-outlined text-[22px]">domain</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-[18px] text-slate-900 tracking-tight leading-none flex items-center gap-1.5">
+            DWDSS
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+</span>
+<span class="text-[11px] text-slate-400 font-semibold tracking-wider uppercase mt-1">HOTEL ANALYTICS</span>
+</div>
+</div>
+<!-- Navigation -->
+<nav class="flex flex-col gap-1.5">
+<div class="px-3 pb-1 font-bold text-[11px] text-slate-400 uppercase tracking-wider">Enterprise Modules</div>
+<a class="group flex items-center justify-between px-3.5 py-3 rounded-2xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200" data-path="operations-analytics" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-blue-600 transition-colors">query_stats</span>
+<span class="text-[14px] font-medium">Operations Analytics</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</a>
+<a class="group flex items-center justify-between px-3.5 py-3 rounded-2xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200" data-path="operations-reports" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-blue-600 transition-colors">table_chart</span>
+<span class="text-[14px] font-medium">Operations Reports</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</a>
+<a aria-current="page" class="group flex items-center justify-between px-3.5 py-3 rounded-2xl bg-blue-600 text-white font-semibold shadow-lg shadow-blue-600/20 transition-all duration-200" data-path="decision-support-system" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px] text-white">auto_graph</span><span class="text-[14px]">Decision Support (DSS)</span></div><span class="material-symbols-outlined text-[16px] text-white/80">arrow_outward</span></a>
+<div class="my-3 mx-2 h-[1px] bg-slate-100"></div>
+<div class="px-3 pb-1 font-bold text-[11px] text-slate-400 tracking-wider uppercase">Phase 2 (Out of Scope)</div>
+<div class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-slate-400/60 cursor-not-allowed select-none">
+<span class="material-symbols-outlined text-[18px]">group</span>
+<span class="text-[13px] font-medium">Guest &amp; Customer</span>
+</div>
+<div class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-slate-400/60 cursor-not-allowed select-none">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+<span class="text-[13px] font-medium">Revenue &amp; Cancellation</span>
+</div>
+</nav>
+</div>
+<!-- Sidebar Footer -->
+<div class="p-4 rounded-3xl bg-slate-50 border border-slate-100 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Engine Node</span>
+<span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-mono font-medium">v9fe497e2</span>
+</div>
+<p class="text-[12px] text-slate-500 leading-snug">Decision-grade analytics runtime for enterprise hospitality.</p>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="pl-72 min-h-screen flex flex-col bg-[#f4f5f8]">
+<!-- Top Header Bar -->
+<header class="fixed top-0 left-72 right-0 h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 z-40 px-8 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+<div class="flex items-center gap-4">
+<!-- Hotel Location Badge -->
+<div class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-100/80 border border-slate-200/60 text-slate-800">
+<div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+<span class="material-symbols-outlined text-[15px]">location_city</span>
+</div>
+<span class="text-[13px] font-semibold">City Hotel — Lisbon, Portugal</span>
+<span class="text-[11px] text-slate-400 font-medium pl-2 border-l border-slate-200">Europe/Lisbon</span>
+</div>
+<!-- Date Range Pill -->
+<div class="hidden xl:flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-100/80 border border-slate-200/60 text-slate-600">
+<span class="material-symbols-outlined text-slate-400 text-[16px]">calendar_today</span>
+<span class="text-[13px] font-medium">01/07/2015 – 31/08/2017</span>
+<span class="text-[11px] text-blue-600 px-2 py-0.5 rounded-full bg-blue-50 font-semibold">(793 days actual)</span>
+</div>
+</div>
+<!-- Right Header Actions (Quixotic style icons & profile) -->
+<div class="flex items-center gap-3">
+<!-- Search icon button -->
+<button class="w-10 h-10 rounded-full bg-white border border-slate-200/80 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm transition-colors">
+<span class="material-symbols-outlined text-[19px]">search</span>
+</button>
+<!-- Bell Notification -->
+<button class="w-10 h-10 rounded-full bg-white border border-slate-200/80 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm transition-colors relative">
+<span class="material-symbols-outlined text-[19px]">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500"></span>
+</button>
+<div class="h-6 w-[1px] bg-slate-200 mx-1"></div>
+<!-- Status Pill -->
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/50">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+<span class="text-[12px] text-emerald-800 font-semibold">Mart Healthy / Ready</span>
+</div>
+<!-- Profile Avatar -->
+<div class="flex items-center gap-2 pl-1 cursor-pointer">
+<img alt="Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-slate-200 shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzOTsbKYOs_1QlL8cPX2wCXw4vi-bhmBYCmujMLK8YG647rH7hlooM3bm_1eafCuoKa-5eocoxoOybOpMijckvh8W0ptdG9UeJiHwRR69r5jGXqacC8SJSMnQ-0-SoAqXMz_sEBAqY8ePHGvhIQ0PXtcB7RfUYBy0444qd7NtgyYzHzmpg02E3UvN9B9qdjUfH9bpGrBnPN8oK39v1AbkAcXVJBukO4Ri4uXbJOmOu">
+</div>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="w-full pt-24 px-8 pb-16 flex-1 bg-[#f4f5f8]">
+<div class="flex flex-col w-full max-w-[1440px] mx-auto gap-7">
+<!-- KHỐI 1: Page Header & As-of-Date Cutoff Selector -->
+<section class="flex flex-col gap-6 pt-2">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2.5">
+<span class="px-3 py-1 rounded-full bg-blue-100/70 text-blue-700 font-bold text-[11px] uppercase tracking-wider">
+                  DO-M01 Decision Engine
+                </span>
+<span class="text-[12px] text-slate-500 font-medium flex items-center gap-1.5">
+<span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span> Live Inference Active
+                </span>
+</div>
+<h1 class="text-[32px] font-extrabold text-slate-900 tracking-tight">
+                Dự báo Nhu cầu &amp; Hỗ trợ Ra quyết định (DSS)
+              </h1>
+<p class="text-[15px] text-slate-500">
+                Mining &amp; dự báo lượng khách 7 ngày tiếp theo (T+1 đến T+7) tuân thủ nghiêm ngặt nguyên tắc không nhìn trước tương lai.
+              </p>
+</div>
+<!-- Action buttons (Pill shaped, soft shadows) -->
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-slate-700 hover:text-slate-900 border border-slate-200/80 hover:border-slate-300 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow transition-all font-semibold text-[14px]" id="btn-export-dss">
+<span class="material-symbols-outlined text-[19px] text-blue-600">download</span>
+<span class="">Xuất Báo Cáo DSS</span>
+</button>
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-600/25 hover:shadow-lg hover:shadow-blue-600/30 transition-all font-semibold text-[14px]" id="btn-recompute">
+<span class="material-symbols-outlined text-[19px]">sync</span>
+<span class="">Tái Chạy Mô Hình</span>
+</button>
+</div>
+</div>
+<!-- Cutoff Selector Bar (Quixotic Soft Pill Container) -->
+<div class="quixotic-card p-4 lg:p-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+<div class="flex flex-wrap items-center gap-3">
+<!-- Cutoff Date Field -->
+<div class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2 rounded-2xl">
+<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Ngày chốt dự báo T</span>
+<span class="text-[13px] text-slate-900 font-bold">24/08/2017 (Final Cutoff)</span>
+</div>
+</div>
+<!-- Horizon Badge -->
+<div class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2 rounded-2xl">
+<div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Phạm vi horizon (T+1 → T+7)</span>
+<span class="text-[13px] text-blue-600 font-bold">25/08/2017 → 31/08/2017</span>
+</div>
+</div>
+<!-- Zero Leakage Verified Pill -->
+<div class="flex items-center gap-2 px-3.5 py-2 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-800">
+<span class="material-symbols-outlined text-[17px] text-emerald-600">verified</span>
+<span class="text-[12px] font-bold">Không rò rỉ dữ liệu (Zero Leakage)</span>
+</div>
+</div>
+<!-- Hint text -->
+<div class="flex items-center gap-2.5 text-slate-500 max-w-lg">
+<span class="material-symbols-outlined text-[19px] text-blue-500 shrink-0">info</span>
+<p class="text-[13px] leading-snug">
+                Mô hình chỉ sử dụng dữ liệu đã biết trước thời điểm T (cutoff 24/08/2017), tuân thủ nguyên tắc không rò rỉ thông tin tương lai.
+              </p>
+</div>
+</div>
+</section>
+<!-- KHỐI 2: Thẻ trạng thái & Khuyến nghị vận hành (Quixotic Card Style) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Status Badge & Action Banner (7 cols) -->
+<div class="lg:col-span-7 quixotic-card p-6 lg:p-7 flex flex-col justify-between gap-5 relative group">
+<!-- Quixotic Corner Diagonal Arrow ↗ -->
+<div class="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 transition-colors">
+<span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[26px]">priority_high</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tổng Thể Chu Kỳ 7 Ngày</span>
+<div class="flex items-center gap-2.5 mt-0.5">
+<span class="text-[18px] text-slate-800 font-bold">MỨC NHU CẦU:</span>
+<span class="px-3.5 py-1 rounded-full bg-red-500 text-white text-[13px] font-bold tracking-wide shadow-sm shadow-red-500/20">
+                      CAO (HIGH)
+                    </span>
+</div>
+</div>
+</div>
+<span class="inline-block text-[12px] font-semibold text-slate-500 pl-1">
+                Điều kiện kích hoạt: &gt; (μ + σ = 142.7 khách)
+              </span>
+</div>
+<!-- Primary Recommendation Card (Inset Rounded Box) -->
+<div class="p-5 rounded-2xl bg-slate-50 border border-slate-100/90 flex flex-col gap-2.5">
+<div class="flex items-center gap-2 text-blue-600 font-bold text-[15px]">
+<span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+<span class="">Khuyến nghị Vận hành Ưu tiên</span>
+</div>
+<p class="text-[14px] text-slate-700 font-medium leading-relaxed">
+                Nhu cầu cao vào cuối tuần (Thứ 7 ngày 26/08 chạm <strong class="text-red-600 font-bold">152 khách</strong>). Bổ sung <strong>2 ca trực lễ tân</strong> và <strong>buồng phòng</strong>, chuẩn bị <strong>F&amp;B tăng 20%</strong> để tránh quá tải quầy buffet và sảnh chờ.
+              </p>
+</div>
+<!-- Quick Pill Action Tags -->
+<div class="flex flex-wrap items-center gap-2.5 pt-1">
+<span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 font-semibold text-[12px]">
+<span class="material-symbols-outlined text-[16px]">group_add</span> +2 Staff Front Desk
+              </span>
+<span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 font-semibold text-[12px]">
+<span class="material-symbols-outlined text-[16px]">bed</span> +2 Staff Housekeeping
+              </span>
+<span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-[12px]">
+<span class="material-symbols-outlined text-[16px]">restaurant</span> +20% Inventory F&amp;B
+              </span>
+</div>
+</div>
+<!-- Ngưỡng thống kê 8 tuần gần nhất (56 ngày) (5 cols) -->
+<div class="lg:col-span-5 quixotic-card p-6 lg:p-7 flex flex-col justify-between gap-5 relative group">
+<!-- Quixotic Corner Diagonal Arrow ↗ -->
+<div class="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 transition-colors">
+<span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+</div>
+<div class="flex items-center justify-between pr-10">
+<div class="flex flex-col">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tham Số Chuẩn Phân Vùng</span>
+<h3 class="text-[18px] font-bold text-slate-900 mt-0.5">Thống kê 8 tuần qua (56 ngày)</h3>
+</div>
+<span class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-[12px]">
+                N = 56 slots
+              </span>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<!-- Mean -->
+<div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col gap-1">
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Trung bình (μ)</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-[28px] font-extrabold text-slate-900 leading-none">124.5</span>
+<span class="text-[11px] font-medium text-slate-400">khách/ngày</span>
+</div>
+</div>
+<!-- Std -->
+<div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col gap-1">
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Độ lệch chuẩn (σ)</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-[28px] font-extrabold text-slate-900 leading-none">18.2</span>
+<span class="text-[11px] font-medium text-slate-400">khách/ngày</span>
+</div>
+</div>
+<!-- High Threshold (Red / Coral warning) -->
+<div class="p-4 rounded-2xl bg-red-50/60 border border-red-100 flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-bold text-red-600 uppercase tracking-wider">Ngưỡng cao (μ+σ)</span>
+<span class="material-symbols-outlined text-red-500 text-[16px]">warning</span>
+</div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-[28px] font-extrabold text-red-600 leading-none">142.7</span>
+<span class="text-[11px] font-semibold text-red-500">Trigger</span>
+</div>
+</div>
+<!-- Low Threshold -->
+<div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col gap-1">
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Ngưỡng thấp (μ-σ)</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-[28px] font-extrabold text-slate-700 leading-none">106.3</span>
+<span class="text-[11px] font-medium text-slate-400">khách</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 pt-1 text-[12px] text-slate-500">
+<span class="material-symbols-outlined text-slate-400 text-[16px]">tune</span>
+<span class="">Dữ liệu lấy từ mart đã chuẩn hóa City Hotel (Lisbon, Bồ Đào Nha).</span>
+</div>
+</div>
+</section>
+<!-- KHỐI 3: Biểu đồ dự báo 7 ngày tới (Quixotic Styled Chart with Pill Peak Tag) -->
+<section class="quixotic-card p-6 lg:p-8 flex flex-col gap-6 relative group">
+<!-- Quixotic Corner Diagonal Arrow ↗ -->
+<div class="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 transition-colors">
+<span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pr-10">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2.5">
+<h2 class="text-[20px] font-bold text-slate-900">Biểu Đồ Dự Báo Lượng Khách 7 Ngày Tiếp Theo</h2>
+<span class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-[11px] uppercase tracking-wider">
+                  Horizon T+1 → T+7
+                </span>
+</div>
+<span class="text-[13px] text-slate-500">Đường chuẩn ngạch μ+σ (142.7) định vị rủi ro quá tải đỉnh điểm Thứ Bảy &amp; Chủ Nhật</span>
+</div>
+<!-- Legend Pills (Quixotic aesthetic) -->
+<div class="flex items-center gap-3 flex-wrap">
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[12px] font-medium text-slate-700">
+<span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+<span class="">Lượng khách dự báo</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-[12px] font-semibold text-red-600">
+<span class="w-3 h-0.5 bg-red-500 border-t-2 border-dashed border-red-500"></span>
+<span class="">Ngưỡng cao (142.7)</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[12px] font-medium text-slate-500">
+<span class="w-3 h-0.5 bg-slate-400"></span>
+<span class="">Trung bình μ (124.5)</span>
+</div>
+</div>
+</div>
+<!-- SVG Chart Canvas with Soft Gradients and Quixotic Style Curve -->
+<div class="w-full h-84 relative select-none pt-4">
+<svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 980 290">
+<defs>
+<linearGradient id="areaGradientQuixotic" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#0071e3" stop-opacity="0.25"></stop>
+<stop offset="60%" stop-color="#0071e3" stop-opacity="0.05"></stop>
+<stop offset="100%" stop-color="#0071e3" stop-opacity="0.00"></stop>
+</linearGradient>
+<filter height="120%" id="shadowFilter" width="120%" x="-10%" y="-10%">
+<feDropShadow dx="0" dy="4" flood-color="#0071e3" flood-opacity="0.2" stdDeviation="4"></feDropShadow>
+</filter>
+<filter height="140%" id="peakShadow" width="140%" x="-20%" y="-20%">
+<feDropShadow dx="0" dy="4" flood-color="#ef4444" flood-opacity="0.3" stdDeviation="6"></feDropShadow>
+</filter>
+</defs>
+<!-- Subtle background bar tracks behind each point (inspired by bar columns in Quixotic) -->
+<rect fill="#f8fafc" height="210" opacity="0.9" rx="14" width="28" x="66" y="30"></rect>
+<rect fill="#fef2f2" height="210" opacity="0.9" rx="14" width="28" x="206" y="30"></rect>
+<rect fill="#fef2f2" height="210" opacity="0.9" rx="14" width="28" x="346" y="30"></rect>
+<rect fill="#f8fafc" height="210" opacity="0.9" rx="14" width="28" x="486" y="30"></rect>
+<rect fill="#f8fafc" height="210" opacity="0.9" rx="14" width="28" x="626" y="30"></rect>
+<rect fill="#f8fafc" height="210" opacity="0.9" rx="14" width="28" x="766" y="30"></rect>
+<rect fill="#f8fafc" height="210" opacity="0.9" rx="14" width="28" x="906" y="30"></rect>
+<!-- Horizontal Grid Lines -->
+<line stroke="#f1f5f9" stroke-width="1.5" x1="40" x2="940" y1="35" y2="35"></line>
+<line stroke="#f1f5f9" stroke-width="1.5" x1="40" x2="940" y1="85" y2="85"></line>
+<line stroke="#f1f5f9" stroke-width="1.5" x1="40" x2="940" y1="145" y2="145"></line>
+<line stroke="#f1f5f9" stroke-width="1.5" x1="40" x2="940" y1="205" y2="205"></line>
+<!-- Y-Axis Labels -->
+<text fill="#94a3b8" font-family="Inter" font-size="11" font-weight="500" text-anchor="end" x="30" y="39">160</text>
+<text fill="#94a3b8" font-family="Inter" font-size="11" font-weight="500" text-anchor="end" x="30" y="89">140</text>
+<text fill="#94a3b8" font-family="Inter" font-size="11" font-weight="500" text-anchor="end" x="30" y="149">120</text>
+<text fill="#94a3b8" font-family="Inter" font-size="11" font-weight="500" text-anchor="end" x="30" y="209">100</text>
+<!-- High Threshold Line (142.7 guests -> y ≈ 78) -->
+<line stroke="#ef4444" stroke-dasharray="6 4" stroke-width="1.75" x1="40" x2="940" y1="78" y2="78"></line>
+<rect fill="#fee2e2" height="22" rx="11" width="125" x="815" y="67"></rect>
+<text fill="#b91c1c" font-family="Inter" font-size="10" font-weight="700" text-anchor="middle" x="877" y="82">NGƯỠNG CAO: 142.7</text>
+<!-- Mean Line (124.5 guests -> y ≈ 132) -->
+<line stroke="#94a3b8" stroke-dasharray="3 3" stroke-width="1.2" x1="40" x2="940" y1="132" y2="132"></line>
+<text fill="#64748b" font-family="Inter" font-size="10" font-weight="600" text-anchor="end" x="940" y="127">μ = 124.5</text>
+<!-- Forecast Fill Path -->
+<path d="M 80,90 C 150,60 160,54 220,54 C 290,54 300,74 360,74 C 420,74 440,143 500,145 C 570,147 580,150 640,150 C 700,150 720,159 780,159 C 840,159 860,148 920,148 L 920,240 L 80,240 Z" fill="url(#areaGradientQuixotic)"></path>
+<!-- Forecast Main Spline Curve -->
+<path d="M 80,90 C 150,60 160,54 220,54 C 290,54 300,74 360,74 C 420,74 440,143 500,145 C 570,147 580,150 640,150 C 700,150 720,159 780,159 C 840,159 860,148 920,148" fill="none" filter="url(#shadowFilter)" stroke="#0071e3" stroke-linecap="round" stroke-width="3.5"></path>
+<!-- Day 1 Node: 25/08 (138) -->
+<circle cx="80" cy="90" fill="#ffffff" r="5.5" stroke="#0071e3" stroke-width="3"></circle>
+<!-- Day 2 Node: 26/08 (152 - PEAK OVER THRESHOLD) -->
+<circle cx="220" cy="54" fill="#fee2e2" opacity="0.6" r="14"></circle>
+<circle cx="220" cy="54" fill="#ef4444" r="7" stroke="#ffffff" stroke-width="3"></circle>
+<!-- Day 3 Node: 27/08 (144 - OVER THRESHOLD) -->
+<circle cx="360" cy="74" fill="#fee2e2" opacity="0.6" r="12"></circle>
+<circle cx="360" cy="74" fill="#ef4444" r="6.5" stroke="#ffffff" stroke-width="3"></circle>
+<!-- Day 4 Node: 28/08 (121) -->
+<circle cx="500" cy="145" fill="#ffffff" r="5.5" stroke="#0071e3" stroke-width="3"></circle>
+<!-- Day 5 Node: 29/08 (119) -->
+<circle cx="640" cy="150" fill="#ffffff" r="5.5" stroke="#0071e3" stroke-width="3"></circle>
+<!-- Day 6 Node: 30/08 (116) -->
+<circle cx="780" cy="159" fill="#ffffff" r="5.5" stroke="#0071e3" stroke-width="3"></circle>
+<!-- Day 7 Node: 31/08 (120) -->
+<circle cx="920" cy="148" fill="#ffffff" r="5.5" stroke="#0071e3" stroke-width="3"></circle>
+<!-- Peak Marker Pill (Quixotic rounded badge) -->
+<g filter="url(#peakShadow)">
+<rect fill="#ef4444" height="26" rx="13" width="105" x="167" y="14"></rect>
+<text fill="#ffffff" font-family="Inter" font-size="11" font-weight="700" text-anchor="middle" x="220" y="31">Peak: 152 khách</text>
+</g>
+<!-- Sunday Warning Pill -->
+<rect fill="#ef4444" height="22" rx="11" width="80" x="320" y="38"></rect>
+<text fill="#ffffff" font-family="Inter" font-size="10" font-weight="700" text-anchor="middle" x="360" y="53">144 khách</text>
+<!-- X Baseline axis -->
+<line stroke="#e2e8f0" stroke-width="1.5" x1="40" x2="940" y1="240" y2="240"></line>
+<!-- X-Axis Labels (Date + Day name) -->
+<text fill="#1e293b" font-family="Inter" font-size="12" font-weight="700" text-anchor="middle" x="80" y="260">25/08</text>
+<text fill="#94a3b8" font-family="Inter" font-size="11" font-weight="500" text-anchor="middle" x="80" y="276">Thứ Sáu</text>
+<text fill="#ef4444" font-family="Inter" font-size="12" font-weight="800" text-anchor="middle" x="220" y="260">26/08</text>
+<text fill="#ef4444" font-family="Inter" font-size="11" font-weight="700" text-anchor="middle" x="220" y="276">Thứ Bảy</text>
+<text fill="#ef4444" font-family="Inter" font-size="12" font-weight="800" text-anchor="middle" x="360" y="260">27/08</text>
+<text fill="#ef4444" font-family="Inter" font-size="11" font-weight="700" text-anchor="middle" x="360" y="276">Chủ Nhật</text>
+<text fill="#1e293b" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle" x="500" y="260">28/08</text>
+<text fill="#94a3b8" font-family="Inter" font-size="11" font-weight="500" text-anchor="middle" x="500" y="276">Thứ Hai</text>
+<text fill="#1e293b" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle" x="640" y="260">29/08</text>
+<text fill="#94a3b8" font-family="Inter" font-size="11" font-weight="500" text-anchor="middle" x="640" y="276">Thứ Ba</text>
+<text fill="#1e293b" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle" x="780" y="260">30/08</text>
+<text fill="#94a3b8" font-family="Inter" font-size="11" font-weight="500" text-anchor="middle" x="780" y="276">Thứ Tư</text>
+<text fill="#1e293b" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle" x="920" y="260">31/08</text>
+<text fill="#94a3b8" font-family="Inter" font-size="11" font-weight="500" text-anchor="middle" x="920" y="276">Thứ Năm</text>
+</svg>
+</div>
+<!-- Forecast Narrative Footnote -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-slate-100 text-slate-500 gap-2">
+<span class="text-[13px]">
+              💡 <strong class="text-slate-700">Phát hiện vận hành:</strong> Lượng khách tăng vọt <strong class="text-red-600">+24.1%</strong> từ Thứ Sáu sang Thứ Bảy trước khi quay trở lại mức thông thường 116-121 khách vào các ngày trong tuần.
+            </span>
+<span class="text-[12px] text-slate-400 font-medium">
+              Khoảng tin cậy: 95% CI [134, 168] cho điểm cực đại
+            </span>
+</div>
+</section>
+<!-- KHỐI 4: Bảng lịch trình chi tiết dự báo 7 ngày (Quixotic Table Style) -->
+<section class="quixotic-card p-6 lg:p-8 flex flex-col gap-5 relative group">
+<!-- Quixotic Corner Diagonal Arrow ↗ -->
+<div class="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 transition-colors">
+<span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pr-10">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">calendar_view_week</span>
+</div>
+<h2 class="text-[20px] font-bold text-slate-900">Lịch Trình Chi Tiết Dự Báo 7 Ngày &amp; Kế Hoạch Chuẩn Bị</h2>
+</div>
+<span class="text-[13px] text-slate-400 font-medium">Thứ tự bước: T+1 đến T+7</span>
+</div>
+<!-- Schedule Table Container -->
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-slate-100 text-slate-400 font-bold text-[11px] uppercase tracking-wider">
+<th class="py-3 px-3">Bước</th>
+<th class="py-3 px-3">Ngày Dự Báo</th>
+<th class="py-3 px-3">Thứ</th>
+<th class="py-3 px-3">Phân Loại</th>
+<th class="py-3 px-3 text-right">Lượng Khách</th>
+<th class="py-3 px-3">Mức Nhu Cầu</th>
+<th class="py-3 px-4">Khuyến Nghị Chuẩn Bị Vận Hành</th>
+<th class="py-3 px-2 text-center">Trạng Thái</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-[13px]">
+<!-- Row 1: Step 1 (25/08) -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-3">
+<span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-[11px]">T+1</span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-slate-800">25/08/2017</td>
+<td class="py-3.5 px-3 text-slate-600">Thứ Sáu</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">Cuối tuần (Early)</span>
+</td>
+<td class="py-3.5 px-3 text-right font-bold text-slate-900">138</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold">NORMAL</span>
+</td>
+<td class="py-3.5 px-4 text-slate-600">Chuẩn bị sẵn phòng sớm cho đoàn khách du lịch tự do; rà soát kho nguyên liệu đồ uống.</td>
+<td class="py-3.5 px-2 text-center">
+<span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</span>
+</td>
+</tr>
+<!-- Row 2: Step 2 (26/08 - SATURDAY PEAK HIGHLIGHTED) -->
+<tr class="bg-red-50/40 hover:bg-red-50/60 transition-colors">
+<td class="py-3.5 px-3">
+<span class="px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-extrabold text-[11px]">T+2</span>
+</td>
+<td class="py-3.5 px-3 font-bold text-red-600">26/08/2017</td>
+<td class="py-3.5 px-3 text-red-600 font-bold">Thứ Bảy (Peak)</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-[11px] font-bold uppercase">Cuối tuần</span>
+</td>
+<td class="py-3.5 px-3 text-right font-extrabold text-red-600 text-[15px]">152</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-red-500 text-white text-[11px] font-extrabold shadow-sm">HIGH</span>
+</td>
+<td class="py-3.5 px-4 text-slate-900 font-semibold">
+                    Tăng cường 2 ca trực lễ tân &amp; buồng phòng; mở quầy Express Check-in; tăng 20% định mức buffet sáng.
+                  </td>
+<td class="py-3.5 px-2 text-center">
+<span class="w-6 h-6 rounded-full bg-red-100 text-red-600 inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">priority_high</span>
+</span>
+</td>
+</tr>
+<!-- Row 3: Step 3 (27/08 - SUNDAY HIGH) -->
+<tr class="bg-red-50/20 hover:bg-red-50/40 transition-colors">
+<td class="py-3.5 px-3">
+<span class="px-2.5 py-1 rounded-full bg-red-100/70 text-red-700 font-bold text-[11px]">T+3</span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-slate-800">27/08/2017</td>
+<td class="py-3.5 px-3 text-slate-800 font-semibold">Chủ Nhật</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-red-50 text-red-700 text-[11px] font-semibold">Cuối tuần</span>
+</td>
+<td class="py-3.5 px-3 text-right font-bold text-red-600">144</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-[11px] font-bold">HIGH</span>
+</td>
+<td class="py-3.5 px-4 text-slate-700">Duy trì nhân lực xử lý check-out đồng thời và đón đợt khách công tác sang đầu tuần.</td>
+<td class="py-3.5 px-2 text-center">
+<span class="w-6 h-6 rounded-full bg-red-50 text-red-600 inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+</span>
+</td>
+</tr>
+<!-- Row 4: Step 4 (28/08) -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-3">
+<span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-[11px]">T+4</span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-slate-800">28/08/2017</td>
+<td class="py-3.5 px-3 text-slate-600">Thứ Hai</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">Ngày thường</span>
+</td>
+<td class="py-3.5 px-3 text-right font-bold text-slate-800">121</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold">NORMAL</span>
+</td>
+<td class="py-3.5 px-4 text-slate-600">Lượng khách ổn định tiệm cận mức μ; bố trí nhân sự luân phiên nghỉ bù sau cuối tuần.</td>
+<td class="py-3.5 px-2 text-center">
+<span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</span>
+</td>
+</tr>
+<!-- Row 5: Step 5 (29/08) -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-3">
+<span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-[11px]">T+5</span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-slate-800">29/08/2017</td>
+<td class="py-3.5 px-3 text-slate-600">Thứ Ba</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">Ngày thường</span>
+</td>
+<td class="py-3.5 px-3 text-right font-bold text-slate-800">119</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold">NORMAL</span>
+</td>
+<td class="py-3.5 px-4 text-slate-600">Bảo dưỡng phòng ốc tầng 3 &amp; 4; phối hợp bộ phận kỹ thuật kiểm tra HVAC.</td>
+<td class="py-3.5 px-2 text-center">
+<span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</span>
+</td>
+</tr>
+<!-- Row 6: Step 6 (30/08) -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-3">
+<span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-[11px]">T+6</span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-slate-800">30/08/2017</td>
+<td class="py-3.5 px-3 text-slate-600">Thứ Tư</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">Ngày thường</span>
+</td>
+<td class="py-3.5 px-3 text-right font-bold text-slate-800">116</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold">NORMAL</span>
+</td>
+<td class="py-3.5 px-4 text-slate-600">Tối ưu hóa doanh thu phòng trống bằng gói nâng cấp tiện ích (upsell executive lounge).</td>
+<td class="py-3.5 px-2 text-center">
+<span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</span>
+</td>
+</tr>
+<!-- Row 7: Step 7 (31/08) -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-3">
+<span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-[11px]">T+7</span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-slate-800">31/08/2017</td>
+<td class="py-3.5 px-3 text-slate-600">Thứ Năm</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">Ngày thường</span>
+</td>
+<td class="py-3.5 px-3 text-right font-bold text-slate-800">120</td>
+<td class="py-3.5 px-3">
+<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold">NORMAL</span>
+</td>
+<td class="py-3.5 px-4 text-slate-600">Khóa sổ dữ liệu tháng 08/2017; chuẩn bị phân kỳ dự báo cho tuần đầu tháng 9.</td>
+<td class="py-3.5 px-2 text-center">
+<span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- KHỐI 5: Bảng đối chuẩn mô hình (Quixotic Styled Metric Columns) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Benchmark Specs (8 cols) -->
+<div class="lg:col-span-8 quixotic-card p-6 lg:p-8 flex flex-col gap-6 relative group">
+<!-- Quixotic Corner Diagonal Arrow ↗ -->
+<div class="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 transition-colors">
+<span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+</div>
+<div class="flex items-center justify-between pr-10">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">model_training</span>
+</div>
+<h3 class="text-[19px] font-bold text-slate-900">Đánh Giá Khoa Học &amp; Đối Chuẩn Mô Hình</h3>
+</div>
+<span class="text-[11px] px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-mono font-bold">
+                v1.0-historical-baseline
+              </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<!-- MAE -->
+<div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between gap-2">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sai số tuyệt đối (MAE)</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-[32px] font-extrabold text-slate-900 leading-none">14.2</span>
+<span class="text-[12px] font-medium text-slate-400">khách</span>
+</div>
+<span class="text-[12px] font-bold text-emerald-600 flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[15px]">trending_down</span> Tốt hơn Naive 18%
+                </span>
+</div>
+<!-- RMSE -->
+<div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between gap-2">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Căn bậc 2 sai số (RMSE)</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-[32px] font-extrabold text-slate-900 leading-none">18.5</span>
+<span class="text-[12px] font-medium text-slate-400">khách</span>
+</div>
+<span class="text-[12px] font-bold text-emerald-600 flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[15px]">check_circle</span> Kiểm soát phương sai
+                </span>
+</div>
+<!-- Architecture Type -->
+<div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between gap-2">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Thuật toán lõi (Core Engine)</span>
+<span class="text-[20px] font-bold text-blue-600 leading-tight">Seasonal Naive</span>
+<span class="text-[12px] text-slate-500 leading-snug">
+                  Dịch chuyển chu kỳ 7 ngày kết hợp trọng số trượt
+                </span>
+</div>
+</div>
+<!-- Rigorous Validation Inset Box -->
+<div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-slate-800 font-bold text-[13px]">
+<span class="material-symbols-outlined text-blue-600 text-[18px]">verified_user</span>
+<span class="">Trạng thái kiểm định thực nghiệm (Out-of-sample Testing)</span>
+</div>
+<p class="text-[13px] text-slate-600 leading-relaxed">
+                Mô hình hoạt động ổn định trên toàn bộ <strong>793 ngày khảo sát thực tế</strong> của tập dữ liệu City Hotel Lisbon. Các sai số dự báo bám sát phân phối chuẩn, không phát hiện hiện tượng trôi dạt dữ liệu (data drift) tại mốc cutoff 24/08/2017.
+              </p>
+</div>
+</div>
+<!-- Edge State & Data Quality Context (4 cols - Quixotic Circular Progress) -->
+<div class="lg:col-span-4 quixotic-card p-6 lg:p-8 flex flex-col justify-between gap-5 relative group">
+<!-- Quixotic Corner Diagonal Arrow ↗ -->
+<div class="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 transition-colors">
+<span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+</div>
+<div class="flex flex-col gap-1 pr-8">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kiểm Tra Toàn Vẹn</span>
+<h3 class="text-[19px] font-bold text-slate-900">Data Quality &amp; Context</h3>
+</div>
+<!-- Circular Completeness Card (Like Quixotic % meter) -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/50">
+<div class="relative w-14 h-14 shrink-0 flex items-center justify-center">
+<svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+<path class="text-emerald-200" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-emerald-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute text-[12px] font-extrabold text-emerald-800">100%</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[14px] font-bold text-emerald-900">100% Complete</span>
+<span class="text-[12px] text-emerald-700 leading-snug">Không có bản ghi khuyết thiếu trong chu kỳ 56 ngày huấn luyện.</span>
+</div>
+</div>
+<!-- Checklist Items -->
+<div class="flex flex-col gap-2.5 text-[13px] text-slate-600">
+<div class="flex items-center gap-2.5">
+<span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 inline-flex items-center justify-center text-[13px]">✓</span>
+<span class="font-medium">Xác thực schema DO-M01 đạt chuẩn</span>
+</div>
+<div class="flex items-center gap-2.5">
+<span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 inline-flex items-center justify-center text-[13px]">✓</span>
+<span class="font-medium">Múi giờ đồng bộ: Europe/Lisbon</span>
+</div>
+<div class="flex items-center gap-2.5">
+<span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 inline-flex items-center justify-center text-[13px]">✓</span>
+<span class="font-medium">Mức cảnh báo đã gửi tới Bộ phận Tiền sảnh</span>
+</div>
+</div>
+<button class="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-[13px] transition-colors flex items-center justify-center gap-2" id="btn-inspect-mart">
+<span class="material-symbols-outlined text-[18px] text-blue-600">dataset</span>
+<span class="">Truy Vấn Mart Chi Tiết</span>
+</button>
+</div>
+</section>
+</div>
+</main>
+</div>
+<script>
+    (function() {
+      // Recompute micro-interaction
+      const btnRecompute = document.getElementById('btn-recompute');
+      if (btnRecompute) {
+        btnRecompute.addEventListener('click', function() {
+          const icon = this.querySelector('.material-symbols-outlined');
+          if (icon) icon.classList.add('animate-spin');
+          this.disabled = true;
+          setTimeout(() => {
+            if (icon) icon.classList.remove('animate-spin');
+            this.disabled = false;
+          }, 1200);
+        });
+      }
+
+      // Export report micro-interaction
+      const btnExport = document.getElementById('btn-export-dss');
+      if (btnExport) {
+        btnExport.addEventListener('click', function() {
+          const originalSpan = this.querySelector('span:last-child');
+          const originalText = originalSpan.textContent;
+          originalSpan.textContent = 'Đang kết xuất...';
+          setTimeout(() => {
+            originalSpan.textContent = 'Hoàn tất PDF!';
+            setTimeout(() => {
+              originalSpan.textContent = originalText;
+            }, 2000);
+          }, 800);
+        });
+      }
+    })();
+  </script>
+
+
+</body></html>
