@@ -13,7 +13,7 @@ from pipeline.source_to_staging.booking import BOOKING_FIELDS
 from pipeline.source_to_staging.common import ROOT, connect, sha256, source_set
 from pipeline.source_to_staging.run import run as load_staging
 from pipeline.staging_to_dw.preflight import report
-from test_dw_inputs import FIXTURE, assert_values, fixture_bundle
+from tests.warehouse.test_dw_inputs import FIXTURE, assert_values, fixture_bundle
 
 
 @pytest.fixture(scope="module")

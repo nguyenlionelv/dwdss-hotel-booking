@@ -18,8 +18,8 @@ from pipeline.source_to_staging.run import run as stage
 from pipeline.staging_to_dw.config import load_config
 from pipeline.staging_to_dw.migrations import WRITER_LOCK
 from pipeline.staging_to_dw.run import run as load_dw
-from test_dw_inputs_postgres import make_sources
-from test_dw_postgres import database, config_for, change_config, changed_booking_manifest, active_state, write_json
+from tests.warehouse.test_dw_inputs_postgres import make_sources
+from tests.warehouse.test_dw_postgres import database, config_for, change_config, changed_booking_manifest, active_state, write_json
 
 
 EXPECTED = json.loads((ROOT / "tests/fixtures/dw/operations_expected.json").read_text(encoding="utf-8"))

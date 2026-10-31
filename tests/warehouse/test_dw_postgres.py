@@ -20,7 +20,7 @@ from pipeline.staging_to_dw.config import DEFAULT_CONFIG, load_config
 from pipeline.staging_to_dw.migrations import WRITER_LOCK, apply_dw_migrations
 from pipeline.staging_to_dw.run import run
 from pipeline.staging_to_dw.snapshot import read_snapshot
-from test_dw_inputs_postgres import make_sources
+from tests.warehouse.test_dw_inputs_postgres import make_sources
 
 
 @pytest.fixture
