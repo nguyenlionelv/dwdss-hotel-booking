@@ -86,7 +86,7 @@ def test_one_command_dw_runner_publishes_and_reruns_on_postgres(database, tmp_pa
     summaries = []
     for index in range(2):
         output = tmp_path / f"runner_{index}"
-        child = subprocess.run([sys.executable, str(ROOT / "scripts/run_dw.py"), "--config", str(config),
+        child = subprocess.run([sys.executable, str(ROOT / "scripts/run_pipeline.py"), "--to", "dw", "--config", str(config),
                                 "--dbname", database, "--output-dir", str(output)],
                                capture_output=True, text=True, cwd=ROOT)
         assert child.returncode == 0, child.stdout
@@ -298,7 +298,7 @@ def test_cli_report_failure_does_not_change_published_run_to_failed(database, tm
     config = config_for(tmp_path, manifest)
     blocker = tmp_path / "regular-file"
     blocker.write_text("Not a report directory", encoding="utf-8")
-    completed = subprocess.run([sys.executable,str(ROOT/"scripts/run_pipeline.py"),"--to","dw","--config",str(config),
+    completed = subprocess.run([sys.executable,str(ROOT/"scripts/run_pipeline.py"),"--to","dw","--step","load","--config",str(config),
                                 "--dbname",database,"--report",str(blocker/"report.json")], capture_output=True,text=True,cwd=ROOT)
     assert completed.returncode == 1
     result = json.loads(completed.stdout)

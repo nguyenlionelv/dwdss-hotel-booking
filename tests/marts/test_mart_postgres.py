@@ -245,7 +245,7 @@ def test_one_command_runner_installs_and_verifies_mart(database,tmp_path):
     stage(manifest,dbname=database)
     config = config_for(tmp_path,manifest)
     output = tmp_path / "runner"
-    child = subprocess.run([sys.executable,str(ROOT/"scripts/run_dw.py"),"--with-mart","--config",str(config),
+    child = subprocess.run([sys.executable,str(ROOT/"scripts/run_pipeline.py"),"--to","dw","--with-mart","--config",str(config),
                             "--dbname",database,"--output-dir",str(output)],capture_output=True,text=True,cwd=ROOT)
     assert child.returncode == 0,child.stdout
     summary = json.loads((output/"summary.json").read_text(encoding="utf-8"))

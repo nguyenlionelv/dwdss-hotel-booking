@@ -27,7 +27,7 @@ Trong phạm vi DW/Mart, `dw_design.md` quy định mô hình và baseline hiệ
 | Transformer | Xây hàm thuần kiểm tra raw/typed/issues, core acceptance/rejection, numeric, eligibility, mapping, profile, party và room comparison |
 | Snapshot và loader | Đọc nhất quán published Staging; dựng/nạp đủ dimension, fact, context, coverage và daily quality; kiểm tra trước atomic publish |
 | Nghiệm thu | Nạp source thật, đối soát độc lập, chạy PostgreSQL tests, kiểm tra no-op, rollback, recovery và concurrency; lưu evidence từng giai đoạn |
-| Điều phối bằng một lệnh | `scripts/run_dw.py` gọi các CLI theo thứ tự, dừng khi lỗi, lưu report chung và xác nhận load/quality/rerun cùng phiên bản; tùy chọn chạy bộ test |
+| Điều phối bằng một lệnh | `scripts/run_pipeline.py --to dw` gọi các CLI theo thứ tự, dừng khi lỗi, lưu report chung và xác nhận load/quality/rerun cùng phiên bản; tùy chọn chạy bộ test |
 | Operations Mart | Hai bảng tổng hợp ngày/country, migration ledger/state, SQL refresh, quality độc lập, publish đồng bộ DW/Mart và runner `--with-mart`; kết quả tại mục 13 |
 
 Chuẩn bị đầu vào có evidence 36 test cases. Migration được kiểm chứng riêng bằng 50 PostgreSQL cases. Transformer có 107 unit cases. Bộ nghiệm thu loader DW gốc có 223 tests. Khi bổ sung runner DW, có thêm 13 cases điều phối và một case PostgreSQL, bộ trước Mart có 237 tests. Kết quả bổ sung Mart theo mục 13; không cộng số test các lần chạy vì có cases được chạy nhiều lần.
@@ -197,8 +197,9 @@ Country filter giữ nguyên số ngày lịch. Ngày source COMPLETE và không
 | [dw_checks.py](../pipeline/quality/dw_checks.py) | Quality CLI chỉ đọc |
 | [check_dw_inputs.py](../scripts/check_dw_inputs.py) | Preflight CLI và report |
 | [setup_db.py](../scripts/setup_db.py) | Migration CLI `--schema dw`/`mart`, dùng chung với Staging |
-| [run_pipeline.py](../scripts/run_pipeline.py) | Pipeline CLI `--to dw`, dùng chung với Staging |
-| [run_dw.py](../scripts/run_dw.py) | Chạy preflight/migration/load/quality/rerun bằng một lệnh; `--with-mart`, tùy chọn tests |
+| [run_pipeline.py](../scripts/run_pipeline.py) | CLI chung: `--to dw` chạy toàn bộ workflow, `--step load` nạp riêng; đích Staging giữ nguyên |
+| [workflow.py](../pipeline/staging_to_dw/workflow.py) | Điều phối preflight/migration/load/quality/rerun, kiểm chứng report; tùy chọn Mart và tests |
+| [run_dw.py](../scripts/run_dw.py) | Wrapper tương thích, chuyển args sang CLI chung với `--to dw` |
 | [dw_to_mart/migrations.py](../pipeline/dw_to_mart/migrations.py) | Migration ledger/checksum Mart, cùng writer lock |
 | [operations.py](../pipeline/dw_to_mart/operations.py) | Columns/fingerprint, SQL refresh, state và clear children trước DW |
 | [dw_to_mart/checks.py](../pipeline/dw_to_mart/checks.py) | Đối soát từng cell với phép tính Python độc lập và metadata DW |
@@ -230,13 +231,13 @@ Tái sử dụng [common.py](../pipeline/source_to_staging/common.py) cho kết 
 
 | File | Nội dung | Cases trong bộ cuối |
 |---|---|---:|
-| [test_dw_inputs.py](../tests/pipeline/test_dw_inputs.py) | Config/mapping/coverage, expectations và CLI errors | 31 |
-| [test_dw_inputs_postgres.py](../tests/pipeline/test_dw_inputs_postgres.py) | Snapshot/first-batch và preflight PostgreSQL | 1 |
-| [test_dw_migrations_postgres.py](../tests/pipeline/test_dw_migrations_postgres.py) | Migration, constraints, ledger/transaction | 50 |
-| [test_dw_transform.py](../tests/pipeline/test_dw_transform.py) | Transformer expected values | 107 |
-| [test_dw_context.py](../tests/pipeline/test_dw_context.py) | Holiday, Weather, ISO calendar và quality | 13 |
-| [test_dw_postgres.py](../tests/pipeline/test_dw_postgres.py) | Load, no-op, rollback, recovery, MVCC, competing writers và runner PostgreSQL | 17 |
-| [test_dw_cli.py](../tests/pipeline/test_dw_cli.py) | Runner: thứ tự, dừng khi lỗi, version mismatch, output tồn tại, tùy chọn tests và interruption | 13 |
+| [test_dw_inputs.py](../tests/warehouse/test_dw_inputs.py) | Config/mapping/coverage, expectations và CLI errors | 31 |
+| [test_dw_inputs_postgres.py](../tests/warehouse/test_dw_inputs_postgres.py) | Snapshot/first-batch và preflight PostgreSQL | 1 |
+| [test_dw_migrations_postgres.py](../tests/warehouse/test_dw_migrations_postgres.py) | Migration, constraints, ledger/transaction | 50 |
+| [test_dw_transform.py](../tests/warehouse/test_dw_transform.py) | Transformer expected values | 107 |
+| [test_dw_context.py](../tests/warehouse/test_dw_context.py) | Holiday, Weather, ISO calendar và quality | 13 |
+| [test_dw_postgres.py](../tests/warehouse/test_dw_postgres.py) | Load, no-op, rollback, recovery, MVCC, competing writers và runner PostgreSQL | 17 |
+| [test_dw_cli.py](../tests/warehouse/test_dw_cli.py) | Runner: thứ tự, dừng khi lỗi, version mismatch, output tồn tại, tùy chọn tests và interruption | 13 |
 | [operations_expected.json](../tests/fixtures/dw/operations_expected.json) | Fixture tính tay; có expected country cho bước Mart | — |
 
 Có thêm 5 Staging regression tests trong bộ pipeline, tổng cộng 237. Integration dùng database test riêng; SQLite không thay thế kiểm chứng PostgreSQL. File `pytest_final.xml` của bộ nghiệm thu loader gốc giữ nguyên 223 cases; kết quả bộ hiện hành nằm trong evidence runner.
@@ -316,7 +317,7 @@ Lệnh `scripts/run_dw.py --with-tests` đã hoàn thành trên PostgreSQL local
 
 ## 12. Vận hành và thay đổi dữ liệu
 
-Thực hiện theo [dw_runbook.md](dw_runbook.md). Lệnh `scripts/run_dw.py` tự chạy preflight → migration → load → quality độc lập → rerun; `--with-tests` bổ sung bộ kiểm thử sau khi đối soát đạt. Các CLI riêng vẫn dùng để xử lý từng bước. Runner điều phối tiến trình bằng Python đang sử dụng, không thay đổi ETL hoặc transaction của các bước bên trong.
+Thực hiện theo [dw_runbook.md](dw_runbook.md). Lệnh `scripts/run_pipeline.py --to dw` tự chạy preflight → migration → load → quality độc lập → rerun; `--with-tests` bổ sung bộ kiểm thử sau khi đối soát đạt. Các CLI riêng vẫn dùng để xử lý từng bước. Runner điều phối tiến trình bằng Python đang sử dụng, không thay đổi ETL hoặc transaction của các bước bên trong.
 
 Runner lưu `summary.json`, từ chối thư mục output đã tồn tại và dừng ở lỗi đầu tiên. Nếu một writer khác thay active dataset giữa load/quality/rerun, đối chiếu version hoặc counts không đạt và runner trả lỗi. Dừng luồng không rollback các publication đã commit; trạng thái luồng và trạng thái active DW được phân biệt.
 
