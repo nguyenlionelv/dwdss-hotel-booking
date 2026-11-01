@@ -1,0 +1,11 @@
+source_code,target_code,target_name,status,note
+A,A,,known,Anonymized shared room-type code; no room-name dictionary
+B,B,,known,Anonymized shared room-type code; no room-name dictionary
+C,C,,known,Anonymized shared room-type code; no room-name dictionary
+D,D,,known,Anonymized shared room-type code; no room-name dictionary
+E,E,,known,Anonymized shared room-type code; no room-name dictionary
+F,F,,known,Anonymized shared room-type code; no room-name dictionary
+G,G,,known,Anonymized shared room-type code; no room-name dictionary
+K,K,,known,Anonymized shared room-type code; no room-name dictionary
+P,P,,known,Anonymized shared room-type code; no room-name dictionary
+UNKNOWN,UNKNOWN,,unknown,Comparison ineligible if either role unknown

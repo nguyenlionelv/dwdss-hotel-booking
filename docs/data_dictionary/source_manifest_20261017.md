@@ -1,5 +1,7 @@
 # Source manifest — acquisition run 2026-10-17
 
+> Historical handoff snapshot. The selected Weather source was refreshed with user authorization on 2026-10-27; see [the refresh record](source_manifest_20261027.md) and `operations_source_set.json` for the current executable selection.
+
 All timestamps are UTC. Raw files are ignored by Git and must not be force-added. Checksums identify the exact inputs used by the profiling evidence in `artifacts/profiling/run_20261017_full/`.
 
 Current ingestion scope: keep the full Booking raw file unchanged, but load only `hotel = 'City Hotel'` into Staging. Holiday and Weather remain required sources; Event is out of scope. See [data contract](operations_sources.md) for missing/invalid and provenance rules.

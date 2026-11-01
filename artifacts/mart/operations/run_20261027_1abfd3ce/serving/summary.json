@@ -1,0 +1,29 @@
+{
+  "status": "failed",
+  "output_dir": "D:\\Users\\BuiTrongNguyen\\CodexProject\\dwdss-hotel-booking\\artifacts\\mart\\operations\\run_20261027_1abfd3ce\\serving",
+  "steps": [
+    {
+      "name": "preflight",
+      "report": "inputs/preflight.json",
+      "exit_code": 0
+    },
+    {
+      "name": "migration",
+      "report": "migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "mart_migration",
+      "report": "mart_migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "load",
+      "report": "first_load.json",
+      "exit_code": 1
+    }
+  ],
+  "tests_run": false,
+  "failed_step": "load",
+  "error": "Command failed with exit code 1; inspect first_load.json"
+}

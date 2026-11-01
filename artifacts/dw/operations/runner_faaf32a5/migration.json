@@ -1,0 +1,26 @@
+{
+  "schema": "dw",
+  "status": "no-op",
+  "applied": [],
+  "skipped": [
+    "001_control.sql",
+    "002_dimensions.sql",
+    "003_fact_context_quality.sql"
+  ],
+  "migrations": [
+    {
+      "version": "001_control.sql",
+      "file_sha256": "26fb9317e40f643c81b307f8afe82d3216ae4f53471b201dfa4877c6e6b80b05"
+    },
+    {
+      "version": "002_dimensions.sql",
+      "file_sha256": "6029973eedb17b08c0bd2dff9f94b5feb9db9ad5a148f4e623aa3fc3fab11525"
+    },
+    {
+      "version": "003_fact_context_quality.sql",
+      "file_sha256": "fa0a71c70be33d0919fed89fec95598db017d111465a388da6d286f81e68cc7f"
+    }
+  ],
+  "database_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+  "finished_at_utc": "2026-10-27T07:48:29.379482+00:00"
+}

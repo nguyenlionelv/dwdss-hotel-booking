@@ -1,0 +1,10 @@
+source_code,target_code,target_name,status,note
+AVIATION,AVIATION,Aviation,known,Source label; dataset Table 1
+COMPLEMENTARY,COMPLEMENTARY,Complementary,known,Source label; dataset Table 1
+CORPORATE,CORPORATE,Corporate,known,Source label; dataset Table 1
+DIRECT,DIRECT,Direct,known,Source label; dataset Table 1
+GROUPS,GROUPS,Groups,known,Source label; dataset Table 1
+OFFLINE TA/TO,OFFLINE TA/TO,Offline TA/TO,known,Source label; dataset Table 1
+ONLINE TA,ONLINE TA,Online TA,known,Source label; dataset Table 1
+UNDEFINED,UNKNOWN,Unknown,unknown,Source explicitly undefined; retain issue
+UNKNOWN,UNKNOWN,Unknown,unknown,Unknown dimension member

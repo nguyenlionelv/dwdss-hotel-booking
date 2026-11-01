@@ -1,0 +1,558 @@
+{
+  "before_root_node": "Nested Loop",
+  "after_root_node": "Hash Join",
+  "before_plan": [
+    {
+      "Plan": {
+        "Node Type": "Nested Loop",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Join Type": "Left",
+        "Startup Cost": 5.44,
+        "Total Cost": 1101.08,
+        "Plan Rows": 1,
+        "Plan Width": 459,
+        "Inner Unique": false,
+        "Join Filter": "(((true) OR (f.country_key = (NULL::integer))) AND (f.date_key = d.date_key) AND (((GROUPING(f.country_key) = 1)) = (true)))",
+        "Plans": [
+          {
+            "Node Type": "Nested Loop",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Join Type": "Inner",
+            "Startup Cost": 1.11,
+            "Total Cost": 1096.36,
+            "Plan Rows": 1,
+            "Plan Width": 147,
+            "Inner Unique": true,
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 0.83,
+                "Total Cost": 1095.49,
+                "Plan Rows": 1,
+                "Plan Width": 139,
+                "Inner Unique": false,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.83,
+                    "Total Cost": 13.04,
+                    "Plan Rows": 1,
+                    "Plan Width": 120,
+                    "Inner Unique": true,
+                    "Join Filter": "(x.date_key = q.date_key)",
+                    "Plans": [
+                      {
+                        "Node Type": "Nested Loop",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Join Type": "Inner",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 12.61,
+                        "Plan Rows": 1,
+                        "Plan Width": 76,
+                        "Inner Unique": true,
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Scan Direction": "Forward",
+                            "Index Name": "ix_context_run",
+                            "Relation Name": "daily_hotel_context",
+                            "Alias": "x",
+                            "Startup Cost": 0.28,
+                            "Total Cost": 4.29,
+                            "Plan Rows": 1,
+                            "Plan Width": 55,
+                            "Index Cond": "(dw_run_id = '0ef0d162-98e2-4e74-8a42-0c907a9c50be'::uuid)"
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Parent Relationship": "Inner",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Scan Direction": "Forward",
+                            "Index Name": "dim_date_pkey",
+                            "Relation Name": "dim_date",
+                            "Alias": "d",
+                            "Startup Cost": 0.28,
+                            "Total Cost": 8.3,
+                            "Plan Rows": 1,
+                            "Plan Width": 21,
+                            "Index Cond": "(date_key = x.date_key)",
+                            "Filter": "((full_date >= '2015-07-01'::date) AND (full_date <= '2017-08-31'::date))"
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "daily_data_quality_pkey",
+                        "Relation Name": "daily_data_quality",
+                        "Alias": "q",
+                        "Startup Cost": 0.28,
+                        "Total Cost": 0.42,
+                        "Plan Rows": 1,
+                        "Plan Width": 52,
+                        "Index Cond": "(date_key = d.date_key)",
+                        "Filter": "(dw_run_id = '0ef0d162-98e2-4e74-8a42-0c907a9c50be'::uuid)"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Append",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 0.0,
+                    "Total Cost": 1081.19,
+                    "Plan Rows": 126,
+                    "Plan Width": 19,
+                    "Subplans Removed": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Result",
+                        "Parent Relationship": "Member",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 0.0,
+                        "Total Cost": 0.01,
+                        "Plan Rows": 1,
+                        "Plan Width": 69
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Member",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "dim_country",
+                        "Alias": "c_1",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 1080.55,
+                        "Plan Rows": 125,
+                        "Plan Width": 19,
+                        "Filter": "((country_key = 0) OR (ANY (country_key = (hashed SubPlan 2).col1)))",
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Parent Relationship": "SubPlan",
+                            "Subplan Name": "SubPlan 2",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Scan Direction": "Forward",
+                            "Index Name": "ix_fact_run",
+                            "Relation Name": "fact_booking",
+                            "Alias": "f_1",
+                            "Startup Cost": 0.29,
+                            "Total Cost": 4.31,
+                            "Plan Rows": 1,
+                            "Plan Width": 4,
+                            "Index Cond": "(dw_run_id = '0ef0d162-98e2-4e74-8a42-0c907a9c50be'::uuid)"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "Node Type": "Index Scan",
+                "Parent Relationship": "Inner",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "source_coverage_pkey",
+                "Relation Name": "source_coverage",
+                "Alias": "v",
+                "Startup Cost": 0.28,
+                "Total Cost": 0.58,
+                "Plan Rows": 1,
+                "Plan Width": 12,
+                "Index Cond": "((run_id = '0ef0d162-98e2-4e74-8a42-0c907a9c50be'::uuid) AND (source_id = 'booking'::text) AND (local_date = d.full_date))"
+              }
+            ]
+          },
+          {
+            "Node Type": "Aggregate",
+            "Strategy": "Sorted",
+            "Partial Mode": "Simple",
+            "Parent Relationship": "Inner",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 4.32,
+            "Total Cost": 4.44,
+            "Plan Rows": 2,
+            "Plan Width": 193,
+            "Grouping Sets": [
+              {
+                "Group Keys": [
+                  [
+                    "f.date_key",
+                    "f.country_key"
+                  ],
+                  [
+                    "f.date_key"
+                  ]
+                ]
+              }
+            ],
+            "Plans": [
+              {
+                "Node Type": "Sort",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 4.32,
+                "Total Cost": 4.33,
+                "Plan Rows": 1,
+                "Plan Width": 49,
+                "Sort Key": [
+                  "f.date_key",
+                  "f.country_key"
+                ],
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "ix_fact_run",
+                    "Relation Name": "fact_booking",
+                    "Alias": "f",
+                    "Startup Cost": 0.29,
+                    "Total Cost": 4.31,
+                    "Plan Rows": 1,
+                    "Plan Width": 49,
+                    "Index Cond": "(dw_run_id = '0ef0d162-98e2-4e74-8a42-0c907a9c50be'::uuid)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "after_plan": [
+    {
+      "Plan": {
+        "Node Type": "Hash Join",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Join Type": "Inner",
+        "Startup Cost": 14895.28,
+        "Total Cost": 68268.32,
+        "Plan Rows": 182530,
+        "Plan Width": 459,
+        "Inner Unique": true,
+        "Hash Cond": "(x.date_key = q.date_key)",
+        "Plans": [
+          {
+            "Node Type": "Hash Join",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Join Type": "Inner",
+            "Startup Cost": 14833.28,
+            "Total Cost": 27568.05,
+            "Plan Rows": 182530,
+            "Plan Width": 287,
+            "Inner Unique": true,
+            "Hash Cond": "(d.date_key = x.date_key)",
+            "Plans": [
+              {
+                "Node Type": "Hash Join",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Right",
+                "Startup Cost": 14762.28,
+                "Total Cost": 27015.37,
+                "Plan Rows": 182530,
+                "Plan Width": 232,
+                "Inner Unique": false,
+                "Hash Cond": "((f.date_key = d.date_key) AND (((GROUPING(f.country_key) = 1)) = (true)))",
+                "Join Filter": "((true) OR (f.country_key = (NULL::integer)))",
+                "Plans": [
+                  {
+                    "Node Type": "Aggregate",
+                    "Strategy": "Hashed",
+                    "Partial Mode": "Simple",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 11946.05,
+                    "Total Cost": 17695.46,
+                    "Plan Rows": 8725,
+                    "Plan Width": 193,
+                    "Grouping Sets": [
+                      {
+                        "Hash Keys": [
+                          [
+                            "f.date_key",
+                            "f.country_key"
+                          ]
+                        ]
+                      },
+                      {
+                        "Hash Keys": [
+                          [
+                            "f.date_key"
+                          ]
+                        ]
+                      }
+                    ],
+                    "Planned Partitions": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "fact_booking",
+                        "Alias": "f",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 6194.62,
+                        "Plan Rows": 79330,
+                        "Plan Width": 49,
+                        "Filter": "(dw_run_id = 'c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873'::uuid)"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Hash",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 1817.05,
+                    "Total Cost": 1817.05,
+                    "Plan Rows": 66612,
+                    "Plan Width": 48,
+                    "Plans": [
+                      {
+                        "Node Type": "Nested Loop",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Join Type": "Inner",
+                        "Startup Cost": 76.4,
+                        "Total Cost": 1817.05,
+                        "Plan Rows": 66612,
+                        "Plan Width": 48,
+                        "Inner Unique": false,
+                        "Plans": [
+                          {
+                            "Node Type": "Hash Join",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Join Type": "Inner",
+                            "Startup Cost": 76.4,
+                            "Total Cost": 295.51,
+                            "Plan Rows": 793,
+                            "Plan Width": 29,
+                            "Inner Unique": true,
+                            "Hash Cond": "(v.local_date = d.full_date)",
+                            "Plans": [
+                              {
+                                "Node Type": "Bitmap Heap Scan",
+                                "Parent Relationship": "Outer",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Relation Name": "source_coverage",
+                                "Alias": "v",
+                                "Startup Cost": 40.48,
+                                "Total Cost": 257.48,
+                                "Plan Rows": 800,
+                                "Plan Width": 12,
+                                "Recheck Cond": "((run_id = 'c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873'::uuid) AND (source_id = 'booking'::text))",
+                                "Plans": [
+                                  {
+                                    "Node Type": "Bitmap Index Scan",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Index Name": "source_coverage_pkey",
+                                    "Startup Cost": 0.0,
+                                    "Total Cost": 40.28,
+                                    "Plan Rows": 800,
+                                    "Plan Width": 0,
+                                    "Index Cond": "((run_id = 'c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873'::uuid) AND (source_id = 'booking'::text))"
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Hash",
+                                "Parent Relationship": "Inner",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Startup Cost": 26.0,
+                                "Total Cost": 26.0,
+                                "Plan Rows": 793,
+                                "Plan Width": 21,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Seq Scan",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Relation Name": "dim_date",
+                                    "Alias": "d",
+                                    "Startup Cost": 0.0,
+                                    "Total Cost": 26.0,
+                                    "Plan Rows": 793,
+                                    "Plan Width": 21,
+                                    "Filter": "((full_date >= '2015-07-01'::date) AND (full_date <= '2017-08-31'::date))"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Materialize",
+                            "Parent Relationship": "Inner",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Startup Cost": 0.0,
+                            "Total Cost": 689.1,
+                            "Plan Rows": 84,
+                            "Plan Width": 20,
+                            "Plans": [
+                              {
+                                "Node Type": "Append",
+                                "Parent Relationship": "Outer",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Startup Cost": 0.0,
+                                "Total Cost": 688.68,
+                                "Plan Rows": 84,
+                                "Plan Width": 20,
+                                "Subplans Removed": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Result",
+                                    "Parent Relationship": "Member",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Startup Cost": 0.0,
+                                    "Total Cost": 0.01,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 69
+                                  },
+                                  {
+                                    "Node Type": "Seq Scan",
+                                    "Parent Relationship": "Member",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Relation Name": "dim_country",
+                                    "Alias": "c_1",
+                                    "Startup Cost": 0.0,
+                                    "Total Cost": 688.25,
+                                    "Plan Rows": 83,
+                                    "Plan Width": 19,
+                                    "Filter": "((country_key = 0) OR EXISTS(SubPlan 1))",
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "SubPlan",
+                                        "Subplan Name": "SubPlan 1",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "ix_fact_country_date",
+                                        "Relation Name": "fact_booking",
+                                        "Alias": "f_1",
+                                        "Startup Cost": 0.29,
+                                        "Total Cost": 2183.25,
+                                        "Plan Rows": 571,
+                                        "Plan Width": 0,
+                                        "Index Cond": "(country_key = c_1.country_key)",
+                                        "Filter": "(dw_run_id = 'c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873'::uuid)"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "Node Type": "Hash",
+                "Parent Relationship": "Inner",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 61.0,
+                "Total Cost": 61.0,
+                "Plan Rows": 800,
+                "Plan Width": 55,
+                "Plans": [
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Relation Name": "daily_hotel_context",
+                    "Alias": "x",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 61.0,
+                    "Plan Rows": 800,
+                    "Plan Width": 55,
+                    "Filter": "(dw_run_id = 'c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873'::uuid)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Node Type": "Hash",
+            "Parent Relationship": "Inner",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 52.0,
+            "Total Cost": 52.0,
+            "Plan Rows": 800,
+            "Plan Width": 52,
+            "Plans": [
+              {
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Relation Name": "daily_data_quality",
+                "Alias": "q",
+                "Startup Cost": 0.0,
+                "Total Cost": 52.0,
+                "Plan Rows": 800,
+                "Plan Width": 52,
+                "Filter": "(dw_run_id = 'c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873'::uuid)"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "note": "Only plans are compared. The DW transaction-timestamp interval in early auxiliary reports is not wall-clock load duration and is excluded."
+}

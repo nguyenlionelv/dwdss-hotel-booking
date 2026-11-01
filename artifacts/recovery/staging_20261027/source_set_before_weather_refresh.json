@@ -1,0 +1,39 @@
+{
+  "contract_version": "staging-v1.1",
+  "sources": {
+    "booking": {
+      "file": "data/raw/booking/mathsian_hotel-bookings_20261017/hotel_bookings.csv",
+      "sha256": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+      "expected": {"raw_count": 119390, "staged_count": 79330, "out_of_scope_count": 40060, "unidentified_count": 0},
+      "provider": "Kaggle mathsian/hotel-bookings",
+      "dataset_version": 5,
+      "hotel_scope": "City Hotel"
+    },
+    "holiday": {
+      "file": "data/raw/holiday/pt_lisboa_holidays_2015_2017_20261017.csv",
+      "sha256": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+      "expected": {"raw_count": 38, "staged_count": 38},
+      "metadata_file": "data/raw/holiday/pt_lisboa_holidays_2015_2017_20261017.metadata.json",
+      "country": "PT",
+      "subdivision": "11",
+      "years": [2015, 2016, 2017],
+      "observed": false,
+      "language": "pt_PT",
+      "category": "PUBLIC",
+      "generator_version": "0.106"
+    },
+    "weather": {
+      "file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261017.json",
+      "sha256": "3ffb2abf731ae6df9c562c063ff070b08ae26615331a985e998f1306f57be781",
+      "expected": {"raw_count": 793, "staged_count": 793},
+      "metadata_file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261017.metadata.json",
+      "requested_coordinate": {"latitude": 38.72509, "longitude": -9.1498},
+      "returned_coordinate": {"latitude": 38.75, "longitude": -9.25},
+      "timezone": "Europe/Lisbon",
+      "model": "ERA5",
+      "daily_variables": {"temperature_2m_mean": "°C", "precipitation_sum": "mm"},
+      "start_date": "2015-07-01",
+      "end_date": "2017-08-31"
+    }
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "status": "published",
+  "run_id": "c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873",
+  "data_version": "75deb861-6eb3-4475-8b15-f23bcef91b9b",
+  "staging_batch_id": "735da72d-5c48-4690-984c-13b5c44b9325",
+  "source_set_fingerprint": "5d2b572acc4a467e19028ab43902686d826538f819d072e5b1971345e577a339",
+  "build_fingerprint": "6162efd63769bd2b76a81133080dacfbc6d17c70098827f5f719b84beb2f65e2",
+  "config_sha256": "06792fb878eba2388aa99404273b5dcd8712981dd3113261832574c14a0fe5a4",
+  "code_version": "ebe1a3f279d9a15ed8d59341530dc39b8ddfb006494e02e21ff35298529c440f",
+  "counts": {
+    "fact_booking": 79330,
+    "daily_hotel_context": 800,
+    "daily_data_quality": 800,
+    "dim_date": 800,
+    "dim_country": 166,
+    "dim_channel": 5,
+    "dim_market_segment": 8,
+    "dim_customer_profile": 9,
+    "dim_room_type": 10,
+    "booking_rejection": 0,
+    "row_issue": 532
+  },
+  "quality": {
+    "passed": true,
+    "run_id": "c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873",
+    "data_version": "75deb861-6eb3-4475-8b15-f23bcef91b9b",
+    "staging_batch_id": "735da72d-5c48-4690-984c-13b5c44b9325",
+    "checks": {
+      "source_key_missing": 0,
+      "source_key_extra": 0,
+      "fact_rejection_overlap": 0,
+      "core_acceptance_missing": 0,
+      "core_acceptance_extra": 0,
+      "fact_wrong_run": 0,
+      "first_batch_lineage": 0,
+      "fact_source_measures": 0,
+      "arrival_date_key": 0,
+      "unknown_date_rejection": 0,
+      "context_dates_missing": 0,
+      "quality_dates_missing": 0,
+      "context_wrong_run": 0,
+      "quality_wrong_run": 0,
+      "coverage_missing": 0,
+      "coverage_extra": 0,
+      "daily_quality_counts": 0,
+      "daily_quality_status": 0,
+      "weather_context": 0,
+      "holiday_context": 0,
+      "holiday_scope_coverage": 0,
+      "source_coverage_declaration": 0,
+      "context_source_versions": 0,
+      "dimension_context_join": 0,
+      "calendar_exact_set": 0,
+      "dim_country_exact_set": 0,
+      "dim_country_labels": 0,
+      "dim_channel_exact_set": 0,
+      "dim_channel_labels": 0,
+      "dim_market_segment_exact_set": 0,
+      "dim_market_segment_labels": 0,
+      "dim_customer_profile_exact_set": 0,
+      "dim_customer_profile_labels": 0,
+      "dim_room_type_exact_set": 0,
+      "dim_room_type_labels": 0,
+      "fact_categorical_assignments": 0
+    },
+    "errors": [],
+    "counts": {
+      "fact_booking": 79330,
+      "daily_hotel_context": 800,
+      "daily_data_quality": 800,
+      "dim_date": 800,
+      "dim_country": 166,
+      "dim_channel": 5,
+      "dim_market_segment": 8,
+      "dim_customer_profile": 9,
+      "dim_room_type": 10,
+      "booking_rejection": 0,
+      "row_issue": 532
+    },
+    "actual_guest_quality_days": {
+      "COMPLETE": 679,
+      "PARTIAL": 114
+    },
+    "observed_totals": {
+      "non_canceled_bookings": 46228,
+      "cancellations": 33102,
+      "eligible_non_canceled_guests": "89456",
+      "eligible_non_canceled_nights": "135153",
+      "non_canceled_adr_sum": "4888423.70"
+    }
+  },
+  "mart": {
+    "passed": true,
+    "run_id": "c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873",
+    "data_version": "75deb861-6eb3-4475-8b15-f23bcef91b9b",
+    "build_fingerprint": "0cc427c2611864d4e8ba000d16a60643dd42009064dd964075acf1aa65fd3d39",
+    "checks": {
+      "actual_calendar": 0,
+      "country_dictionary": 0,
+      "context_dates": 0,
+      "quality_dates": 0,
+      "coverage_dates": 0,
+      "daily_hotel_operations_keys": 0,
+      "daily_hotel_operations_calendar": 0,
+      "daily_hotel_operations_context": 0,
+      "daily_hotel_operations_quality": 0,
+      "daily_hotel_operations_measures": 0,
+      "daily_hotel_operations_version": 0,
+      "daily_hotel_operations_country": 0,
+      "daily_hotel_operations_by_country_keys": 0,
+      "daily_hotel_operations_by_country_calendar": 0,
+      "daily_hotel_operations_by_country_context": 0,
+      "daily_hotel_operations_by_country_quality": 0,
+      "daily_hotel_operations_by_country_measures": 0,
+      "daily_hotel_operations_by_country_version": 0,
+      "daily_hotel_operations_by_country_country": 0,
+      "country_daily_reconciliation": 0
+    },
+    "errors": [],
+    "counts": {
+      "daily_hotel_operations": 793,
+      "daily_hotel_operations_by_country": 131638
+    },
+    "actual_guest_quality_days": {
+      "PARTIAL": 114,
+      "COMPLETE": 679
+    },
+    "observed_totals": {
+      "bookings": "79330",
+      "non_canceled_bookings": "46228",
+      "cancellations": "33102",
+      "eligible_non_canceled_guests": "89456",
+      "eligible_non_canceled_nights": "135153",
+      "non_canceled_adr_sum": "4888423.70"
+    }
+  },
+  "input_versions": {
+    "config": {
+      "config_version": "dw-inputs-v2",
+      "contract_version": "dw-operations-6dim-v1",
+      "rule_version": "D01-D08-20261026-v1",
+      "source_manifest": "docs/data_dictionary/operations_source_set.json",
+      "hotel_scope": "City Hotel",
+      "timezone": "Europe/Lisbon",
+      "calendar": {
+        "start": "2015-07-01",
+        "end": "2017-09-07",
+        "label_language": "en"
+      },
+      "actual": {
+        "start": "2015-07-01",
+        "end": "2017-08-31"
+      },
+      "data_coverage_end": "2017-08-31",
+      "data_coverage_end_note": "End of selected observation interval; Booking COMPLETE within this interval under user-accepted assumption booking-completeness-assumption-v1",
+      "country_calendar": "actual_dates_x_accepted_countries_including_UNK",
+      "room_namespace": "shared_anonymized_source_codes",
+      "mappings": {
+        "country": {
+          "file": "pipeline/mappings/country_codes.csv",
+          "sha256": "9e6d8252968ac676b331bed6ea514370663268dc240de6a451d73e20e40a054e",
+          "version": "country-v1",
+          "unknown_code": "UNK"
+        },
+        "channel": {
+          "file": "pipeline/mappings/channel_codes.csv",
+          "sha256": "d12552cd3cbb944698a127093c4bc9e8faa8935a1ab97917760d47a03450b340",
+          "version": "channel-v1",
+          "unknown_code": "UNKNOWN"
+        },
+        "market_segment": {
+          "file": "pipeline/mappings/market_segment_codes.csv",
+          "sha256": "45254e1827d51449ccd9123ec3e08623259567b4817ccfa0012410fadeb48210",
+          "version": "market_segment-v1",
+          "unknown_code": "UNKNOWN"
+        },
+        "customer_type": {
+          "file": "pipeline/mappings/customer_type_codes.csv",
+          "sha256": "9c6674c727f5bead0a60d263374819a4184618e5d940d4c6273716238cbe011e",
+          "version": "customer_type-v1",
+          "unknown_code": "UNKNOWN"
+        },
+        "room_type": {
+          "file": "pipeline/mappings/room_type_codes.csv",
+          "sha256": "dcd8b4955efc7538ddb2ef5968bbc1eb07c5334fea49d84a9ea1353d1b6ea781",
+          "version": "room_type-v1",
+          "unknown_code": "UNKNOWN"
+        }
+      },
+      "coverage": {
+        "file": "pipeline/config/coverage_selected_source_set.json",
+        "sha256": "7d2c242539ad27dbf5003ece43a7cb9e0b155a03f955fce4b60e290452ebf109"
+      }
+    },
+    "coverage": {
+      "version": "selected-coverage-v2",
+      "source_checksums": {
+        "booking": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+        "holiday": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+        "weather": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3"
+      },
+      "default_status": "UNKNOWN",
+      "intervals": [
+        {
+          "source_id": "booking",
+          "scope": "all",
+          "start": "2015-07-01",
+          "end": "2017-08-31",
+          "status": "COMPLETE",
+          "reason": "User-accepted dataset completeness assumption booking-completeness-assumption-v1; only the selected Booking checksum and arrival interval",
+          "evidence": {
+            "file": "artifacts/dw/operations/booking_coverage_accepted_20261027/decision.json",
+            "sha256": "9cffbdf46645cff851b155b7e1147e947da82250c48d764879f632ce5eab98e7"
+          }
+        },
+        {
+          "source_id": "holiday",
+          "scope": "national",
+          "start": "2015-01-01",
+          "end": "2017-12-31",
+          "status": "COMPLETE",
+          "reason": "Full generated PT national calendar replay matches accepted source",
+          "evidence": {
+            "file": "artifacts/dw/operations/input_preparation_20261027/coverage_assessment.json",
+            "sha256": "edc008f3f8d3307cbd2f291f587ea771c13443fba1a3f97ec0d9a0ee97710020"
+          }
+        },
+        {
+          "source_id": "holiday",
+          "scope": "Lisboa",
+          "start": "2015-01-01",
+          "end": "2017-12-31",
+          "status": "COMPLETE",
+          "reason": "Full generated PT/Lisboa calendar replay matches accepted source",
+          "evidence": {
+            "file": "artifacts/dw/operations/input_preparation_20261027/coverage_assessment.json",
+            "sha256": "edc008f3f8d3307cbd2f291f587ea771c13443fba1a3f97ec0d9a0ee97710020"
+          }
+        },
+        {
+          "source_id": "weather",
+          "scope": "all",
+          "start": "2015-07-01",
+          "end": "2017-08-31",
+          "status": "COMPLETE",
+          "reason": "Selected daily series; preflight must verify each day and both measures",
+          "evidence": {
+            "file": "artifacts/dw/operations/input_preparation_20261027/coverage_assessment.json",
+            "sha256": "edc008f3f8d3307cbd2f291f587ea771c13443fba1a3f97ec0d9a0ee97710020"
+          }
+        }
+      ]
+    }
+  }
+}

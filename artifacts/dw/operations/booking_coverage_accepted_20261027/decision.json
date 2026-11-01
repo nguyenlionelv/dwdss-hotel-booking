@@ -1,0 +1,31 @@
+{
+  "decision_id": "booking-completeness-assumption-v1",
+  "accepted_on_local_date": "2026-10-27",
+  "timezone": "Asia/Saigon",
+  "recorded_at_utc": "2026-10-27T03:58:02.354064+00:00",
+  "accepted_by": "project_user",
+  "user_confirmation": "tôi chấp nhận giả định này",
+  "basis": "user_accepted_dataset_completeness_assumption",
+  "source_id": "booking",
+  "source_file_sha256": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+  "source_set_fingerprint": "5d2b572acc4a467e19028ab43902686d826538f819d072e5b1971345e577a339",
+  "hotel_scope": "City Hotel",
+  "start": "2015-07-01",
+  "end": "2017-08-31",
+  "coverage_status": "COMPLETE",
+  "statement": "Chấp nhận file Booking đang được chọn là nguồn đầy đủ cho các reservation City Hotel có ngày đến từ 01/07/2015 đến 31/08/2017 trong phạm vi dự án.",
+  "limitations": [
+    "This is an accepted project assumption, not independent proof of exhaustive PMS capture.",
+    "Outside the accepted interval, Booking coverage remains UNKNOWN.",
+    "Measure eligibility, zero-guest warnings, rejections and D01/D02 quality rules remain in force.",
+    "A new Booking source checksum requires reassessment; this approval does not transfer automatically."
+  ],
+  "previous_configuration": {
+    "file": "artifacts/dw/operations/booking_coverage_accepted_20261027/config_before.json",
+    "sha256": "e84a8f20b19ca593f93e7c657709bb77ba43bcb4fbf9ffc5bd7e613211129ebf"
+  },
+  "previous_coverage": {
+    "file": "artifacts/dw/operations/booking_coverage_accepted_20261027/coverage_before.json",
+    "sha256": "4cb6d646ad03ed924b1b78da72b0e9e519a393d1b84c66763bff2746001cac76"
+  }
+}

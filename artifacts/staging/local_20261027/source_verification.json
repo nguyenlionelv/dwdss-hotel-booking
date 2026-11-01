@@ -1,0 +1,37 @@
+{
+  "status": "RAW_VERIFIED",
+  "contract_version": "staging-v1.1",
+  "source_set_fingerprint": "5d2b572acc4a467e19028ab43902686d826538f819d072e5b1971345e577a339",
+  "sources": {
+    "booking": {
+      "file": "data/raw/booking/mathsian_hotel-bookings_20261017/hotel_bookings.csv",
+      "sha256": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+      "metadata_file": null,
+      "expected": {
+        "raw_count": 119390,
+        "staged_count": 79330,
+        "out_of_scope_count": 40060,
+        "unidentified_count": 0
+      }
+    },
+    "holiday": {
+      "file": "data/raw/holiday/pt_lisboa_holidays_2015_2017_20261017.csv",
+      "sha256": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+      "metadata_file": "data/raw/holiday/pt_lisboa_holidays_2015_2017_20261017.metadata.json",
+      "expected": {
+        "raw_count": 38,
+        "staged_count": 38
+      }
+    },
+    "weather": {
+      "file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261027.json",
+      "sha256": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3",
+      "metadata_file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261027.metadata.json",
+      "expected": {
+        "raw_count": 793,
+        "staged_count": 793
+      }
+    }
+  },
+  "database_loaded_by_this_step": false
+}

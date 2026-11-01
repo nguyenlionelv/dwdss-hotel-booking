@@ -1,0 +1,20 @@
+{
+  "status": "no-op",
+  "run_id": "4481d8b1-a6c7-451d-87a6-057d8273e7b2",
+  "data_version": "b49e51b6-ac15-4227-8b82-77d465e4cc93",
+  "staging_batch_id": "735da72d-5c48-4690-984c-13b5c44b9325",
+  "build_fingerprint": "4071c4dfe231bf05bb1a80a96e1660c3697f1ac7a42e524c8577b3c4be06cb22",
+  "counts": {
+    "dim_date": 800,
+    "row_issue": 532,
+    "dim_channel": 5,
+    "dim_country": 166,
+    "fact_booking": 79330,
+    "dim_room_type": 10,
+    "booking_rejection": 0,
+    "daily_data_quality": 800,
+    "dim_market_segment": 8,
+    "daily_hotel_context": 800,
+    "dim_customer_profile": 9
+  }
+}

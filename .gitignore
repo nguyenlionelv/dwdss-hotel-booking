@@ -13,6 +13,10 @@ venv/
 .ruff_cache/
 .coverage
 
+# Disposable pytest workspaces; keep named run evidence outside these folders.
+/artifacts/tests/tmp_*/
+/artifacts/tests/dw_*/
+
 # Node / frontend
 node_modules/
 frontend/dist/

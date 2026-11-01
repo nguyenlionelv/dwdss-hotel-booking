@@ -1,0 +1,4 @@
+{
+  "status": "failed",
+  "error": "PostgreSQL pipeline operation failed (SQLSTATE 57014)"
+}
