@@ -1,0 +1,13 @@
+R1: DWDSS – Team Assignment & Execution Tracker |  |  |  |  |  |  | 
+R3: Hotel Booking DWDSS | Deadline: 10/11/2026 | React + FastAPI + PostgreSQL + Python ETL/ML + Docker |  |  |  |  |  |  | 
+R5: Member | Primary Ownership | Core Deliverables | Secondary / Support | Main Risk | Task Count | Done | Avg Progress
+R6: Member 1 – Architecture / DW / Backend | System design, DW/Mart, FastAPI, integration | BR + architecture, DW schema, Mart design/SQL, API contracts, Docker Compose | Review ETL contracts; support demo/report | Becoming integration bottleneck | 19 | 0 | 0.05789473684210527
+R7: Member 2 – Data Engineering / BI | Data sources, staging, ETL, quality, OLAP/reporting data | Raw sources, staging, ETL #1/#2/#3, quality checks, OLAP SQL, report views | Support backend repositories and KPI validation | ETL scope grows with new sources | 19 | 0 | 0
+R8: Member 3 – Frontend / ML-DSS | React dashboard, ML/DSS, visualization | React UI, 3 prediction pipelines, DSS rules/pages, charts | Support API response design and demo polish | Frontend + 3 models may overload late phase | 10 | 0 | 0
+R10: Working Rules / Governance |  |  |  |  |  |  | 
+R11: 1 | Không merge code lớn nếu data contract/schema/API contract chưa review. | Milestone | Target | Owner | Gate | Meaning
+R12: 2 | Raw data bất biến; pipeline chính không sửa file source bằng tay. | Design Baseline | 46302 | Member 1 – Architecture / DW / Backend | DESIGN BASELINE | BR + architecture + target + source plan
+R13: 3 | Schema Freeze trước khi hoàn thiện dashboard/model chính thức. | DW Ready | 46320 | Member 1 – Architecture / DW / Backend | SCHEMA FREEZE | Fact/Dim + ETL core validated
+R14: 4 | Analytics KPI = Reporting KPI = SQL validation với cùng filter. | Mart + OLAP Ready | 46324 | Member 2 – Data Engineering / BI | MART READY | Official marts + OLAP baseline
+R15: 5 | ML dùng official Mart/feature dataset, không tự đọc raw khi pipeline đã tồn tại. | Demo Feature Complete | 46331 | Member 3 – Frontend / ML-DSS | FEATURE COMPLETE | React + Reports + 3 DSS flows
+R16: 6 | Mỗi task chỉ được Done khi deliverable + acceptance criteria đều đạt. | Final | 46336 | All | SUBMIT | Stable integrated release

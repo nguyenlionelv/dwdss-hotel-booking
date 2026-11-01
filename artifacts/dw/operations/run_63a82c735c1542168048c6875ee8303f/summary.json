@@ -1,0 +1,47 @@
+{
+  "status": "completed",
+  "output_dir": "D:\\HCMUT\\HK261\\CO4031_Data_Warehouse\\dwdss-hotel-booking\\artifacts\\dw\\operations\\run_63a82c735c1542168048c6875ee8303f",
+  "steps": [
+    {
+      "name": "preflight",
+      "report": "inputs/preflight.json",
+      "exit_code": 0
+    },
+    {
+      "name": "migration",
+      "report": "migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "mart_migration",
+      "report": "mart_migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "load",
+      "report": "first_load.json",
+      "exit_code": 0
+    },
+    {
+      "name": "quality",
+      "report": "quality_report.json",
+      "exit_code": 0
+    },
+    {
+      "name": "rerun",
+      "report": "rerun.json",
+      "exit_code": 0
+    }
+  ],
+  "tests_run": false,
+  "run_id": "7cb4772a-b462-4798-af14-cb635ac53b87",
+  "data_version": "14f02116-2a08-4d74-8974-be2d797728be",
+  "load_status": "no-op",
+  "verified": true,
+  "mart_verified": true,
+  "mart_counts": {
+    "daily_hotel_operations": 793,
+    "daily_hotel_operations_by_country": 131638
+  },
+  "mart_build_fingerprint": "03abf2b66edac0dc116d99b4abfc02f7b785c0c8bcd881b388f25fd4d0f52298"
+}

@@ -1,0 +1,14 @@
+{
+  "status": "failed",
+  "output_dir": "D:\\HCMUT\\HK261\\CO4031_Data_Warehouse\\dwdss-hotel-booking\\artifacts\\dw\\operations\\run_f7dea203aa68482ca2127b7a5e0c7d0a",
+  "steps": [
+    {
+      "name": "preflight",
+      "report": "inputs/preflight.json",
+      "exit_code": 1
+    }
+  ],
+  "tests_run": false,
+  "failed_step": "preflight",
+  "error": "Command failed with exit code 1; inspect inputs/preflight.json"
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "dw",
+  "status": "no-op",
+  "applied": [],
+  "skipped": [
+    "001_control.sql",
+    "002_dimensions.sql",
+    "003_fact_context_quality.sql"
+  ],
+  "migrations": [
+    {
+      "version": "001_control.sql",
+      "file_sha256": "9940348485d25f98b7148ffa3ee2cf86c490ea3f494df19f5b2bf15206302bb2"
+    },
+    {
+      "version": "002_dimensions.sql",
+      "file_sha256": "11b78861569a4f011ddd62452e7b95e9c45c4970b40cb7c50ec5e43be492b0af"
+    },
+    {
+      "version": "003_fact_context_quality.sql",
+      "file_sha256": "3a8b1238273a31dca9282979d4b1b1914f9fa319af669af14b721705398060cb"
+    }
+  ],
+  "database_version": "18.0",
+  "finished_at_utc": "2026-10-28T02:16:33.406581+00:00"
+}
