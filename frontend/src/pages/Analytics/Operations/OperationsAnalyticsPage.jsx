@@ -52,6 +52,31 @@ const GRAIN_OPTIONS = [
   { id: "year", label: "Year (Roll-up)" },
 ];
 
+const CHILD_GRAIN = {
+  year: "quarter",
+  quarter: "month",
+  month: "week",
+  week: "day",
+};
+
+function getPeriodRange(item, grain) {
+  if (item.period_start && item.period_end) {
+    return { from: item.period_start, to: item.period_end };
+  }
+  const label = item.period_label;
+  if (grain === "month") {
+    // "2016-08"
+    const [y, m] = label.split("-").map(Number);
+    const last = new Date(y, m, 0).getDate();
+    const mm = String(m).padStart(2, "0");
+    return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${last}` };
+  }
+  if (grain === "year") {
+    return { from: `${label}-01-01`, to: `${label}-12-31` };
+  }
+  return null;
+}
+
 export default function OperationsAnalyticsPage() {
   const { metadata } = useSystemContext();
 
@@ -62,6 +87,7 @@ export default function OperationsAnalyticsPage() {
   const [dayType, setDayType] = useState("ALL");
   const [holidayFilter, setHolidayFilter] = useState("ALL");
   const [drilldownContext, setDrilldownContext] = useState(null);
+  const [drilldownRange, setDrilldownRange] = useState(null);
 
   // Pivot Matrix State
   const [pivotColDim, setPivotColDim] = useState("country");
@@ -86,6 +112,8 @@ export default function OperationsAnalyticsPage() {
         country,
         day_type: dayType,
         is_holiday: holidayFilter,
+        date_from: drilldownRange?.from,
+        date_to: drilldownRange?.to,
       }),
       fetchOperationsPivot({
         col_dim: pivotColDim,
@@ -110,22 +138,41 @@ export default function OperationsAnalyticsPage() {
     holidayFilter,
     pivotColDim,
     pivotMeasure,
+    drilldownRange,
   ]);
 
   const handleGrainChange = (newGrain) => {
     setGrain(newGrain);
-    if (newGrain === "day") {
-      setDrilldownContext("2016-08 (Tháng cao điểm Hè — 31 ngày)");
-    } else {
-      setDrilldownContext(null);
-    }
+    setDrilldownRange(null);
+    setDrilldownContext(null);
   };
 
   const handleBarDrilldown = (item) => {
-    if (grain !== "day") {
-      setGrain("day");
-      setDrilldownContext(`${item.period_label} (Chi tiết từng ngày)`);
-    }
+    const childGrain = CHILD_GRAIN[grain];
+    if (!childGrain) return; // đã ở mức day, không drill tiếp
+
+    const range = getPeriodRange(item, grain);
+    if (!range) return;
+
+    setDrilldownRange({
+      ...range,
+      label: item.period_label,
+      parentGrain: grain,
+      // giữ stack để roll-up nhiều cấp
+      parent: drilldownRange,
+    });
+    setGrain(childGrain);
+    setDrilldownContext(`${item.period_label} (Chi tiết theo ${childGrain})`);
+  };
+
+  const handleRollUp = () => {
+    if (!drilldownRange) return;
+    setGrain(drilldownRange.parentGrain);
+    const parent = drilldownRange.parent || null;
+    setDrilldownRange(parent);
+    setDrilldownContext(
+      parent ? `${parent.label} (Chi tiết theo ${parent.parentGrain})` : null,
+    );
   };
 
   const handleResetFilters = () => {
@@ -227,10 +274,10 @@ export default function OperationsAnalyticsPage() {
                   <span>Drill-down: {drilldownContext}</span>
                   <button
                     type="button"
-                    onClick={() => handleGrainChange("month")}
+                    onClick={handleRollUp}
                     className="ml-1 underline hover:text-primary font-bold cursor-pointer"
                   >
-                    Roll-up Tháng
+                    Roll-up
                   </button>
                 </Badge>
               )}
@@ -469,12 +516,13 @@ export default function OperationsAnalyticsPage() {
                     );
 
                     const isSpecial = item.is_peak || item.is_holiday_period;
+                    const canDrill = !!CHILD_GRAIN[grain];
 
                     return (
                       <button
                         key={item.period_label}
                         type="button"
-                        onClick={() => handleBarDrilldown(item)}
+                        onClick={() => canDrill && handleBarDrilldown(item)}
                         title={`${item.period_label}: ${item.room_nights.toLocaleString()} đêm phòng`}
                         className="group flex-1 min-w-[20px] h-full flex flex-col justify-end items-center cursor-pointer relative"
                       >
