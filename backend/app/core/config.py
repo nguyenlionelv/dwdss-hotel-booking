@@ -10,7 +10,19 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 def load_dotenv(env_path: Path | None = None) -> None:
-    """Read local .env without overwriting existing process environment variables."""
+    """Read local .env without overwriting existing process environment variables.
+
+    Vai trò (Role):
+        Đọc tệp cấu hình `.env` cục bộ và nạp các cặp khóa-giá trị vào biến môi trường
+        của tiến trình (`os.environ`) mà không ghi đè các biến môi trường đã tồn tại.
+
+    Input:
+        - env_path (Path | None, mặc định=None): Đường dẫn tới tệp `.env`. Nếu không truyền,
+          hàm mặc định tìm tệp `.env` tại thư mục gốc của dự án (`ROOT / ".env"`).
+
+    Output:
+        - None: Không trả về giá trị (cập nhật trực tiếp vào `os.environ` dưới dạng side-effect).
+    """
     target = env_path or (ROOT / ".env")
     if not target.is_file():
         return
@@ -48,5 +60,17 @@ class Settings:
 
 
 def get_settings() -> Settings:
+    """Load environment variables and return an immutable Settings instance.
+
+    Vai trò (Role):
+        Kích hoạt việc nạp tệp `.env` thông qua `load_dotenv()` và khởi tạo đối tượng
+        cấu hình bất biến `Settings` chứa thông số kết nối PostgreSQL, thông tin khách sạn và CORS.
+
+    Input:
+        - Không có tham số đầu vào (đọc gián tiếp từ biến môi trường hệ thống và tệp `.env`).
+
+    Output:
+        - Settings: Đối tượng dataclass bất biến (`frozen=True`) chứa toàn bộ cấu hình ứng dụng.
+    """
     load_dotenv()
     return Settings()

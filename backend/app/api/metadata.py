@@ -35,7 +35,19 @@ SUPPORTED_MEASURES = [
 
 
 def get_db(request: Request):
-    """Dependency yielding a database connection within a read-only transaction."""
+    """Dependency yielding a database connection within a read-only transaction.
+
+    Vai trò (Role):
+        FastAPI dependency cung cấp kết nối cơ sở dữ liệu nằm trong một transaction chỉ đọc
+        (`read_only_tx`) cho các API endpoint. Tự động lấy `dbname` từ `request.app.state.dbname` nếu có.
+
+    Input:
+        - request (Request): Đối tượng HTTP Request của FastAPI dùng để truy xuất `app.state`.
+
+    Output:
+        - Generator[psycopg.Connection, None, None]: Sinh ra (`yield`) kết nối `psycopg.Connection`
+          cho phép thực thi truy vấn an toàn trong phạm vi một request.
+    """
     dbname = getattr(request.app.state, "dbname", None)
     with read_only_tx(dbname) as conn:
         yield conn
@@ -43,7 +55,22 @@ def get_db(request: Request):
 
 @router.get("/health", response_model=HealthResponse)
 def health_check(request: Request, settings: Settings = Depends(get_settings)) -> HealthResponse:
-    """Check connectivity and whether Operations Mart is published and matches active DW."""
+    """Check connectivity and whether Operations Mart is published and matches active DW.
+
+    Vai trò (Role):
+        API endpoint kiểm tra sức khỏe hệ thống (`/health`), xác minh khả năng kết nối tới PostgreSQL,
+        kiểm tra xem bảng `mart.dataset_state` đã được xuất bản (published) hay chưa và có khớp
+        với `dw.active_dataset` hiện hành hay không.
+
+    Input:
+        - request (Request): Đối tượng HTTP Request của FastAPI để lấy `dbname` override nếu có.
+        - settings (Settings): Cấu hình ứng dụng được tiêm qua `Depends(get_settings)`.
+
+    Output:
+        - HealthResponse: Đối tượng schema chứa trạng thái sức khỏe (`"healthy"` hoặc `"degraded"`),
+          cờ kết nối DB, trạng thái mart published, tính đồng bộ với DW, `data_version`, `dw_run_id`,
+          thời điểm `published_at` và thông điệp chi tiết (nếu có lỗi/cảnh báo).
+    """
     dbname = getattr(request.app.state, "dbname", None)
     db_connected = False
     try:
@@ -105,7 +132,22 @@ def get_metadata(
     conn: psycopg.Connection = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> MetadataResponse:
-    """Return published Operations Mart metadata, available dates, countries, and status summary."""
+    """Return published Operations Mart metadata, available dates, countries, and status summary.
+
+    Vai trò (Role):
+        API endpoint trả về siêu dữ liệu (metadata) tổng thể của Operations Mart đã được công bố,
+        bao gồm thông tin khách sạn, phiên bản dữ liệu, khoảng ngày thực tế (`date_range`),
+        phân phối trạng thái chất lượng dữ liệu (`context_status_summary`), danh sách độ mịn thời gian
+        (`supported_grains`), các chỉ số hỗ trợ (`supported_measures`) và danh mục quốc gia (`countries`).
+
+    Input:
+        - conn (psycopg.Connection): Kết nối DB trong transaction chỉ đọc từ `Depends(get_db)`.
+        - settings (Settings): Cấu hình ứng dụng từ `Depends(get_settings)`.
+
+    Output:
+        - MetadataResponse: Đối tượng schema chứa toàn bộ metadata của Operations Mart.
+          Ném `HTTPException(503)` nếu mart chưa được khởi tạo hoặc lệch phiên bản so với DW active.
+    """
     cur = conn.cursor()
     # 1. Check published state
     try:

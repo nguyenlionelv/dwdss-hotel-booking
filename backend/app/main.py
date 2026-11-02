@@ -13,6 +13,20 @@ from backend.app.core.config import get_settings
 
 
 def create_app(dbname: str | None = None) -> FastAPI:
+    """Create and configure the FastAPI application instance.
+
+    Vai trò (Role):
+        Khởi tạo ứng dụng FastAPI chính cho hệ thống DWDSS Hotel Booking (Operations Mart),
+        cấu hình middleware CORS, gắn thông tin override database (nếu có dùng cho kiểm thử),
+        và đăng ký toàn bộ các API router (Metadata, Analytics, Reports, DSS).
+
+    Input:
+        - dbname (str | None, mặc định=None): Tên cơ sở dữ liệu PostgreSQL tùy chọn để ghi đè
+          cấu hình mặc định trong `app.state.dbname` (thường phục vụ kiểm thử tích hợp).
+
+    Output:
+        - FastAPI: Thực thể ứng dụng FastAPI đã được cấu hình đầy đủ middleware và routers.
+    """
     settings = get_settings()
     app = FastAPI(
         title="DWDSS Hotel Booking API - Operations Mart (City Hotel)",
