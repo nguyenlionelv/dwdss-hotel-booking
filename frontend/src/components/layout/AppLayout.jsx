@@ -5,11 +5,11 @@ import Header from './Header';
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen bg-[#f4f5f8] text-slate-900 flex">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Sidebar />
-      <div className="ml-[260px] flex-1 flex flex-col min-w-0">
+      <div className="lg:pl-64 flex-1 flex flex-col min-w-0 transition-all">
         <Header />
-        <main className="p-8 max-w-[1600px] w-full mx-auto space-y-7 flex-1">
+        <main className="p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto space-y-6 flex-1">
           <Outlet />
         </main>
       </div>

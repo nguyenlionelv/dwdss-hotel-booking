@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 /**
  * Accessible Scrollable Table Container following modern-web-guidance (responsive-table):
@@ -14,7 +15,10 @@ export default function ResponsiveTableContainer({
 }) {
   return (
     <div
-      className={`table-scroll-region ${className}`}
+      className={cn(
+        'table-scroll-region border rounded-md bg-card shadow-2xs',
+        className
+      )}
       role="region"
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}

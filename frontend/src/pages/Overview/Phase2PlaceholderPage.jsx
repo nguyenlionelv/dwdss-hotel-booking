@@ -1,5 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Lock, BarChart3, FileSpreadsheet, BrainCircuit, ArrowLeft } from 'lucide-react';
 
 const DOMAIN_INFO = {
   '/analytics/guest-customer': {
@@ -28,57 +32,54 @@ export default function Phase2PlaceholderPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-12">
-      <div className="quixotic-card p-8 text-center space-y-5">
-        <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mx-auto">
-          <span className="material-symbols-outlined text-3xl">lock_clock</span>
+    <div className="max-w-2xl mx-auto py-12">
+      <Card className="text-center p-6 sm:p-8 space-y-4">
+        <div className="w-12 h-12 rounded-lg bg-muted text-muted-foreground flex items-center justify-center mx-auto border">
+          <Lock className="h-6 w-6 text-muted-foreground" />
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold uppercase tracking-wider">
           <span>{info.code} • Phase 2 Roadmap (Out of MVP Scope)</span>
         </div>
 
-        <h1 className="text-2xl font-display font-extrabold text-slate-900">
+        <CardTitle className="text-xl sm:text-2xl font-display font-extrabold text-foreground">
           {info.title}
-        </h1>
+        </CardTitle>
 
-        <p className="text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
+        <CardDescription className="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
           {info.desc} Theo tài liệu{' '}
-          <code className="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">
+          <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded border">
             docs/scope_assessment.md
           </code>{' '}
           và{' '}
-          <code className="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">
+          <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded border">
             docs/detailed_plan.md
           </code>
           , phạm vi MVP chính thức tập trung sâu vào{' '}
-          <strong>Daily Hotel Operations (City Hotel — Lisbon, Portugal)</strong>.
-        </p>
+          <strong className="text-foreground">Daily Hotel Operations (City Hotel — Lisbon, Portugal)</strong>.
+        </CardDescription>
 
-        <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to="/analytics/operations"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0059b5] text-white text-xs font-bold shadow-sm hover:bg-[#00438a] transition-all"
-          >
-            <span className="material-symbols-outlined text-[18px]">analytics</span>
-            Về Operations Analytics (BI-01)
-          </Link>
-          <Link
-            to="/reports/operations"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all"
-          >
-            <span className="material-symbols-outlined text-[18px]">assessment</span>
-            Mở Operations Reports (DO-R01)
-          </Link>
-          <Link
-            to="/dss/demand-forecast"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-sm hover:bg-emerald-700 transition-all"
-          >
-            <span className="material-symbols-outlined text-[18px]">psychology</span>
-            Mở DSS Demand Forecast (DO-M01)
-          </Link>
+        <div className="pt-4 flex flex-wrap items-center justify-center gap-2.5">
+          <Button variant="default" size="sm" asChild className="gap-1.5">
+            <Link to="/analytics/operations">
+              <BarChart3 className="h-4 w-4" />
+              <span>Về Operations Analytics (BI-01)</span>
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild className="gap-1.5">
+            <Link to="/reports/operations">
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+              <span>Mở Operations Reports (DO-R01)</span>
+            </Link>
+          </Button>
+          <Button variant="emerald" size="sm" asChild className="gap-1.5">
+            <Link to="/dss/demand-forecast">
+              <BrainCircuit className="h-4 w-4" />
+              <span>Mở DSS Demand Forecast (DO-M01)</span>
+            </Link>
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,25 +1,34 @@
 import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { TrendingUp, AlertTriangle, CheckCircle2, Zap } from 'lucide-react';
 
-const TONE_MAP = {
+const TONE_STYLES = {
   emerald: {
-    iconBg: 'bg-emerald-50 text-emerald-600',
-    badgeBg: 'bg-emerald-50 text-emerald-700',
+    accentBar: 'border-l-emerald-600',
+    iconBg: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    badgeVariant: 'emerald',
   },
   blue: {
-    iconBg: 'bg-blue-50 text-blue-600',
-    badgeBg: 'bg-blue-50 text-blue-700',
+    accentBar: 'border-l-primary',
+    iconBg: 'bg-blue-50 text-primary border-blue-100',
+    badgeVariant: 'blue',
   },
   indigo: {
-    iconBg: 'bg-indigo-50 text-indigo-600',
-    badgeBg: 'bg-indigo-50 text-indigo-700',
+    accentBar: 'border-l-indigo-600',
+    iconBg: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    badgeVariant: 'secondary',
   },
   amber: {
-    iconBg: 'bg-amber-50 text-amber-600',
-    badgeBg: 'bg-amber-50 text-amber-700',
+    accentBar: 'border-l-amber-500',
+    iconBg: 'bg-amber-50 text-amber-700 border-amber-100',
+    badgeVariant: 'amber',
   },
   rose: {
-    iconBg: 'bg-rose-50 text-rose-600',
-    badgeBg: 'bg-rose-50 text-rose-700',
+    accentBar: 'border-l-rose-500',
+    iconBg: 'bg-rose-50 text-rose-700 border-rose-100',
+    badgeVariant: 'destructive',
   },
 };
 
@@ -31,54 +40,75 @@ export default function KpiCard({
   badgeIcon,
   subtext,
   icon = 'analytics',
-  tone = 'emerald',
+  tone = 'blue',
   highlightBorder = false,
+  className,
 }) {
-  const palette = TONE_MAP[tone] || TONE_MAP.emerald;
+  const style = TONE_STYLES[tone] || TONE_STYLES.blue;
 
   return (
-    <div
-      className={`quixotic-card p-6 relative overflow-hidden ${
-        highlightBorder ? 'border-l-4 border-l-rose-500' : ''
-      }`}
+    <Card
+      className={cn(
+        'overflow-hidden transition-all duration-150 hover:border-slate-300 hover:shadow-xs',
+        highlightBorder && cn('border-l-4', style.accentBar),
+        className
+      )}
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-          {label}
-        </span>
-        <div
-          className={`w-10 h-10 rounded-2xl flex items-center justify-center ${palette.iconBg}`}
-        >
-          <span className="material-symbols-outlined text-[20px]">{icon}</span>
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground line-clamp-1">
+            {label}
+          </span>
+          <div
+            className={cn(
+              'w-8 h-8 rounded-md flex items-center justify-center shrink-0 border text-xs',
+              style.iconBg
+            )}
+          >
+            {typeof icon === 'string' ? (
+              <span className="material-symbols-outlined text-[18px]">{icon}</span>
+            ) : (
+              icon
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-display font-extrabold text-slate-900 tabular-nums">
-          {value}
-        </span>
-        {unit && (
-          <span className="text-sm font-medium text-slate-500">{unit}</span>
-        )}
-      </div>
-
-      {(badgeText || subtext) && (
-        <div className="mt-3 flex items-center gap-2 text-xs flex-wrap">
-          {badgeText && (
-            <span
-              className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-md ${palette.badgeBg}`}
-            >
-              {badgeIcon && (
-                <span className="material-symbols-outlined text-[14px]">
-                  {badgeIcon}
-                </span>
-              )}
-              {badgeText}
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl sm:text-3xl font-display font-extrabold text-foreground tabular-nums tracking-tight">
+            {value}
+          </span>
+          {unit && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {unit}
             </span>
           )}
-          {subtext && <span className="text-slate-400">{subtext}</span>}
         </div>
-      )}
-    </div>
+
+        {(badgeText || subtext) && (
+          <div className="mt-2.5 flex items-center gap-2 text-xs flex-wrap">
+            {badgeText && (
+              <Badge
+                variant={style.badgeVariant}
+                className="gap-1 font-semibold text-[10px] px-1.5 py-0.5"
+              >
+                {badgeIcon === 'trending_up' && <TrendingUp className="h-3 w-3" />}
+                {badgeIcon === 'warning' && <AlertTriangle className="h-3 w-3" />}
+                {badgeIcon && badgeIcon !== 'trending_up' && badgeIcon !== 'warning' && (
+                  <span className="material-symbols-outlined text-[13px]">
+                    {badgeIcon}
+                  </span>
+                )}
+                {badgeText}
+              </Badge>
+            )}
+            {subtext && (
+              <span className="text-[11px] text-muted-foreground truncate">
+                {subtext}
+              </span>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
