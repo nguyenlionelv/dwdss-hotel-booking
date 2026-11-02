@@ -3,11 +3,27 @@ import { MOCK_REPORTS_BY_WEEK } from '../data/mockData';
 
 export async function fetchWeeklyOperationsReport(weekKey = '2017-W32') {
   try {
-    const res = await apiRequest(`/api/reports/operations/weekly?week=${encodeURIComponent(weekKey)}`);
+    const res = await apiRequest(
+      `/api/reports/operations/weekly-demand?week=${encodeURIComponent(weekKey)}`
+    );
     return { ...res, is_mock: false };
   } catch {
-    const report = MOCK_REPORTS_BY_WEEK[weekKey] || MOCK_REPORTS_BY_WEEK['2017-W32'];
+    const report =
+      MOCK_REPORTS_BY_WEEK[weekKey] || MOCK_REPORTS_BY_WEEK['2017-W32'];
     return { ...report, is_mock: true };
+  }
+}
+
+export async function fetchCapacitySummaryReport(weekKey = '2017-W32') {
+  try {
+    const res = await apiRequest(
+      `/api/reports/operations/capacity-summary?week=${encodeURIComponent(weekKey)}`
+    );
+    return { ...res, is_mock: false };
+  } catch {
+    const report =
+      MOCK_REPORTS_BY_WEEK[weekKey] || MOCK_REPORTS_BY_WEEK['2017-W32'];
+    return { ...report.capacity_summary, is_mock: true };
   }
 }
 
@@ -45,7 +61,10 @@ export function exportWeeklyReportToCsv(reportData) {
 
   const csvContent =
     '\uFEFF' +
-    [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join('\n');
+    [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
+    ].join('\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -53,7 +72,9 @@ export function exportWeeklyReportToCsv(reportData) {
   link.href = url;
   link.setAttribute(
     'download',
-    `DO-R01_City_Hotel_${reportData.period_summary?.iso_year || 2017}_W${reportData.period_summary?.iso_week || 32}.csv`
+    `DO-R01_City_Hotel_${reportData.period_summary?.iso_year || 2017}_W${
+      reportData.period_summary?.iso_week || 32
+    }.csv`
   );
   document.body.appendChild(link);
   link.click();
