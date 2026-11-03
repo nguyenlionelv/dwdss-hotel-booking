@@ -479,16 +479,29 @@ export default function OperationsAnalyticsPage() {
                 </CardDescription>
               </div>
 
-              <div className="flex items-center gap-3 text-xs font-medium">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-primary" />
-                  <span className="text-muted-foreground">
-                    Đêm phòng thường
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600" />
-                  <span className="text-muted-foreground">Kỳ có Lễ / Đỉnh</span>
+              <div className="flex flex-wrap flex-col items-end gap-4 text-xs font-medium">
+                {!["year", "quarter"].includes(grain) && (
+                  <button
+                    type="button"
+                    onClick={handleRollUp}
+                    className="inline-flex items-center justify-center rounded-md border border-input bg-background px-2.5 py-1 text-xs font-semibold shadow-xs hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+                  >
+                    Roll-up
+                  </button>
+                )}
+                <div className="flex items-center gap-3 text-xs font-medium">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-xs bg-primary" />
+                    <span className="text-muted-foreground">
+                      Đêm phòng thường
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600" />
+                    <span className="text-muted-foreground">
+                      Kỳ có Lễ / Đỉnh
+                    </span>
+                  </div>
                 </div>
               </div>
             </CardHeader>
