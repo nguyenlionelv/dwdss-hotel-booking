@@ -46,7 +46,7 @@ const AVAILABLE_WEEKS = [
   { id: "2017-W32", label: "2017 — Week 32 (07/08/2017 – 13/08/2017)" },
   {
     id: "2017-W33",
-    label: "2017 — Week 33 (14/08/2017 – 20/08/2017) [Lễ Quốc gia]",
+    label: "2017 — Week 33 (14/08/2017 – 20/08/2017) [National Holiday]",
   },
 ];
 
@@ -133,11 +133,11 @@ export default function OperationsReportsPage() {
             Operations Reports — Weekly Demand &amp; Capacity Summary
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Báo cáo cố định chuẩn hóa đối soát trực tiếp với{" "}
+            Standardized static operational report reconciled directly against{" "}
             <code className="text-[11px] font-mono bg-muted px-1.5 py-0.5 rounded text-foreground border">
               mart.operations_weekly_report
             </code>{" "}
-            — cam kết cùng bộ lọc cho ra cùng KPI với trang OLAP Analytics.
+            — guaranteed 100% KPI parity with OLAP Analytics under identical filters.
           </p>
         </div>
 
@@ -150,7 +150,7 @@ export default function OperationsReportsPage() {
             className="gap-1.5"
           >
             <Printer className="h-4 w-4" />
-            <span>In Báo Cáo</span>
+            <span>Print Report</span>
           </Button>
           <Button
             type="button"
@@ -160,7 +160,7 @@ export default function OperationsReportsPage() {
             className="gap-1.5"
           >
             <Download className="h-4 w-4" />
-            <span>Xuất CSV</span>
+            <span>Export CSV</span>
           </Button>
         </div>
       </div>
@@ -174,7 +174,7 @@ export default function OperationsReportsPage() {
                 htmlFor="report-week-select"
                 className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
               >
-                Kỳ Báo Cáo Tuần (ISO Week — Europe/Lisbon)
+                Weekly Report Period (ISO Week — Europe/Lisbon)
               </label>
               <select
                 id="report-week-select"
@@ -192,7 +192,7 @@ export default function OperationsReportsPage() {
 
             <div>
               <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                Lọc Nhóm Ngày (Day Type Filter)
+                Day Type Filter
               </span>
               <div className="flex items-center p-0.5 rounded-lg bg-muted border text-xs">
                 {["ALL", "Weekday", "Weekend"].map((type) => (
@@ -200,17 +200,17 @@ export default function OperationsReportsPage() {
                     key={type}
                     type="button"
                     onClick={() => setDayTypeFilter(type)}
-                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                       dayTypeFilter === type
                         ? "bg-background text-foreground shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {type === "ALL"
-                      ? "Cả tuần (7 ngày)"
+                      ? "Full Week (7 Days)"
                       : type === "Weekday"
-                        ? "Ngày thường (Mon–Thu)"
-                        : "Cuối tuần (Fri–Sun)"}
+                        ? "Weekdays (Mon–Thu)"
+                        : "Weekend (Fri–Sun)"}
                   </button>
                 ))}
               </div>
@@ -221,12 +221,11 @@ export default function OperationsReportsPage() {
             <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
             <div className="text-xs">
               <div className="font-bold text-emerald-900">
-                Đối soát KPI tự động
+                Automated KPI Reconciliation
               </div>
               <div className="text-[11px] text-emerald-700">
-                Khoảng ngày: {summary.start_date || "2017-08-07"} →{" "}
-                {summary.end_date || "2017-08-13"} • {dailyRows.length} ngày
-                hiển thị
+                Date Range: {summary.start_date || "2017-08-07"} →{" "}
+                {summary.end_date || "2017-08-13"} • {dailyRows.length} days displayed
               </div>
             </div>
           </div>
@@ -249,40 +248,40 @@ export default function OperationsReportsPage() {
         ) : (
           <>
             <KpiCard
-              label="Tổng Check-in Tuần (Arrivals)"
+              label="Total Weekly Arrivals"
               value={reconciledTotals.arrivals.toLocaleString()}
-              unit="lượt"
+              unit="check-ins"
               badgeText={summary.yoy_arrivals_delta || "+4.2% YoY"}
               badgeIcon="trending_up"
-              subtext={`Trả phòng: ${reconciledTotals.departures.toLocaleString()} lượt`}
+              subtext={`Departures: ${reconciledTotals.departures.toLocaleString()}`}
               icon="login"
               tone="emerald"
             />
             <KpiCard
-              label="Tổng Đêm Phòng (Room Nights)"
+              label="Total Room Nights"
               value={reconciledTotals.room_nights.toLocaleString()}
-              unit="đêm"
+              unit="nights"
               badgeText={summary.yoy_room_nights_delta || "+1.8% YoY"}
               badgeIcon="trending_up"
-              subtext={`ADR TB: €${avgAdr}`}
+              subtext={`Avg ADR: €${avgAdr}`}
               icon="bed"
               tone="blue"
             />
             <KpiCard
-              label="Khách Phục Vụ TB / Ngày"
+              label="Avg Daily Active Guests"
               value={avgDailyGuests.toLocaleString()}
-              unit="khách/ngày"
+              unit="guests/day"
               badgeText="Optimal Staffing"
-              subtext="Tổng khách lưu trú thực tế"
+              subtext="Actual in-house guests"
               icon="group"
               tone="indigo"
             />
             <KpiCard
-              label="Ngày Cao Điểm Nhất (Peak Day)"
+              label="Peak Demand Day"
               value={peakRow.date_display || "12/08/2017"}
-              badgeText={`${peakRow.active_guests || 745} khách`}
+              badgeText={`${peakRow.active_guests || 745} guests`}
               badgeIcon="warning"
-              subtext={`${peakRow.day_of_week || "Thứ Bảy"} (${peakRow.arrivals || 162} check-in)`}
+              subtext={`${peakRow.day_of_week || "Saturday"} (${peakRow.arrivals || 162} arrivals)`}
               icon="local_fire_department"
               tone="rose"
               highlightBorder
@@ -301,7 +300,7 @@ export default function OperationsReportsPage() {
                 Visual Profile
               </span>
               <CardTitle className="text-base mt-0.5">
-                Biểu đồ Cân đối Check-in, Check-out &amp; Đêm phòng
+                Check-in, Check-out &amp; Room Nights Balance Chart
               </CardTitle>
             </div>
             <div className="flex items-center gap-3 text-xs font-medium">
@@ -315,7 +314,7 @@ export default function OperationsReportsPage() {
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-                Đêm phòng
+                Room Nights
               </span>
             </div>
           </CardHeader>
@@ -338,7 +337,7 @@ export default function OperationsReportsPage() {
                     }`}
                   >
                     <div className="text-[10px] font-semibold text-primary mb-1 tabular-nums">
-                      {row.room_nights}đ
+                      {row.room_nights}rn
                     </div>
                     <div className="w-full flex items-end justify-center gap-1 flex-1">
                       <div
@@ -367,7 +366,7 @@ export default function OperationsReportsPage() {
 
             <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded-md border">
               <span>
-                Chênh lệch Cuối tuần so với Ngày thường:{" "}
+                Weekend Surge vs. Weekday Average:{" "}
                 <strong className="text-emerald-700">
                   {capacity.weekend_surge_pct || "+20.0%"}
                 </strong>
@@ -376,7 +375,7 @@ export default function OperationsReportsPage() {
                 to="/analytics/operations"
                 className="font-semibold text-primary hover:underline flex items-center gap-1"
               >
-                Mở trong OLAP Analytics
+                Open in OLAP Analytics
                 <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
@@ -396,10 +395,10 @@ export default function OperationsReportsPage() {
               <Building2 className="h-4 w-4 text-emerald-600" />
             </div>
             <CardTitle className="text-base">
-              Chỉ đạo Phân bổ Ca trực &amp; Công suất Phục vụ
+              Shift Allocation &amp; Operational Directives
             </CardTitle>
             <CardDescription className="text-xs">
-              Tổng hợp định mức để vận hành cho Lễ tân, Buồng phòng và F&amp;B.
+              Operational benchmark thresholds for Front Desk, Housekeeping, and F&amp;B departments.
             </CardDescription>
           </CardHeader>
 
@@ -408,31 +407,31 @@ export default function OperationsReportsPage() {
             <div className="grid grid-cols-2 gap-2.5">
               <div className="p-3 rounded-md bg-muted/60 border">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                  TB Ngày Thường (Mon-Thu)
+                  Weekday Avg (Mon–Thu)
                 </div>
                 <div className="text-xl font-display font-extrabold text-foreground mt-0.5 tabular-nums">
                   {capacity.weekday_avg_arrivals || 135}{" "}
                   <span className="text-xs font-normal text-muted-foreground">
-                    lượt
+                    arrivals
                   </span>
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-0.5">
-                  ~{capacity.weekday_avg_guests || 652} khách/ngày
+                  ~{capacity.weekday_avg_guests || 652} guests/day
                 </div>
               </div>
 
               <div className="p-3 rounded-md bg-emerald-50/60 border border-emerald-200/70">
                 <div className="text-[10px] uppercase tracking-wider text-emerald-800 font-semibold">
-                  TB Cuối Tuần (Fri-Sun)
+                  Weekend Avg (Fri–Sun)
                 </div>
                 <div className="text-xl font-display font-extrabold text-emerald-950 mt-0.5 tabular-nums">
                   {capacity.weekend_avg_arrivals || 162}{" "}
                   <span className="text-xs font-normal text-emerald-800">
-                    lượt
+                    arrivals
                   </span>
                 </div>
                 <div className="text-[11px] text-emerald-700 mt-0.5">
-                  ~{capacity.weekend_avg_guests || 732} khách/ngày
+                  ~{capacity.weekend_avg_guests || 732} guests/day
                 </div>
               </div>
             </div>
@@ -443,7 +442,7 @@ export default function OperationsReportsPage() {
                 <Building2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                 <div>
                   <div className="font-semibold text-foreground">
-                    Lễ tân (Front Office):
+                    Front Office:
                   </div>
                   <div className="text-muted-foreground text-[11px] mt-0.5 leading-relaxed">
                     {capacity.front_desk_directive}
@@ -455,7 +454,7 @@ export default function OperationsReportsPage() {
                 <Sparkles className="h-4 w-4 text-sky-600 mt-0.5 shrink-0" />
                 <div>
                   <div className="font-semibold text-foreground">
-                    Buồng phòng (Housekeeping):
+                    Housekeeping:
                   </div>
                   <div className="text-muted-foreground text-[11px] mt-0.5 leading-relaxed">
                     {capacity.housekeeping_directive}
@@ -467,7 +466,7 @@ export default function OperationsReportsPage() {
                 <UtensilsCrossed className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                 <div>
                   <div className="font-semibold text-foreground">
-                    Ẩm thực (F&amp;B / Breakfast):
+                    Food &amp; Beverage (Breakfast):
                   </div>
                   <div className="text-muted-foreground text-[11px] mt-0.5 leading-relaxed">
                     {capacity.fb_directive}
@@ -484,17 +483,16 @@ export default function OperationsReportsPage() {
         <CardHeader className="p-5 pb-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <CardTitle id="daily-operations-log-heading" className="text-base">
-              Bảng Nhật ký Vận hành Chi tiết Từng ngày
+              Daily Operations Log &amp; Context Table
             </CardTitle>
             <CardDescription className="text-xs mt-0.5">
-              Dữ liệu chuẩn hóa theo múi giờ{" "}
-              <code className="font-mono">Europe/Lisbon</code> kết hợp Thời tiết
-              và Ngày lễ Quốc gia Bồ Đào Nha.
+              Standardized stay-date data aligned with{" "}
+              <code className="font-mono">Europe/Lisbon</code> timezone, Open-Meteo weather and Portuguese national holidays.
             </CardDescription>
           </div>
           {loading && (
             <span className="text-xs text-muted-foreground animate-pulse">
-              Đang đồng bộ báo cáo...
+              Syncing report data...
             </span>
           )}
         </CardHeader>
@@ -505,9 +503,9 @@ export default function OperationsReportsPage() {
               <TableHeader>
                 <TableRow className="bg-muted/60">
                   <TableHead className="py-2.5 px-4 font-semibold text-foreground">
-                    Ngày (Stay Date)
+                    Stay Date
                   </TableHead>
-                  <TableHead className="py-2.5 px-3">Thứ / Loại ngày</TableHead>
+                  <TableHead className="py-2.5 px-3">Day / Type</TableHead>
                   <TableHead className="py-2.5 px-3 text-right">
                     Check-in
                   </TableHead>
@@ -515,17 +513,17 @@ export default function OperationsReportsPage() {
                     Check-out
                   </TableHead>
                   <TableHead className="py-2.5 px-3 text-right">
-                    Đêm phòng
+                    Room Nights
                   </TableHead>
                   <TableHead className="py-2.5 px-3 text-right">
-                    Khách lưu trú
+                    Active Guests
                   </TableHead>
                   <TableHead className="py-2.5 px-3 text-right">
                     ADR (€)
                   </TableHead>
-                  <TableHead className="py-2.5 px-3">Sự kiện / Lễ PT</TableHead>
+                  <TableHead className="py-2.5 px-3">Holiday / Event</TableHead>
                   <TableHead className="py-2.5 px-4">
-                    Thời tiết Lisbon
+                    Lisbon Weather
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -576,11 +574,11 @@ export default function OperationsReportsPage() {
                       {row.is_pt_holiday || row.holiday_local_name ? (
                         <Badge variant="amber" className="gap-1 text-[10px]">
                           <PartyPopper className="h-3 w-3" />
-                          <span>{row.holiday_local_name || "Lễ Quốc gia"}</span>
+                          <span>{row.holiday_local_name || "National Holiday"}</span>
                         </Badge>
                       ) : (
                         <span className="text-xs text-muted-foreground">
-                          Ngày thường
+                          Regular Day
                         </span>
                       )}
                     </TableCell>
@@ -601,7 +599,7 @@ export default function OperationsReportsPage() {
                     className="py-3 px-4 font-bold text-foreground"
                     colSpan={2}
                   >
-                    Tổng cộng / TB Kỳ ({dailyRows.length} ngày)
+                    Period Total / Average ({dailyRows.length} days)
                   </TableCell>
                   <TableCell className="py-3 px-3 text-right font-bold text-emerald-700 tabular-nums">
                     {reconciledTotals.arrivals.toLocaleString()}
@@ -613,16 +611,16 @@ export default function OperationsReportsPage() {
                     {reconciledTotals.room_nights.toLocaleString()}
                   </TableCell>
                   <TableCell className="py-3 px-3 text-right font-bold text-primary tabular-nums">
-                    TB {avgDailyGuests}/ngày
+                    Avg {avgDailyGuests}/day
                   </TableCell>
                   <TableCell className="py-3 px-3 text-right font-bold text-foreground tabular-nums">
-                    TB €{avgAdr}
+                    Avg €{avgAdr}
                   </TableCell>
                   <TableCell
                     className="py-3 px-4 text-[11px] font-semibold text-emerald-700"
                     colSpan={2}
                   >
-                    ✓ Khớp 100% với KPI Summary &amp; Analytics
+                    ✓ 100% Reconciled with KPI Summary &amp; Analytics
                   </TableCell>
                 </TableRow>
               </TableFooter>

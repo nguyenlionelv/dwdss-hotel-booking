@@ -59,7 +59,7 @@ export async function fetchSystemMetadata() {
 
     const normalizedCountries = Array.isArray(data.countries)
       ? [
-          { code: 'ALL', name: 'Tất cả quốc gia (All Markets)', booking_count: 79330 },
+          { code: 'ALL', name: 'All Markets (Worldwide)', booking_count: 79330 },
           ...data.countries
             .filter((c) => (c.code || c.country_code) !== 'ALL')
             .map((c) => {

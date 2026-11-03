@@ -20,9 +20,9 @@ export async function fetchDemandForecast(params = {}) {
         demand_level: isHigh ? 'HIGH' : 'NORMAL',
         demand_label: isHigh
           ? row.is_peak
-            ? 'Cao (Đỉnh tuần)'
-            : `Cao (> ${dynamicHighThreshold})`
-          : 'Bình thường',
+            ? 'High (Weekly Peak)'
+            : `High (> ${dynamicHighThreshold})`
+          : 'Normal',
       };
     });
 

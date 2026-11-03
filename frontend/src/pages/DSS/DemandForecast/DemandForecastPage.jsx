@@ -2,7 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { fetchDemandForecast } from '../../../services/dssApi';
 import KpiCard from '../../../components/kpi/KpiCard';
 import ResponsiveTableContainer from '../../../components/tables/ResponsiveTableContainer';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,26 +23,23 @@ import {
 } from '@/components/ui/table';
 import {
   BrainCircuit,
-  Cpu,
   Calendar,
-  SlidersHorizontal,
-  Zap,
-  TrendingUp,
   AlertTriangle,
-  Flame,
-  Sun,
-  PartyPopper,
-  CheckCircle2,
-  FunctionSquare,
-  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Cpu,
   Layers,
-  ArrowRight,
+  Activity,
+  Sliders,
+  CheckCircle2,
+  Sun,
+  Zap,
 } from 'lucide-react';
 
 export default function DemandForecastPage() {
   const [cutoffDate, setCutoffDate] = useState('2017-08-24');
   const [stdMultiplier, setStdMultiplier] = useState(1.0);
-  const [targetView, setTargetView] = useState('arrivals');
+  const [targetView, setTargetView] = useState('arrivals'); // 'arrivals' | 'room_nights'
   const [forecastData, setForecastData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -73,11 +76,11 @@ export default function DemandForecastPage() {
             </Badge>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-foreground tracking-tight">
-            Decision Support System — Dự báo Nhu cầu &amp; Khuyến nghị Ca trực
+            Decision Support System — Demand Forecasting &amp; Staffing Directives
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Dự báo 7 ngày kế tiếp (<code className="font-mono text-xs">T+1 → T+7</code>) kết hợp quy tắc ngưỡng thống kê trượt 8 tuần (
-            <code className="font-mono text-xs">μ_8w + k·σ_8w</code>) để tự động sinh cảnh báo vận hành.
+            Short-horizon 7-day demand projections (<code className="font-mono text-xs">T+1 → T+7</code>) coupled with an 8-week rolling statistical threshold rule (
+            <code className="font-mono text-xs">μ_8w + k·σ_8w</code>) to automate operational surge alerts.
           </p>
         </div>
 
@@ -90,7 +93,7 @@ export default function DemandForecastPage() {
                 {modelMeta.model_version || 'v1.2-lgbm-rolling'})
               </div>
               <div className="text-[11px] text-emerald-700">
-                MAE: {modelMeta.validation_mae || 8.42} • Tốt hơn Baseline{' '}
+                MAE: {modelMeta.validation_mae || 8.42} • Baseline Improvement:{' '}
                 {modelMeta.improvement_vs_baseline_pct || 43.3}%
               </div>
             </div>
@@ -106,7 +109,7 @@ export default function DemandForecastPage() {
               htmlFor="dss-cutoff"
               className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
             >
-              Ngày Chốt Dữ Liệu (Forecast Cutoff Date T)
+              Forecast Cutoff Date T
             </label>
             <select
               id="dss-cutoff"
@@ -115,10 +118,10 @@ export default function DemandForecastPage() {
               className="w-full bg-background border border-input text-foreground text-xs font-bold rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
             >
               <option value="2017-08-24">
-                T = 24/08/2017 (Dự báo 25/08 – 31/08/2017)
+                T = 2017-08-24 (Forecast Aug 25 – Aug 31, 2017)
               </option>
               <option value="2017-08-17">
-                T = 17/08/2017 (Backtest tuần 18/08 – 24/08/2017)
+                T = 2017-08-17 (Backtest Week Aug 18 – Aug 24, 2017)
               </option>
             </select>
           </div>
@@ -128,7 +131,7 @@ export default function DemandForecastPage() {
               htmlFor="dss-threshold-k"
               className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
             >
-              Độ nhạy Ngưỡng Cảnh báo Cao (Threshold Rule)
+              Alert Sensitivity (Threshold Rule k)
             </label>
             <select
               id="dss-threshold-k"
@@ -136,38 +139,38 @@ export default function DemandForecastPage() {
               onChange={(e) => setStdMultiplier(Number(e.target.value))}
               className="w-full bg-background border border-input text-foreground text-xs font-bold rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
             >
-              <option value={0.75}>Nhạy cao: μ + 0.75σ (Ngưỡng = 138.2 lượt)</option>
-              <option value={1.0}>Chuẩn DSS: μ + 1.00σ (Ngưỡng = 142.7 lượt)</option>
-              <option value={1.25}>Khắt khe: μ + 1.25σ (Ngưỡng = 147.3 lượt)</option>
+              <option value={0.75}>High Sensitivity: μ + 0.75σ (Threshold = 138.2)</option>
+              <option value={1.0}>Standard DSS: μ + 1.00σ (Threshold = 142.7)</option>
+              <option value={1.25}>Conservative: μ + 1.25σ (Threshold = 147.3)</option>
             </select>
           </div>
 
           <div>
             <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              Chỉ số Hiển thị Đồ thị (Chart Metric)
+              Trajectory Metric
             </span>
             <div className="flex items-center p-0.5 rounded-lg bg-muted border text-xs">
               <button
                 type="button"
                 onClick={() => setTargetView('arrivals')}
-                className={`flex-1 py-1 rounded-md text-xs font-semibold transition-all ${
+                className={`flex-1 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                   targetView === 'arrivals'
                     ? 'bg-background text-emerald-700 shadow-xs font-bold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Lượt Check-in
+                Arrivals
               </button>
               <button
                 type="button"
                 onClick={() => setTargetView('room_nights')}
-                className={`flex-1 py-1 rounded-md text-xs font-semibold transition-all ${
+                className={`flex-1 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                   targetView === 'room_nights'
                     ? 'bg-background text-emerald-700 shadow-xs font-bold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Đêm Phòng
+                Room Nights
               </button>
             </div>
           </div>
@@ -176,10 +179,10 @@ export default function DemandForecastPage() {
             type="button"
             variant="emerald"
             onClick={() => loadForecast(stdMultiplier)}
-            className="w-full gap-2 font-bold"
+            className="w-full gap-2 font-bold cursor-pointer"
           >
             <Zap className="h-4 w-4" />
-            <span>{loading ? 'Đang chạy mô hình...' : 'Chạy Dự Báo 7 Ngày'}</span>
+            <span>{loading ? 'Running Model...' : 'Run 7-Day Forecast'}</span>
           </Button>
         </CardContent>
       </Card>
@@ -200,40 +203,40 @@ export default function DemandForecastPage() {
         ) : (
           <>
             <KpiCard
-              label="Tổng Lượt Đến Dự Báo (7 Ngày)"
+              label="Predicted Total Arrivals"
               value={(kpis.total_predicted_arrivals || 942).toLocaleString()}
-              unit="lượt check-in"
-              badgeText="+8.4% vs TB 8 tuần"
+              unit="check-ins"
+              badgeText="+8.4% vs 8W Mean"
               badgeIcon="trending_up"
               subtext="Horizon: 25/08 – 31/08/2017"
               icon="flight_land"
               tone="emerald"
             />
             <KpiCard
-              label="Tổng Đêm Phòng Dự Báo"
+              label="Predicted Total Room Nights"
               value={(kpis.total_predicted_room_nights || 2840).toLocaleString()}
-              unit="đêm phòng"
-              badgeText="~405.7 đêm/ngày"
-              subtext="Dự phóng từ công suất lưu trú"
+              unit="nights"
+              badgeText="~405.7 nights/day"
+              subtext="Projected in-house stays"
               icon="bed"
               tone="blue"
             />
             <KpiCard
-              label="Ngày Đỉnh Điểm Dự Báo (Peak)"
+              label="Peak Projected Day"
               value="26/08/2017"
-              badgeText={`${kpis.peak_day_arrivals || 164} lượt đến`}
+              badgeText={`${kpis.peak_day_arrivals || 164} arrivals`}
               badgeIcon="warning"
-              subtext="Thứ Bảy • 492 đêm phòng"
+              subtext="Saturday • 492 room nights"
               icon="event_upcoming"
               tone="amber"
             />
             <KpiCard
-              label="Số Ngày Cảnh Báo Cao (High Alert)"
+              label="High Alert Days"
               value={`${kpis.high_alert_days_count ?? 3} / 7`}
-              unit="ngày"
+              unit="days"
               badgeText={`> ${threshold.high_demand_threshold || 142.7}`}
               badgeIcon="warning"
-              subtext="Cần tăng cường nhân sự ca trực"
+              subtext="Staff reinforcement required"
               icon="notification_important"
               tone="rose"
               highlightBorder
@@ -248,16 +251,16 @@ export default function DemandForecastPage() {
           <div>
             <div className="flex items-center gap-2">
               <CardTitle className="text-base">
-                Đồ thị Dự báo Nhu cầu 7 Ngày Tới &amp; Ngưỡng Cảnh báo Vận hành
+                7-Day Forward Demand Curve &amp; Operational Alert Thresholds
               </CardTitle>
               <Badge variant="emerald" className="text-[10px]">
                 Horizon T+1 → T+7
               </Badge>
             </div>
             <CardDescription className="text-xs mt-0.5">
-              Các điểm màu đỏ biểu thị ngày dự báo vượt ngưỡng cảnh báo cao (
+              Red nodes highlight forecast days exceeding the high demand surge threshold (
               <strong className="text-rose-600 font-mono">
-                &gt; {threshold.high_demand_threshold || 142.7} lượt check-in
+                &gt; {threshold.high_demand_threshold || 142.7} arrivals
               </strong>
               ).
             </CardDescription>
@@ -266,19 +269,19 @@ export default function DemandForecastPage() {
           <div className="flex flex-wrap items-center gap-3 text-xs font-medium">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-              Dự báo bình thường
+              Standard Demand
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" />
-              Vượt ngưỡng Cao
+              Surge Threshold Exceeded
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-4 border-t-2 border-dashed border-rose-500" />
-              Ngưỡng Cao ({threshold.high_demand_threshold || 142.7})
+              High Threshold ({threshold.high_demand_threshold || 142.7})
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-4 border-t-2 border-dashed border-primary" />
-              TB 8 tuần (μ = {threshold.rolling_8w_mean || 124.5})
+              8W Rolling Mean (μ = {threshold.rolling_8w_mean || 124.5})
             </span>
           </div>
         </CardHeader>
@@ -447,10 +450,10 @@ export default function DemandForecastPage() {
         <CardHeader className="p-5 pb-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <CardTitle id="dss-schedule-table-heading" className="text-base">
-              Bảng Lịch trình Dự báo 7 Ngày &amp; Khuyến nghị Hành động (DSS Action Matrix)
+              7-Day Operational Schedule &amp; Action Directives (DSS Action Matrix)
             </CardTitle>
             <CardDescription className="text-xs mt-0.5">
-              Kết hợp dự báo ML với ngữ cảnh Ngày lễ và Thời tiết để đưa ra khuyến nghị bố trí nhân sự cụ thể cho từng ngày.
+              Synthesizes ML demand forecasts with holiday and weather context to generate actionable daily shift allocations.
             </CardDescription>
           </div>
           <Badge variant="outline" className="text-xs font-mono">
@@ -463,13 +466,13 @@ export default function DemandForecastPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/60">
-                  <TableHead className="py-2.5 px-4 font-semibold text-foreground">Ngày (Stay Date)</TableHead>
-                  <TableHead className="py-2.5 px-3">Thứ</TableHead>
-                  <TableHead className="py-2.5 px-3">Thời tiết &amp; Sự kiện</TableHead>
-                  <TableHead className="py-2.5 px-3 text-right">Dự báo Check-in</TableHead>
-                  <TableHead className="py-2.5 px-3 text-right">Dự báo Đêm phòng</TableHead>
-                  <TableHead className="py-2.5 px-3 text-center">Mức Cầu</TableHead>
-                  <TableHead className="py-2.5 px-4">Khuyến nghị Vận hành (Recommended Action)</TableHead>
+                  <TableHead className="py-2.5 px-4 font-semibold text-foreground">Stay Date</TableHead>
+                  <TableHead className="py-2.5 px-3">Day of Week</TableHead>
+                  <TableHead className="py-2.5 px-3">Weather &amp; Context</TableHead>
+                  <TableHead className="py-2.5 px-3 text-right">Predicted Check-ins</TableHead>
+                  <TableHead className="py-2.5 px-3 text-right">Predicted Room Nights</TableHead>
+                  <TableHead className="py-2.5 px-3 text-center">Demand Tier</TableHead>
+                  <TableHead className="py-2.5 px-4">Recommended Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -543,7 +546,7 @@ export default function DemandForecastPage() {
               ML-03 / ML-05 Evaluation
             </span>
             <CardTitle className="text-base mt-0.5">
-              So sánh Sai số Dự báo (MAE Benchmark)
+              Forecast Error Benchmark (MAE Evaluation)
             </CardTitle>
           </CardHeader>
 
@@ -557,7 +560,7 @@ export default function DemandForecastPage() {
                 <div className="bg-emerald-600 h-full rounded-full w-[52%]" />
               </div>
               <div className="text-[10px] text-emerald-700 mt-1">
-                RMSE: 11.15 • MAPE: 6.8% (Đạt chuẩn Production)
+                RMSE: 11.15 • MAPE: 6.8% (Production Ready)
               </div>
             </div>
 
@@ -590,7 +593,7 @@ export default function DemandForecastPage() {
               Decision Rule Engine
             </span>
             <CardTitle className="text-base mt-0.5">
-              Quy tắc Ngưỡng Thống kê Trượt 8 Tuần
+              8-Week Rolling Statistical Threshold Rule
             </CardTitle>
           </CardHeader>
 
@@ -606,14 +609,14 @@ export default function DemandForecastPage() {
                 = {threshold.rolling_8w_mean || 124.5} + {stdMultiplier.toFixed(2)} ×{' '}
                 {threshold.rolling_8w_std || 18.2} ={' '}
                 <strong className="text-rose-600 font-bold">
-                  {threshold.high_demand_threshold || 142.7} lượt
+                  {threshold.high_demand_threshold || 142.7} check-ins
                 </strong>
               </div>
             </div>
 
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              DSS tự động tính trung bình và độ lệch chuẩn của 56 ngày trước ngày chốt{' '}
-              <code className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">T</code> để thích ứng động theo mùa vụ Hè/Đông tại Lisbon.
+              The DSS engine dynamically computes the rolling mean and standard deviation of the preceding 56 days before cutoff{' '}
+              <code className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">T</code> to adapt to seasonal shifts in Lisbon.
             </p>
           </CardContent>
         </Card>
@@ -630,7 +633,7 @@ export default function DemandForecastPage() {
               </Badge>
             </div>
             <CardTitle className="text-base mt-0.5">
-              Độ phủ Đặc trưng &amp; Ngữ cảnh
+              Feature Completeness &amp; Data Quality
             </CardTitle>
           </CardHeader>
 

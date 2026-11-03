@@ -44,6 +44,8 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
+import TrendChart from "../../../components/charts/TrendChart";
+
 const GRAIN_OPTIONS = [
   { id: "day", label: "Day (Drill-down)" },
   { id: "week", label: "Week" },
@@ -63,17 +65,61 @@ function getPeriodRange(item, grain) {
   if (item.period_start && item.period_end) {
     return { from: item.period_start, to: item.period_end };
   }
-  const label = item.period_label;
-  if (grain === "month") {
-    // "2016-08"
+  const label = String(item.period_label || "");
+
+  // 1. Month: "2016-08"
+  if (grain === "month" && label.includes("-")) {
     const [y, m] = label.split("-").map(Number);
     const last = new Date(y, m, 0).getDate();
     const mm = String(m).padStart(2, "0");
     return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${last}` };
   }
-  if (grain === "year") {
-    return { from: `${label}-01-01`, to: `${label}-12-31` };
+
+  // 2. Quarter: "2016-Q3"
+  if (grain === "quarter") {
+    const match = label.match(/(\d{4})-Q(\d)/);
+    if (match) {
+      const year = match[1];
+      const q = Number(match[2]);
+      const qRanges = {
+        1: { from: `${year}-01-01`, to: `${year}-03-31` },
+        2: { from: `${year}-04-01`, to: `${year}-06-30` },
+        3: { from: `${year}-07-01`, to: `${year}-09-30` },
+        4: { from: `${year}-10-01`, to: `${year}-12-31` },
+      };
+      return qRanges[q] || null;
+    }
   }
+
+  // 3. Year: "2016" or "2016 (Full)"
+  if (grain === "year") {
+    const match = label.match(/\b(20\d\d)\b/);
+    if (match) {
+      const y = match[1];
+      return { from: `${y}-01-01`, to: `${y}-12-31` };
+    }
+  }
+
+  // 4. Week: "2017-W25"
+  if (grain === "week") {
+    const match = label.match(/(\d{4})-W(\d{2})/);
+    if (match) {
+      const y = Number(match[1]);
+      const w = Number(match[2]);
+      const simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7));
+      const dow = simple.getUTCDay();
+      const isoStart = new Date(simple);
+      if (dow <= 4) isoStart.setUTCDate(simple.getUTCDate() - simple.getUTCDay() + 1);
+      else isoStart.setUTCDate(simple.getUTCDate() + 8 - simple.getUTCDay());
+      const isoEnd = new Date(isoStart);
+      isoEnd.setUTCDate(isoStart.getUTCDate() + 6);
+      return {
+        from: isoStart.toISOString().slice(0, 10),
+        to: isoEnd.toISOString().slice(0, 10),
+      };
+    }
+  }
+
   return null;
 }
 
@@ -149,7 +195,7 @@ export default function OperationsAnalyticsPage() {
 
   const handleBarDrilldown = (item) => {
     const childGrain = CHILD_GRAIN[grain];
-    if (!childGrain) return; // đã ở mức day, không drill tiếp
+    if (!childGrain) return; // already at leaf grain (day)
 
     const range = getPeriodRange(item, grain);
     if (!range) return;
@@ -158,11 +204,10 @@ export default function OperationsAnalyticsPage() {
       ...range,
       label: item.period_label,
       parentGrain: grain,
-      // giữ stack để roll-up nhiều cấp
       parent: drilldownRange,
     });
     setGrain(childGrain);
-    setDrilldownContext(`${item.period_label} (Chi tiết theo ${childGrain})`);
+    setDrilldownContext(`${item.period_label} (Detailed by ${childGrain})`);
   };
 
   const handleRollUp = () => {
@@ -171,7 +216,7 @@ export default function OperationsAnalyticsPage() {
     const parent = drilldownRange.parent || null;
     setDrilldownRange(parent);
     setDrilldownContext(
-      parent ? `${parent.label} (Chi tiết theo ${parent.parentGrain})` : null,
+      parent ? `${parent.label} (Detailed by ${parent.parentGrain || drilldownRange.parentGrain})` : null,
     );
   };
 
@@ -181,6 +226,7 @@ export default function OperationsAnalyticsPage() {
     setCountry("ALL");
     setDayType("ALL");
     setHolidayFilter("ALL");
+    setDrilldownRange(null);
     setDrilldownContext(null);
   };
 
@@ -189,7 +235,6 @@ export default function OperationsAnalyticsPage() {
   };
 
   const series = trendData?.series || [];
-  const maxRoomNights = Math.max(...series.map((s) => s.room_nights), 1);
 
   return (
     <div className="space-y-6">
@@ -214,11 +259,11 @@ export default function OperationsAnalyticsPage() {
             Operations Analytics — Demand, Holiday &amp; Weather
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Phân tích đa chiều (Slice, Dice, Drill-Down, Roll-Up) trên{" "}
+            Multi-dimensional analytical workbench (Slice, Dice, Drill-down, Roll-up) on{" "}
             <code className="text-[11px] font-mono bg-muted px-1.5 py-0.5 rounded text-foreground border">
               mart.operations_daily
             </code>{" "}
-            cho City Hotel (Lisbon, Portugal).
+            for City Hotel (Lisbon, Portugal).
           </p>
         </div>
 
@@ -226,13 +271,13 @@ export default function OperationsAnalyticsPage() {
           <Button variant="outline" size="sm" asChild className="gap-1.5">
             <Link to="/reports/operations">
               <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-              <span>Xem Báo cáo Tuần</span>
+              <span>View Weekly Reports</span>
             </Link>
           </Button>
           <Button variant="default" size="sm" asChild className="gap-1.5">
             <Link to="/dss/demand-forecast">
               <BrainCircuit className="h-4 w-4" />
-              <span>Dự báo DSS 7 Ngày</span>
+              <span>7-Day DSS Forecast</span>
             </Link>
           </Button>
         </div>
@@ -254,7 +299,7 @@ export default function OperationsAnalyticsPage() {
                     key={g.id}
                     type="button"
                     onClick={() => handleGrainChange(g.id)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                       grain === g.id
                         ? "bg-background text-foreground shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
@@ -286,7 +331,7 @@ export default function OperationsAnalyticsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleResetFilters}
-                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>Reset OLAP</span>
@@ -301,12 +346,16 @@ export default function OperationsAnalyticsPage() {
                 htmlFor="olap-preset"
                 className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
               >
-                Khoảng thời gian (Date Range Preset)
+                Date Range Preset
               </label>
               <select
                 id="olap-preset"
                 value={preset}
-                onChange={(e) => setPreset(e.target.value)}
+                onChange={(e) => {
+                  setPreset(e.target.value);
+                  setDrilldownRange(null);
+                  setDrilldownContext(null);
+                }}
                 className="w-full bg-background border border-input text-foreground text-xs font-medium rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
               >
                 {ANALYTICS_PRESETS.map((p) => (
@@ -322,7 +371,7 @@ export default function OperationsAnalyticsPage() {
                 htmlFor="olap-country"
                 className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
               >
-                Slice: Thị trường Quốc gia (Country)
+                Slice: Source Market (Country)
               </label>
               <select
                 id="olap-country"
@@ -343,7 +392,7 @@ export default function OperationsAnalyticsPage() {
                 htmlFor="olap-daytype"
                 className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
               >
-                Slice: Loại ngày (Day Type)
+                Slice: Day Type
               </label>
               <select
                 id="olap-daytype"
@@ -351,9 +400,9 @@ export default function OperationsAnalyticsPage() {
                 onChange={(e) => setDayType(e.target.value)}
                 className="w-full bg-background border border-input text-foreground text-xs font-medium rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
               >
-                <option value="ALL">Tất cả (Weekday + Weekend)</option>
-                <option value="Weekday">Ngày trong tuần (Mon–Thu)</option>
-                <option value="Weekend">Cuối tuần (Fri–Sun)</option>
+                <option value="ALL">All Days (Weekday + Weekend)</option>
+                <option value="Weekday">Weekday (Mon–Thu)</option>
+                <option value="Weekend">Weekend (Fri–Sun)</option>
               </select>
             </div>
 
@@ -362,7 +411,7 @@ export default function OperationsAnalyticsPage() {
                 htmlFor="olap-holiday"
                 className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
               >
-                Slice: Ngày lễ Bồ Đào Nha (PT Holiday)
+                Slice: Portugal National Holiday
               </label>
               <select
                 id="olap-holiday"
@@ -370,9 +419,9 @@ export default function OperationsAnalyticsPage() {
                 onChange={(e) => setHolidayFilter(e.target.value)}
                 className="w-full bg-background border border-input text-foreground text-xs font-medium rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
               >
-                <option value="ALL">Tất cả các ngày (All Days)</option>
-                <option value="HOLIDAY_ONLY">Chỉ kỳ có Lễ Quốc gia</option>
-                <option value="NON_HOLIDAY">Chỉ kỳ ngày thường</option>
+                <option value="ALL">All Days</option>
+                <option value="HOLIDAY_ONLY">National Holidays Only</option>
+                <option value="NON_HOLIDAY">Non-Holidays Only</option>
               </select>
             </div>
           </div>
@@ -395,11 +444,11 @@ export default function OperationsAnalyticsPage() {
         ) : (
           <>
             <KpiCard
-              label="Tổng Đêm Phòng"
+              label="Total Room Nights"
               value={(
                 trendData?.summary?.total_room_nights || 260680
               ).toLocaleString()}
-              unit="đêm"
+              unit="nights"
               badgeText="+8.4% YoY"
               badgeIcon="trending_up"
               subtext="Active room nights"
@@ -407,40 +456,40 @@ export default function OperationsAnalyticsPage() {
               tone="blue"
             />
             <KpiCard
-              label="Tổng Lượt Check-in"
+              label="Total Arrivals"
               value={(
                 trendData?.summary?.total_arrivals || 82200
               ).toLocaleString()}
-              unit="lượt"
+              unit="arrivals"
               badgeText="Verified"
               badgeIcon="trending_up"
-              subtext="Confirmed arrivals"
+              subtext="Confirmed check-ins"
               icon="luggage"
               tone="emerald"
             />
             <KpiCard
-              label="Khách Lưu Trú TB/Ngày"
+              label="Avg Daily Active Guests"
               value={(
                 trendData?.summary?.avg_daily_active_guests || 635
               ).toLocaleString()}
-              unit="khách"
-              badgeText="1.94 khách/phòng"
+              unit="guests"
+              badgeText="1.94 guests/room"
               subtext="Daily active guests"
               icon="groups"
               tone="indigo"
             />
             <KpiCard
-              label="ADR Trung Bình"
+              label="Average Daily Rate"
               value={`€${trendData?.summary?.avg_adr || 106.8}`}
-              badgeText="+14.5% dịp Lễ"
-              subtext="Average Daily Rate"
+              badgeText="+14.5% during Holidays"
+              subtext="ADR across period"
               icon="euro"
               tone="amber"
             />
             <KpiCard
-              label="Đỉnh Công Suất (Peak)"
+              label="Peak Demand Period"
               value={trendData?.summary?.peak_period || "2016-08"}
-              badgeText={`${(trendData?.summary?.peak_room_nights || 14120).toLocaleString()} đêm`}
+              badgeText={`${(trendData?.summary?.peak_room_nights || 14120).toLocaleString()} nights`}
               badgeIcon="warning"
               subtext="Highest period demand"
               icon="local_fire_department"
@@ -460,7 +509,7 @@ export default function OperationsAnalyticsPage() {
             <CardHeader className="p-5 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <span>Xu hướng Công suất Đêm phòng &amp; Lượt đến</span>
+                  <span>Room Nights &amp; Arrivals Demand Trend</span>
                   <Badge
                     variant="outline"
                     className="text-[10px] font-mono uppercase"
@@ -469,18 +518,17 @@ export default function OperationsAnalyticsPage() {
                   </Badge>
                   {loading && (
                     <span className="text-xs text-muted-foreground animate-pulse">
-                      Đang tải...
+                      Loading...
                     </span>
                   )}
                 </CardTitle>
                 <CardDescription className="text-xs mt-0.5">
-                  Nhấn vào cột bất kỳ để <strong>Drill-down</strong> xuống mức
-                  ngày (Daily), hoặc đổi grain để Roll-up.
+                  Click any bar to <strong>Drill-down</strong> to finer detail (Year → Quarter → Month → Week → Day), or click Roll-up.
                 </CardDescription>
               </div>
 
-              <div className="flex flex-wrap flex-col items-end gap-4 text-xs font-medium">
-                {!["year", "quarter"].includes(grain) && (
+              <div className="flex flex-wrap flex-col items-end gap-3 text-xs font-medium">
+                {drilldownRange && (
                   <button
                     type="button"
                     onClick={handleRollUp}
@@ -491,15 +539,15 @@ export default function OperationsAnalyticsPage() {
                 )}
                 <div className="flex items-center gap-3 text-xs font-medium">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-xs bg-primary" />
+                    <span className="w-2.5 h-2.5 rounded-xs bg-primary/70" />
                     <span className="text-muted-foreground">
-                      Đêm phòng thường
+                      Regular Room Nights
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600" />
                     <span className="text-muted-foreground">
-                      Kỳ có Lễ / Đỉnh
+                      Holiday / Peak Demand
                     </span>
                   </div>
                 </div>
@@ -507,81 +555,15 @@ export default function OperationsAnalyticsPage() {
             </CardHeader>
 
             <CardContent className="p-5 pt-2">
-              {/* Interactive Bar Chart with Y-Axis */}
-              <div className="h-64 flex gap-2 pt-8 pb-2 px-1">
-                {/* Y-Axis */}
-                <div className="w-12 shrink-0 flex flex-col justify-between text-[10px] text-muted-foreground text-right pb-0">
-                  {[100, 75, 50, 25, 0].map((tick) => (
-                    <span key={tick} className="tabular-nums leading-none">
-                      {Math.round(
-                        (maxRoomNights * tick) / 100,
-                      ).toLocaleString()}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Chart Area */}
-                <div className="flex-1 flex items-end gap-1.5 border-b border-l relative overflow-x-auto">
-                  {series.map((item) => {
-                    const heightPct = Math.max(
-                      10,
-                      Math.round((item.room_nights / maxRoomNights) * 100),
-                    );
-
-                    const isSpecial = item.is_peak || item.is_holiday_period;
-                    const canDrill = !!CHILD_GRAIN[grain];
-
-                    return (
-                      <button
-                        key={item.period_label}
-                        type="button"
-                        onClick={() => canDrill && handleBarDrilldown(item)}
-                        title={`${item.period_label}: ${item.room_nights.toLocaleString()} đêm phòng`}
-                        className="group flex-1 min-w-[20px] h-full flex flex-col justify-end items-center cursor-pointer relative"
-                      >
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold text-foreground mb-1 tabular-nums whitespace-nowrap bg-popover px-1.5 py-0.5 rounded border shadow-xs z-10">
-                          <div className="text-red-500">
-                            {item.room_nights.toLocaleString()}
-                          </div>
-                          {["day", "week"].includes(grain) && (
-                            <div className="text-xs">{item.period_label}</div>
-                          )}
-                        </span>
-
-                        <div
-                          style={{ height: `${heightPct}%` }}
-                          className={`w-full rounded-t-sm transition-all duration-150 group-hover:brightness-110 ${
-                            item.is_peak
-                              ? "bg-emerald-600"
-                              : isSpecial
-                                ? "bg-primary"
-                                : "bg-primary/70 hover:bg-primary"
-                          }`}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* X-Axis Ticks */}
-              {!["day", "week"].includes(grain) && (
-                <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground pt-2 px-1 overflow-hidden">
-                  {series
-                    .filter((_, idx) =>
-                      series.length > 16
-                        ? idx % 3 === 0 || idx === series.length - 1
-                        : true,
-                    )
-                    .map((item) => (
-                      <span
-                        key={item.period_label}
-                        className="tabular-nums truncate"
-                      >
-                        {item.period_label}
-                      </span>
-                    ))}
-                </div>
+              {loading ? (
+                <Skeleton className="h-72 w-full" />
+              ) : (
+                <TrendChart
+                  series={series}
+                  grain={grain}
+                  canDrill={!!CHILD_GRAIN[grain]}
+                  onDrill={handleBarDrilldown}
+                />
               )}
             </CardContent>
           </Card>
@@ -591,37 +573,36 @@ export default function OperationsAnalyticsPage() {
             <CardHeader className="p-5 pb-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <CardTitle id="olap-pivot-heading" className="text-base">
-                  Ma trận OLAP Đa chiều (Slice &amp; Dice Pivot Matrix)
+                  Multi-Dimensional OLAP Matrix (Slice &amp; Dice Pivot)
                 </CardTitle>
                 <CardDescription className="text-xs mt-0.5">
-                  So sánh độ đo vận hành theo Quý/Tháng kết hợp chiều Quốc gia
-                  hoặc Loại ngày.
+                  Compare operational performance across time dimensions sliced by Country or Day Type.
                 </CardDescription>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
                 <select
-                  aria-label="Chiều cột Pivot"
+                  aria-label="Pivot Column Dimension"
                   value={pivotColDim}
                   onChange={(e) => setPivotColDim(e.target.value)}
                   className="bg-background border border-input text-foreground text-xs font-semibold rounded-md px-2.5 py-1.5 focus:outline-none"
                 >
-                  <option value="country">Cột: Top Quốc gia (Country)</option>
-                  <option value="day_type">Cột: Loại ngày (Day Type)</option>
+                  <option value="country">Column: Top Countries</option>
+                  <option value="day_type">Column: Day Type</option>
                 </select>
 
                 <select
-                  aria-label="Độ đo Pivot"
+                  aria-label="Pivot Measure"
                   value={pivotMeasure}
                   onChange={(e) => setPivotMeasure(e.target.value)}
                   className="bg-primary/10 border border-primary/20 text-primary text-xs font-bold rounded-md px-2.5 py-1.5 focus:outline-none"
                 >
                   <option value="room_nights">
-                    Measure: Room Nights (Đêm phòng)
+                    Measure: Room Nights
                   </option>
-                  <option value="arrivals">Measure: Arrivals (Lượt đến)</option>
+                  <option value="arrivals">Measure: Arrivals</option>
                   <option value="active_guests">
-                    Measure: Active Guests (Khách lưu trú)
+                    Measure: Active Guests
                   </option>
                 </select>
               </div>
@@ -633,7 +614,7 @@ export default function OperationsAnalyticsPage() {
                   <TableHeader>
                     <TableRow className="bg-muted/60">
                       <TableHead className="py-2.5 px-4 font-semibold text-foreground">
-                        Time Dimension (Quý / Tháng)
+                        Time Dimension (Quarter / Month)
                       </TableHead>
                       {(pivotData?.columns || []).map((col) => (
                         <TableHead key={col} className="py-2.5 px-3 text-right">
@@ -641,7 +622,7 @@ export default function OperationsAnalyticsPage() {
                         </TableHead>
                       ))}
                       <TableHead className="py-2.5 px-4 text-right font-bold text-foreground bg-muted">
-                        Tổng cộng
+                        Grand Total
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -726,7 +707,7 @@ export default function OperationsAnalyticsPage() {
           <Card>
             <CardHeader className="p-4 sm:p-5 pb-3 flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-sm sm:text-xl mt-0.5">
-                Tác động Ngày Lễ Quốc Gia của Bồ Đào Nha
+                Portuguese National Holiday Impact
               </CardTitle>
               <Badge variant="emerald" className="font-extrabold text-xs">
                 +{impactData?.holiday_impact?.lift_pct || "-"}% Lift
@@ -737,39 +718,39 @@ export default function OperationsAnalyticsPage() {
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="p-3 rounded-md bg-amber-50/60 border border-amber-200/60">
                   <div className="text-[10px] font-semibold uppercase text-amber-800">
-                    Ngày Lễ (
-                    {impactData?.holiday_impact?.holiday_days_count || 29} day)
+                    Holidays (
+                    {impactData?.holiday_impact?.holiday_days_count || 29} days)
                   </div>
                   <div className="text-xl font-display font-extrabold text-foreground mt-1 tabular-nums">
                     {impactData?.holiday_impact?.holiday_avg_room_nights ||
                       348.4}
                   </div>
                   <div className="text-[11px] text-amber-700 font-medium">
-                    Đêm TB ~ €
-                    {impactData?.holiday_impact?.holiday_avg_adr || "-"}
+                    Avg ~ €
+                    {impactData?.holiday_impact?.holiday_avg_adr || "-"} ADR
                   </div>
                 </div>
 
                 <div className="p-3 rounded-md bg-muted/60 border">
                   <div className="text-[10px] font-semibold uppercase text-muted-foreground">
-                    Ngày Thường (
+                    Regular Days (
                     {impactData?.holiday_impact?.non_holiday_days_count || 764}{" "}
-                    day)
+                    days)
                   </div>
                   <div className="text-xl font-display font-extrabold text-foreground mt-1 tabular-nums">
                     {impactData?.holiday_impact?.non_holiday_avg_room_nights ||
                       304.2}
                   </div>
                   <div className="text-[11px] text-muted-foreground font-medium">
-                    Đêm TB ~ €
-                    {impactData?.holiday_impact?.non_holiday_avg_adr || "-"}
+                    Avg ~ €
+                    {impactData?.holiday_impact?.non_holiday_avg_adr || "-"} ADR
                   </div>
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Các kỳ lễ tạo đột biến cao nhất
+                  Top Holiday Demand Spikes
                 </div>
                 {(impactData?.holiday_impact?.upcoming_holidays || []).map(
                   (h) => (
@@ -806,7 +787,7 @@ export default function OperationsAnalyticsPage() {
                   Open-Meteo Lisbon Weather
                 </span>
                 <CardTitle className="text-sm sm:text-base mt-0.5">
-                  Tương quan Thời tiết &amp; Công suất
+                  Weather &amp; Demand Correlation
                 </CardTitle>
               </div>
               <Badge variant="blue" className="text-[10px]">
@@ -823,7 +804,7 @@ export default function OperationsAnalyticsPage() {
                   <div className="flex items-center justify-between text-xs font-semibold text-foreground">
                     <span>{b.band_label}</span>
                     <span className="text-primary tabular-nums">
-                      {b.avg_room_nights} đêm/ngày
+                      {b.avg_room_nights} nights/day
                     </span>
                   </div>
                   <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden">
@@ -835,15 +816,15 @@ export default function OperationsAnalyticsPage() {
                     />
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>{b.days_count} ngày quan sát</span>
+                    <span>{b.days_count} observed days</span>
                     <span className="font-semibold text-foreground">
-                      So với trung bình năm: {b.demand_index}x
+                      Index vs. baseline: {b.demand_index}x
                     </span>
                   </div>
                 </div>
               ))}
 
-              <p className="text-[11px] text-red-400 text-muted-foreground bg-muted/60 p-2.5 rounded-md border leading-relaxed">
+              <p className="text-[11px] text-muted-foreground bg-muted/60 p-2.5 rounded-md border leading-relaxed">
                 {impactData?.weather_impact?.insight}
               </p>
             </CardContent>
@@ -857,7 +838,7 @@ export default function OperationsAnalyticsPage() {
                   Geographic Mix
                 </span>
                 <CardTitle className="text-sm sm:text-base mt-0.5">
-                  Top 5 Quốc gia Lưu trú (City Hotel)
+                  Top 5 Guest Source Markets (City Hotel)
                 </CardTitle>
               </div>
               <Globe2 className="h-4 w-4 text-muted-foreground" />
@@ -875,7 +856,7 @@ export default function OperationsAnalyticsPage() {
                     </span>
                     <div className="flex items-center gap-1.5 tabular-nums">
                       <span className="text-muted-foreground">
-                        {c.room_nights.toLocaleString()} đêm
+                        {c.room_nights.toLocaleString()} nights
                       </span>
                       <span className="text-[11px] font-bold text-emerald-600">
                         {c.share_pct}%
