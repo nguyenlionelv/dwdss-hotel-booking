@@ -1,0 +1,65 @@
+{
+  "status": "no-op",
+  "run_id": "7cb4772a-b462-4798-af14-cb635ac53b87",
+  "data_version": "14f02116-2a08-4d74-8974-be2d797728be",
+  "staging_batch_id": "b3f5adc4-ceaa-43f3-812e-8ddc1a144e2c",
+  "build_fingerprint": "d8f8764b28f556ff3fd31287c69a61923a5fbf0e6348d16be1602ae35d1e1f91",
+  "counts": {
+    "dim_date": 800,
+    "row_issue": 532,
+    "dim_channel": 5,
+    "dim_country": 166,
+    "fact_booking": 79330,
+    "dim_room_type": 10,
+    "booking_rejection": 0,
+    "daily_data_quality": 800,
+    "dim_market_segment": 8,
+    "daily_hotel_context": 800,
+    "dim_customer_profile": 9
+  },
+  "mart": {
+    "passed": true,
+    "run_id": "7cb4772a-b462-4798-af14-cb635ac53b87",
+    "data_version": "14f02116-2a08-4d74-8974-be2d797728be",
+    "build_fingerprint": "03abf2b66edac0dc116d99b4abfc02f7b785c0c8bcd881b388f25fd4d0f52298",
+    "checks": {
+      "actual_calendar": 0,
+      "country_dictionary": 0,
+      "context_dates": 0,
+      "quality_dates": 0,
+      "coverage_dates": 0,
+      "daily_hotel_operations_keys": 0,
+      "daily_hotel_operations_calendar": 0,
+      "daily_hotel_operations_context": 0,
+      "daily_hotel_operations_quality": 0,
+      "daily_hotel_operations_measures": 0,
+      "daily_hotel_operations_version": 0,
+      "daily_hotel_operations_country": 0,
+      "daily_hotel_operations_by_country_keys": 0,
+      "daily_hotel_operations_by_country_calendar": 0,
+      "daily_hotel_operations_by_country_context": 0,
+      "daily_hotel_operations_by_country_quality": 0,
+      "daily_hotel_operations_by_country_measures": 0,
+      "daily_hotel_operations_by_country_version": 0,
+      "daily_hotel_operations_by_country_country": 0,
+      "country_daily_reconciliation": 0
+    },
+    "errors": [],
+    "counts": {
+      "daily_hotel_operations": 793,
+      "daily_hotel_operations_by_country": 131638
+    },
+    "actual_guest_quality_days": {
+      "PARTIAL": 114,
+      "COMPLETE": 679
+    },
+    "observed_totals": {
+      "bookings": "79330",
+      "non_canceled_bookings": "46228",
+      "cancellations": "33102",
+      "eligible_non_canceled_guests": "89456",
+      "eligible_non_canceled_nights": "135153",
+      "non_canceled_adr_sum": "4888423.70"
+    }
+  }
+}

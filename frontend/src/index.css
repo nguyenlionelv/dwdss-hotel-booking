@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 14% 96%; /* #f1f3f6 clean enterprise canvas */
+    --foreground: 222 47% 11%; /* #0f172a slate-900 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 215 100% 38%; /* #0056b3 high-contrast executive azure */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 214 28% 93%; /* #e5eaf2 */
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 216 24% 95%; /* #eef2f6 */
+    --muted-foreground: 215 16% 47%; /* #64748b */
+
+    --accent: 214 32% 93%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 25% 88%; /* #dde3ea crisp 1px structural borders */
+    --input: 215 25% 88%;
+    --ring: 215 100% 38%;
+
+    --radius: 0.5rem;
+
+    --chart-1: 215 100% 38%; /* Executive Azure */
+    --chart-2: 160 84% 39%; /* Hospitality Emerald */
+    --chart-3: 199 89% 48%; /* Ocean Sky */
+    --chart-4: 38 92% 50%; /* Lisbon Amber */
+    --chart-5: 350 89% 60%; /* Surge Rose */
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 212 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 33% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 18%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 18%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 18%;
+    --input: 217 33% 18%;
+    --ring: 212 100% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display,
+  .font-headline {
+    font-family: "Plus Jakarta Sans", sans-serif;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+  vertical-align: middle;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-grid-line {
+  stroke: hsl(var(--border));
+  stroke-dasharray: 4 4;
+}
+
+/* Glass header with modern backdrop blur */
+.glass-header {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Accessible Scrollable Data Table Container (modern-web-guidance: responsive-table) */
+.table-scroll-region {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-inline-size: 100%;
+  border-radius: var(--radius);
+  container-type: inline-size;
+}
+
+.table-scroll-region:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: -2px;
+}
+
+.table-scroll-region thead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 10;
+}
+
+/* Precision scrollbars for dense data grids */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

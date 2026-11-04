@@ -1,0 +1,47 @@
+{
+  "projectId": "16851751821645352227",
+  "title": "Hotel Operations DSS",
+  "deviceType": "DESKTOP",
+  "Last Sync Time": "2026-10-28T02:03:17.492352+00:00",
+  "screens": {
+    "operations-analytics": {
+      "id": "3e78b0562a044365af343b0ba227da43",
+      "label": "Operations Analytics",
+      "sourceScreen": "projects/16851751821645352227/screens/3e78b0562a044365af343b0ba227da43",
+      "dimensions": {
+        "width": 2560,
+        "height": 6416
+      },
+      "canvasPosition": {
+        "x": 576,
+        "y": 3068
+      }
+    },
+    "operations-reports": {
+      "id": "efb81a157b6a48be9a394aba23dae3a9",
+      "label": "Operations Reports",
+      "sourceScreen": "projects/16851751821645352227/screens/efb81a157b6a48be9a394aba23dae3a9",
+      "dimensions": {
+        "width": 2560,
+        "height": 4706
+      },
+      "canvasPosition": {
+        "x": 1920,
+        "y": 3068
+      }
+    },
+    "dss-demand-forecast": {
+      "id": "3c8704c699ac41f39f9a31d489bf6b5e",
+      "label": "DSS Demand Forecast",
+      "sourceScreen": "projects/16851751821645352227/screens/3c8704c699ac41f39f9a31d489bf6b5e",
+      "dimensions": {
+        "width": 2560,
+        "height": 5846
+      },
+      "canvasPosition": {
+        "x": 3264,
+        "y": 3068
+      }
+    }
+  }
+}

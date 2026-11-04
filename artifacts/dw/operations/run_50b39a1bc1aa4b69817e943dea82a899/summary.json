@@ -1,0 +1,36 @@
+{
+  "status": "completed",
+  "output_dir": "D:\\HCMUT\\HK261\\CO4031_Data_Warehouse\\dwdss-hotel-booking\\artifacts\\dw\\operations\\run_50b39a1bc1aa4b69817e943dea82a899",
+  "steps": [
+    {
+      "name": "preflight",
+      "report": "inputs/preflight.json",
+      "exit_code": 0
+    },
+    {
+      "name": "migration",
+      "report": "migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "load",
+      "report": "first_load.json",
+      "exit_code": 0
+    },
+    {
+      "name": "quality",
+      "report": "quality_report.json",
+      "exit_code": 0
+    },
+    {
+      "name": "rerun",
+      "report": "rerun.json",
+      "exit_code": 0
+    }
+  ],
+  "tests_run": false,
+  "run_id": "7cb4772a-b462-4798-af14-cb635ac53b87",
+  "data_version": "14f02116-2a08-4d74-8974-be2d797728be",
+  "load_status": "published",
+  "verified": true
+}

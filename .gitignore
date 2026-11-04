@@ -41,3 +41,6 @@ artifacts/screenshots/*
 Thumbs.db
 .idea/
 .vscode/
+.stitch/
+.agents/
+graphify-out/
