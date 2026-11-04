@@ -1,0 +1,12 @@
+**
+!frontend/
+!frontend/**
+!infra/
+!infra/frontend/
+!infra/frontend/nginx.conf
+
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+frontend/.npmrc
