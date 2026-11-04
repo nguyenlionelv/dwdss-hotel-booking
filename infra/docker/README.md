@@ -1,3 +1,11 @@
 # Docker
 
-`docker-compose.yml` currently defines PostgreSQL only. Add service images after the related modules have runnable entry points. Keep application secrets in `.env`, based on `.env.example`.
+Chạy PostgreSQL, backend và frontend development từ thư mục gốc repository:
+
+```powershell
+docker compose up -d --build
+```
+
+Hiện tại chưa dùng ngrok cho production.
+
+Hướng dẫn: [App runbook](../../docs/app_runbook.md).
