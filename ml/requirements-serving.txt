@@ -1,0 +1,7 @@
+# Accepted Seasonal Naive inference + optional live PostgreSQL snapshot extraction.
+# Learned-model experiments use requirements.txt and requirements-dev.txt instead.
+numpy==2.1.3
+pandas==2.3.1
+joblib==1.5.1
+psycopg[binary]==3.3.6
+tzdata==2025.2

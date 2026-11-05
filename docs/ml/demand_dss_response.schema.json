@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dwdss:demand-dss-v1",
+  "title": "City Hotel demand forecast and DSS response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "hotel_name", "timezone", "as_of_date", "horizon", "model_name", "model_version", "feature_version", "data_version", "generated_at", "forecast_status", "forecast_reason_code", "forecast_message", "dss_status", "dss_reason_codes", "dss_threshold_rule", "forecasts", "summary", "provenance"],
+  "properties": {
+    "schema_version": {"const": "demand-dss-v1"},
+    "hotel_name": {"const": "City Hotel"},
+    "timezone": {"const": "Europe/Lisbon"},
+    "as_of_date": {"type": "string", "format": "date"},
+    "horizon": {"const": 7},
+    "model_name": {"enum": ["seasonal_naive", "linear_regression", "random_forest", "xgboost"]},
+    "model_version": {"type": "string", "minLength": 1},
+    "feature_version": {"enum": ["demand-weekly-v1", "demand-short-v1", "demand-v1"]},
+    "data_version": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time", "pattern": "(Z|\\+00:00)$"},
+    "forecast_status": {"enum": ["ok", "unavailable"]},
+    "forecast_reason_code": {"type": ["string", "null"]},
+    "forecast_message": {"type": ["string", "null"]},
+    "dss_status": {"enum": ["OK", "INSUFFICIENT_HISTORY", "FORECAST_UNAVAILABLE"]},
+    "dss_reason_codes": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "dss_threshold_rule": {"$ref": "#/$defs/thresholdRule"},
+    "forecasts": {"type": "array", "maxItems": 7, "items": {"$ref": "#/$defs/forecastRow"}},
+    "summary": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/summary"}]},
+    "provenance": {"$ref": "#/$defs/provenance"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"forecast_status": {"const": "ok"}}},
+      "then": {"properties": {"forecasts": {"minItems": 7}, "summary": {"$ref": "#/$defs/summary"}, "forecast_reason_code": {"type": "null"}, "forecast_message": {"type": "null"}, "dss_status": {"enum": ["OK", "INSUFFICIENT_HISTORY"]}}},
+      "else": {"properties": {"forecasts": {"maxItems": 0}, "summary": {"type": "null"}, "dss_status": {"const": "FORECAST_UNAVAILABLE"}, "forecast_reason_code": {"type": "string", "minLength": 1}}}
+    },
+    {
+      "if": {"properties": {"dss_status": {"const": "OK"}}},
+      "then": {"properties": {"dss_reason_codes": {"maxItems": 0}, "dss_threshold_rule": {"properties": {"sufficient_history": {"const": true}, "complete_days_available": {"const": 56}, "unavailable_days": {"maxItems": 0}, "mean_guests_8w": {"type": "number"}, "std_guests_8w": {"type": "number"}, "high_threshold": {"type": "number"}, "low_threshold": {"type": "number"}}}, "forecasts": {"items": {"properties": {"demand_level": {"enum": ["HIGH", "NORMAL", "LOW"]}}}}}},
+      "else": {"properties": {"dss_threshold_rule": {"properties": {"mean_guests_8w": {"type": "null"}, "std_guests_8w": {"type": "null"}, "high_threshold": {"type": "null"}, "low_threshold": {"type": "null"}}}, "forecasts": {"items": {"properties": {"demand_level": {"const": "INSUFFICIENT_HISTORY"}}}}}}
+    },
+    {"if": {"properties": {"dss_status": {"const": "INSUFFICIENT_HISTORY"}}}, "then": {"properties": {"dss_reason_codes": {"minItems": 1}, "dss_threshold_rule": {"properties": {"sufficient_history": {"const": false}, "complete_days_available": {"maximum": 55}, "unavailable_days": {"minItems": 1}}}}}}
+  ],
+  "$defs": {
+    "nullableNonnegative": {"type": ["number", "null"], "minimum": 0},
+    "thresholdRule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rule_version", "window_start", "window_end", "lookback_days_required", "complete_days_available", "sufficient_history", "std_ddof", "mean_guests_8w", "std_guests_8w", "high_threshold", "low_threshold", "unavailable_days"],
+      "properties": {
+        "rule_version": {"const": "demand-dss-56d-v1"},
+        "window_start": {"type": "string", "format": "date"},
+        "window_end": {"type": "string", "format": "date"},
+        "lookback_days_required": {"const": 56},
+        "complete_days_available": {"type": "integer", "minimum": 0, "maximum": 56},
+        "sufficient_history": {"type": "boolean"},
+        "std_ddof": {"const": 0},
+        "mean_guests_8w": {"$ref": "#/$defs/nullableNonnegative"},
+        "std_guests_8w": {"$ref": "#/$defs/nullableNonnegative"},
+        "high_threshold": {"$ref": "#/$defs/nullableNonnegative"},
+        "low_threshold": {"$ref": "#/$defs/nullableNonnegative"},
+        "unavailable_days": {"type": "array", "maxItems": 56, "items": {"type": "object", "additionalProperties": false, "required": ["full_date", "reason_code"], "properties": {"full_date": {"type": "string", "format": "date"}, "reason_code": {"enum": ["MISSING_HISTORY_DAY", "PARTIAL_HISTORY_TARGET", "UNKNOWN_HISTORY_TARGET", "INVALID_HISTORY_TARGET"]}}}}
+      }
+    },
+    "forecastRow": {
+      "type": "object", "additionalProperties": false,
+      "required": ["as_of_date", "forecast_date", "horizon", "predicted_guest_count", "model_version", "generated_at", "input_sources", "demand_level", "recommended_action"],
+      "properties": {
+        "as_of_date": {"type": "string", "format": "date"},
+        "forecast_date": {"type": "string", "format": "date"},
+        "horizon": {"type": "integer", "minimum": 1, "maximum": 7},
+        "predicted_guest_count": {"type": "number", "minimum": 0},
+        "model_version": {"type": "string", "minLength": 1},
+        "generated_at": {"type": "string", "format": "date-time", "pattern": "(Z|\\+00:00)$"},
+        "input_sources": {"type": "object", "additionalProperties": false, "required": ["actual_days", "predicted_days"], "properties": {"actual_days": {"type": "integer", "minimum": 1, "maximum": 14}, "predicted_days": {"type": "integer", "minimum": 0, "maximum": 6}}},
+        "demand_level": {"enum": ["HIGH", "NORMAL", "LOW", "INSUFFICIENT_HISTORY"]},
+        "recommended_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["total_predicted_guests_7d", "peak_predicted_guest_count", "peak_forecast_dates"],
+      "properties": {"total_predicted_guests_7d": {"type": "number", "minimum": 0}, "peak_predicted_guest_count": {"type": "number", "minimum": 0}, "peak_forecast_dates": {"type": "array", "minItems": 1, "maxItems": 7, "uniqueItems": true, "items": {"type": "string", "format": "date"}}}
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_kind", "source_checksums", "snapshot_hash", "extracted_at", "dw_run_id", "quality_passed"],
+      "properties": {
+        "source_kind": {"enum": ["postgresql", "synthetic_fixture"]},
+        "source_checksums": {"type": "object", "additionalProperties": false, "required": ["booking", "holiday", "weather"], "properties": {"booking": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "holiday": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "weather": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+        "snapshot_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "extracted_at": {"type": "string", "format": "date-time"},
+        "dw_run_id": {"type": "string", "minLength": 1},
+        "quality_passed": {"const": true}
+      }
+    }
+  }
+}

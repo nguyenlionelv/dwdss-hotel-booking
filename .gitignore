@@ -44,3 +44,9 @@ Thumbs.db
 .stitch/
 .agents/
 graphify-out/
+.venv-ml/
+
+# Local Phase 4 investigation history and generated handoff archives.
+/artifacts/local_archive/
+/artifacts/handoff/
+/artifacts/recovery/phase4_recreate_20261104/

@@ -1,0 +1,8 @@
+{
+  "experiment_version": "demand-feature-comparison-v1",
+  "feature_versions": ["demand-weekly-v1", "demand-short-v1", "demand-v1"],
+  "expected_training_rows": {"V1": 218, "V2": 131, "V3": 55},
+  "controlled_analysis": true,
+  "require_nonoverlapping_mae_improvement": true,
+  "test_partition_previously_evaluated": true
+}
