@@ -1,0 +1,19 @@
+{
+  "contract_version": "demand-contract-v1",
+  "feature_version": "demand-v1",
+  "seed": 42,
+  "min_train_rows": 20,
+  "min_validation_origins": 3,
+  "min_test_origins": 3,
+  "min_relative_mae_improvement": 0.01,
+  "splits": {
+    "train": {"start": "2015-07-01", "end": "2016-03-31"},
+    "validation": {"start": "2016-04-01", "end": "2017-05-31"},
+    "test": {"start": "2017-06-01", "end": "2017-08-31"}
+  },
+  "models": {
+    "linear_regression": {},
+    "random_forest": {"n_estimators": 100, "max_depth": 4, "min_samples_leaf": 3},
+    "xgboost": {"n_estimators": 100, "max_depth": 2, "learning_rate": 0.05, "reg_lambda": 2.0}
+  }
+}

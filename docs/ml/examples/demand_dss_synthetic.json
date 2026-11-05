@@ -1,0 +1,150 @@
+{
+  "schema_version": "demand-dss-v1",
+  "hotel_name": "City Hotel",
+  "timezone": "Europe/Lisbon",
+  "as_of_date": "2020-02-25",
+  "horizon": 7,
+  "model_name": "linear_regression",
+  "model_version": "synthetic-calendar-rule-example",
+  "feature_version": "demand-weekly-v1",
+  "data_version": "synthetic-dss-v1",
+  "generated_at": "2026-11-05T05:49:28.139888+00:00",
+  "forecast_status": "ok",
+  "forecast_reason_code": null,
+  "forecast_message": null,
+  "dss_status": "OK",
+  "dss_reason_codes": [],
+  "dss_threshold_rule": {
+    "rule_version": "demand-dss-56d-v1",
+    "window_start": "2020-01-01",
+    "window_end": "2020-02-25",
+    "lookback_days_required": 56,
+    "complete_days_available": 56,
+    "sufficient_history": true,
+    "std_ddof": 0,
+    "mean_guests_8w": 20.0,
+    "std_guests_8w": 10.0,
+    "high_threshold": 30.0,
+    "low_threshold": 10.0,
+    "unavailable_days": []
+  },
+  "forecasts": [
+    {
+      "as_of_date": "2020-02-25",
+      "forecast_date": "2020-02-26",
+      "horizon": 1,
+      "predicted_guest_count": 20.0,
+      "model_version": "synthetic-calendar-rule-example",
+      "generated_at": "2026-11-05T05:49:28.139888+00:00",
+      "input_sources": {
+        "actual_days": 1,
+        "predicted_days": 0
+      },
+      "demand_level": "NORMAL",
+      "recommended_action": "Maintain the current operational plan and monitor demand changes."
+    },
+    {
+      "as_of_date": "2020-02-25",
+      "forecast_date": "2020-02-27",
+      "horizon": 2,
+      "predicted_guest_count": 30.0,
+      "model_version": "synthetic-calendar-rule-example",
+      "generated_at": "2026-11-05T05:49:28.139888+00:00",
+      "input_sources": {
+        "actual_days": 1,
+        "predicted_days": 0
+      },
+      "demand_level": "NORMAL",
+      "recommended_action": "Maintain the current operational plan and monitor demand changes."
+    },
+    {
+      "as_of_date": "2020-02-25",
+      "forecast_date": "2020-02-28",
+      "horizon": 3,
+      "predicted_guest_count": 40.0,
+      "model_version": "synthetic-calendar-rule-example",
+      "generated_at": "2026-11-05T05:49:28.139888+00:00",
+      "input_sources": {
+        "actual_days": 1,
+        "predicted_days": 0
+      },
+      "demand_level": "HIGH",
+      "recommended_action": "Review guest reception capacity, prepare housekeeping workload, and coordinate operational resources."
+    },
+    {
+      "as_of_date": "2020-02-25",
+      "forecast_date": "2020-02-29",
+      "horizon": 4,
+      "predicted_guest_count": 19.5,
+      "model_version": "synthetic-calendar-rule-example",
+      "generated_at": "2026-11-05T05:49:28.139888+00:00",
+      "input_sources": {
+        "actual_days": 1,
+        "predicted_days": 0
+      },
+      "demand_level": "NORMAL",
+      "recommended_action": "Maintain the current operational plan and monitor demand changes."
+    },
+    {
+      "as_of_date": "2020-02-25",
+      "forecast_date": "2020-03-01",
+      "horizon": 5,
+      "predicted_guest_count": 9.5,
+      "model_version": "synthetic-calendar-rule-example",
+      "generated_at": "2026-11-05T05:49:28.139888+00:00",
+      "input_sources": {
+        "actual_days": 1,
+        "predicted_days": 0
+      },
+      "demand_level": "LOW",
+      "recommended_action": "Review staff shift allocation and adjust preparation for lower expected demand."
+    },
+    {
+      "as_of_date": "2020-02-25",
+      "forecast_date": "2020-03-02",
+      "horizon": 6,
+      "predicted_guest_count": 0.0,
+      "model_version": "synthetic-calendar-rule-example",
+      "generated_at": "2026-11-05T05:49:28.139888+00:00",
+      "input_sources": {
+        "actual_days": 1,
+        "predicted_days": 0
+      },
+      "demand_level": "LOW",
+      "recommended_action": "Review staff shift allocation and adjust preparation for lower expected demand."
+    },
+    {
+      "as_of_date": "2020-02-25",
+      "forecast_date": "2020-03-03",
+      "horizon": 7,
+      "predicted_guest_count": 10.0,
+      "model_version": "synthetic-calendar-rule-example",
+      "generated_at": "2026-11-05T05:49:28.139888+00:00",
+      "input_sources": {
+        "actual_days": 1,
+        "predicted_days": 0
+      },
+      "demand_level": "NORMAL",
+      "recommended_action": "Maintain the current operational plan and monitor demand changes."
+    }
+  ],
+  "summary": {
+    "total_predicted_guests_7d": 129.0,
+    "peak_predicted_guest_count": 40.0,
+    "peak_forecast_dates": [
+      "2020-02-28"
+    ]
+  },
+  "provenance": {
+    "source_kind": "synthetic_fixture",
+    "source_checksums": {
+      "booking": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "holiday": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "weather": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "snapshot_hash": "6c10403d72157e66f3d051c7bb69157acb7cc1a547f0de8b8654ce03b65ac46f",
+    "extracted_at": "2026-11-05T00:00:00+00:00",
+    "dw_run_id": "synthetic-dss",
+    "quality_passed": true
+  }
+}

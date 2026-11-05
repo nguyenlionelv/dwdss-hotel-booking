@@ -1,0 +1,3 @@
+# Generated immutable bundles are transferred with checksums, not committed.
+artifacts/**
+!artifacts/.gitkeep

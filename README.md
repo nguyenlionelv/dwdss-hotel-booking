@@ -24,4 +24,5 @@ React + Vite · FastAPI · PostgreSQL 17 · Python ETL/ML · Docker Compose.
 | [Thiết kế DW đã chốt](docs/dw_design/dw_design.md) | 1 FactBooking + 6 Dim + 1 DailyContext; đầu ra Operations Mart; attributes, mapping, kế hoạch code và nghiệm thu |
 | [DW runbook](docs/dw_runbook.md) | Staging → DW đã chạy local: snapshot, loader, quality, rerun và evidence DW READY |
 | [DW READY / Member 1](docs/dw_report.md) | Quá trình triển khai, danh mục file, quy tắc dữ liệu và kết quả nghiệm thu |
+| [Demand Forecast + DSS: bắt đầu tại đây](docs/ml/README.md) | Một hướng dẫn bàn giao cho Phase 3; báo cáo thử nghiệm là tài liệu tùy chọn |
 [Master plan](docs/Hotel_booking_Overall_plan.md) là tài liệu tham khảo về kiến trúc và định hướng mở rộng; phạm vi triển khai theo các tài liệu hiện hành ở trên.
