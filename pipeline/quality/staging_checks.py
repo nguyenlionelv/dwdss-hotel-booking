@@ -8,6 +8,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import psycopg
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
@@ -15,6 +17,15 @@ from pipeline.source_to_staging.common import SOURCE_IDS, connect  # noqa: E402
 
 
 def report(conn) -> dict:
+    """Read one published snapshot without committing a caller's transaction."""
+    if conn.info.transaction_status != psycopg.pq.TransactionStatus.IDLE:
+        raise ValueError("Staging quality requires an idle connection")
+    with conn.transaction():
+        conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        return _report_snapshot(conn)
+
+
+def _report_snapshot(conn) -> dict:
     with conn.cursor() as cur:
         cur.execute(
             """SELECT b.batch_id,b.status,b.source_set_fingerprint,b.contract_version,
@@ -35,6 +46,8 @@ def report(conn) -> dict:
         )
         sources = {}
         errors = []
+        if status != "published":
+            errors.append("Active Staging batch is not published")
         for row in cur.fetchall():
             sid, path, sha, metadata, raw, staged, out_scope, unidentified, rejected, missing, invalid = row
             sources[sid] = {
@@ -50,10 +63,14 @@ def report(conn) -> dict:
             errors.append("Published batch does not contain exactly three sources")
         counts = {}
         for sid in SOURCE_IDS:
-            cur.execute(f"SELECT count(*) FROM staging.v_{sid}_current")
-            counts[sid] = cur.fetchone()[0]
-            if sid in sources and counts[sid] != sources[sid]["staged_count"]:
-                errors.append(f"{sid}: active count differs from batch count")
+            cur.execute(f"""SELECT count(*),array_agg(DISTINCT _source_file_sha256)
+                            FROM staging.v_{sid}_current""")
+            counts[sid], checksums = cur.fetchone()
+            if sid in sources:
+                if counts[sid] != sources[sid]["staged_count"]:
+                    errors.append(f"{sid}: active count differs from batch count")
+                if checksums is not None and checksums != [sources[sid]["sha256"]]:
+                    errors.append(f"{sid}: current checksums differ from batch registry")
         cur.execute("SELECT count(*) FROM staging.v_booking_current WHERE hotel <> 'City Hotel'")
         non_city = cur.fetchone()[0]
         if non_city:

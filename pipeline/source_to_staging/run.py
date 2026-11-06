@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import uuid
+from collections import Counter
 from pathlib import Path
 
 from psycopg.types.json import Jsonb
 
 from . import booking, holiday, weather
-from .common import DEFAULT_MANIFEST, SOURCE_IDS, StructuralError, connect, insert_issues, source_set, verify_sources
+from .common import DEFAULT_MANIFEST, SOURCE_IDS, LoadResult, StructuralError, connect, insert_issues, source_set, verify_sources
 
 
 LOADERS = {"booking": booking.load, "holiday": holiday.load, "weather": weather.load}
@@ -60,6 +61,38 @@ def _check_results(cur, sources: dict, results: dict) -> dict:
     return summary
 
 
+def _check_published_batch(cur, sources: dict, batch_id) -> dict:
+    """Validate stored source versions before reactivating a historical batch."""
+    cur.execute(
+        """SELECT source_id,source_file_sha256,source_metadata,raw_count,staged_count,
+                  out_of_scope_count,unidentified_count,reject_count,missing_counts,invalid_counts
+           FROM staging.load_batch_source WHERE batch_id=%s""",
+        (batch_id,),
+    )
+    registered = cur.fetchall()
+    if {row[0] for row in registered} != set(SOURCE_IDS):
+        raise RuntimeError("Published batch must contain exactly three sources")
+    results = {}
+    for source_id, checksum, metadata, raw, staged, out_scope, unidentified, rejected, missing, invalid in registered:
+        spec = sources[source_id]
+        if checksum != spec["sha256"]:
+            raise RuntimeError(f"{source_id}: published checksum differs from selected manifest")
+        # Paths and acquisition timestamps may differ for a copy of the same raw bytes.
+        for key, value in spec.items():
+            if key not in {"file", "resolved_path", "expected", "metadata_file", "acquisition_metadata"}:
+                if metadata.get(key) != value:
+                    raise RuntimeError(f"{source_id}: published metadata differs from selected manifest ({key})")
+        results[source_id] = LoadResult(
+            raw_count=raw, staged_count=staged, out_of_scope_count=out_scope,
+            unidentified_count=unidentified, reject_count=rejected,
+            missing={field: Counter(tokens) for field, tokens in missing.items()}, invalid=Counter(invalid),
+        )
+    cur.execute("SELECT count(*) FROM staging.reject WHERE batch_id=%s", (batch_id,))
+    if cur.fetchone()[0]:
+        raise RuntimeError("Published batch contains structural rejects")
+    return _check_results(cur, sources, results)
+
+
 def run(manifest_path: Path = DEFAULT_MANIFEST, *, dbname: str | None = None,
         inject_failure_after: str | None = None) -> dict:
     contract_version, sources, fingerprint = source_set(manifest_path, verify=False)
@@ -93,13 +126,37 @@ def run(manifest_path: Path = DEFAULT_MANIFEST, *, dbname: str | None = None,
                 conn.commit()
                 raise
             cur.execute(
-                "SELECT batch_id FROM staging.load_batch WHERE source_set_fingerprint=%s AND status='published'",
+                """SELECT b.batch_id,a.batch_id IS NOT NULL AS is_active,b.contract_version
+                   FROM staging.load_batch b
+                   LEFT JOIN staging.active_snapshot a ON a.singleton_id=1 AND a.batch_id=b.batch_id
+                   WHERE b.source_set_fingerprint=%s AND b.status='published'""",
                 (fingerprint,),
             )
             existing = cur.fetchone()
             if existing:
-                conn.rollback()
-                return {"status": "no-op", "batch_id": str(existing[0]), "source_set_fingerprint": fingerprint}
+                batch_id, is_active, published_contract = existing
+                if published_contract != contract_version:
+                    raise RuntimeError("Published batch contract differs from selected manifest")
+                if is_active:
+                    conn.rollback()
+                    return {"status": "no-op", "batch_id": str(batch_id), "source_set_fingerprint": fingerprint}
+                try:
+                    summary = _check_published_batch(cur, sources, batch_id)
+                    cur.execute("SELECT pg_advisory_xact_lock(634718252)")
+                    cur.execute(
+                        """INSERT INTO staging.active_snapshot(singleton_id,batch_id,published_at)
+                           VALUES (1,%s,now()) ON CONFLICT (singleton_id)
+                           DO UPDATE SET batch_id=EXCLUDED.batch_id,published_at=EXCLUDED.published_at""",
+                        (batch_id,),
+                    )
+                    if inject_failure_after == "reactivation":
+                        raise RuntimeError("Injected failure after reactivation")
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+                    raise
+                return {"status": "published", "batch_id": str(batch_id),
+                        "source_set_fingerprint": fingerprint, "sources": summary}
             batch_id = uuid.uuid4()
             cur.execute(
                 "INSERT INTO staging.load_batch(batch_id,source_set_fingerprint,contract_version,status) VALUES (%s,%s,%s,'loading')",

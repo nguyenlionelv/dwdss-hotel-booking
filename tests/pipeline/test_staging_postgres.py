@@ -7,15 +7,15 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from psycopg import sql
+from psycopg import Cursor, pq, sql
 
 from pipeline.quality.staging_checks import report
 from pipeline.source_to_staging.booking import BOOKING_FIELDS
-from pipeline.source_to_staging.common import ROOT, connect, sha256
+from pipeline.source_to_staging.common import ROOT, StructuralError, connect, sha256
 from pipeline.source_to_staging.run import run
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def test_database():
     name = "staging_test_" + uuid4().hex[:12]
     assert name.startswith("staging_test_") and len(name) == 25
@@ -92,6 +92,238 @@ def make_sources(tmp_path: Path) -> Path:
     return manifest_path
 
 
+def make_source_versions(tmp_path: Path) -> tuple[Path, Path]:
+    """Two source sets have equal counts but different Booking values and issues."""
+    paths = []
+    for version in ("a", "b"):
+        folder = tmp_path / version
+        folder.mkdir()
+        path = make_sources(folder)
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        manifest["sources"]["booking"]["hotel_scope"] = "City Hotel"
+        if version == "b":
+            booking = Path(manifest["sources"]["booking"]["file"])
+            with booking.open(encoding="utf-8", newline="") as handle:
+                rows = list(csv.DictReader(handle))
+            rows[1].update(adults="3", children="0")
+            with booking.open("w", encoding="utf-8", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=BOOKING_FIELDS)
+                writer.writeheader()
+                writer.writerows(rows)
+            manifest["sources"]["booking"]["sha256"] = sha256(booking)
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        paths.append(path)
+    return paths[0], paths[1]
+
+
+def staging_state(dbname: str) -> dict:
+    """Capture physical data/audit and serving values on the owned test database."""
+    tables = {
+        "load_batch": "batch_id", "load_batch_source": "batch_id,source_id",
+        "quality_issue": "issue_id", "reject": "reject_id",
+        "stg_booking": "_source_file_sha256,_source_row_id",
+        "stg_holiday": "_source_file_sha256,_source_row_id",
+        "stg_weather": "_source_file_sha256,_source_row_id",
+    }
+    with connect(dbname) as conn:
+        conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        active = conn.execute("SELECT batch_id,published_at FROM staging.active_snapshot WHERE singleton_id=1").fetchone()
+        stored = {table: conn.execute(sql.SQL("SELECT * FROM staging.{} ORDER BY {}").format(
+            sql.Identifier(table), sql.SQL(order))).fetchall() for table, order in tables.items()}
+        views = {source: conn.execute(sql.SQL("SELECT * FROM staging.{} ORDER BY _source_row_id").format(
+            sql.Identifier(f"v_{source}_current"))).fetchall() for source in ("booking", "holiday", "weather")}
+        views["context"] = conn.execute("SELECT * FROM staging.v_daily_context_current ORDER BY local_date").fetchall()
+    return {"active": active, "stored": stored, "views": views}
+
+
+def test_reactivate_historical_snapshot_preserves_rows_and_audit(test_database, tmp_path):
+    manifest_a, manifest_b = make_source_versions(tmp_path)
+    first = run(manifest_a, dbname=test_database)
+    state_a = staging_state(test_database)
+    assert run(manifest_a, dbname=test_database)["status"] == "no-op"
+    assert staging_state(test_database) == state_a
+
+    second = run(manifest_b, dbname=test_database)
+    state_b = staging_state(test_database)
+    assert first["sources"]["booking"]["staged_count"] == second["sources"]["booking"]["staged_count"] == 4
+    assert state_b["views"]["booking"] != state_a["views"]["booking"]
+    assert state_b["views"]["holiday"] == state_a["views"]["holiday"]
+    assert state_b["views"]["weather"] == state_a["views"]["weather"]
+
+    restored = run(manifest_a, dbname=test_database)
+    assert restored["status"] == "published"
+    assert restored["batch_id"] == first["batch_id"]
+    assert restored["source_set_fingerprint"] == first["source_set_fingerprint"]
+    assert restored["sources"] == first["sources"]
+    state_restored = staging_state(test_database)
+    assert str(state_restored["active"][0]) == first["batch_id"]
+    assert state_restored["active"][1] > state_b["active"][1]
+    assert state_restored["views"] == state_a["views"]
+    assert state_restored["stored"] == state_b["stored"]
+    with connect(test_database) as conn:
+        quality = report(conn)
+    assert quality["passed"] is True and quality["batch_id"] == first["batch_id"]
+    assert run(manifest_a, dbname=test_database)["status"] == "no-op"
+    assert staging_state(test_database) == state_restored
+
+
+def test_failed_reactivation_keeps_active_snapshot_and_published_history(test_database, tmp_path):
+    manifest_a, manifest_b = make_source_versions(tmp_path)
+    first = run(manifest_a, dbname=test_database)
+    run(manifest_b, dbname=test_database)
+    before = staging_state(test_database)
+    with pytest.raises(RuntimeError, match="Injected failure after reactivation"):
+        run(manifest_a, dbname=test_database, inject_failure_after="reactivation")
+    assert staging_state(test_database) == before
+    assert run(manifest_a, dbname=test_database)["batch_id"] == first["batch_id"]
+
+
+@pytest.mark.parametrize("defect,error", [
+    ("contract", "Published batch contract differs"),
+    ("sources", "Published batch must contain exactly three sources"),
+    ("checksum", "published checksum differs"),
+    ("metadata", "published metadata differs"),
+    ("expected", "differs from manifest expectation"),
+    ("physical_rows", "physical rows"),
+    ("reject", "Published batch contains structural rejects"),
+])
+def test_reactivation_rejects_inconsistent_history(test_database, tmp_path, defect, error):
+    manifest_a, manifest_b = make_source_versions(tmp_path)
+    first = run(manifest_a, dbname=test_database)
+    run(manifest_b, dbname=test_database)
+    selected = json.loads(manifest_a.read_text(encoding="utf-8"))
+    with connect(test_database) as conn:
+        if defect == "contract":
+            conn.execute("UPDATE staging.load_batch SET contract_version='damaged' WHERE batch_id=%s", (first["batch_id"],))
+        elif defect == "sources":
+            conn.execute("DELETE FROM staging.load_batch_source WHERE batch_id=%s AND source_id='holiday'", (first["batch_id"],))
+        elif defect == "checksum":
+            conn.execute("UPDATE staging.load_batch_source SET source_file_sha256=%s WHERE batch_id=%s AND source_id='booking'",
+                         ("0" * 64, first["batch_id"]))
+        elif defect == "metadata":
+            conn.execute("""UPDATE staging.load_batch_source
+                            SET source_metadata=jsonb_set(source_metadata,'{hotel_scope}','\"Other Hotel\"')
+                            WHERE batch_id=%s AND source_id='booking'""", (first["batch_id"],))
+        elif defect == "expected":
+            selected["sources"]["booking"]["expected"]["staged_count"] = 5
+            manifest_a.write_text(json.dumps(selected), encoding="utf-8")
+        elif defect == "physical_rows":
+            conn.execute("DELETE FROM staging.stg_booking WHERE _source_file_sha256=%s AND _source_row_id=3",
+                         (selected["sources"]["booking"]["sha256"],))
+        else:
+            conn.execute("""INSERT INTO staging.reject(batch_id,source_id,rule_code,reason)
+                            VALUES (%s,'booking','TEST_REJECT','Deliberately inconsistent history')""", (first["batch_id"],))
+    before = staging_state(test_database)
+    with pytest.raises(RuntimeError, match=error):
+        run(manifest_a, dbname=test_database)
+    assert staging_state(test_database) == before
+
+
+def test_reactivation_verifies_raw_checksum_before_switching(test_database, tmp_path):
+    manifest_a, manifest_b = make_source_versions(tmp_path)
+    first = run(manifest_a, dbname=test_database)
+    run(manifest_b, dbname=test_database)
+    before = staging_state(test_database)
+    selected = json.loads(manifest_a.read_text(encoding="utf-8"))
+    booking = Path(selected["sources"]["booking"]["file"])
+    with booking.open("a", encoding="utf-8") as handle:
+        handle.write("\n")
+    with pytest.raises(StructuralError, match="Raw file checksum differs"):
+        run(manifest_a, dbname=test_database)
+    after = staging_state(test_database)
+    assert after["active"] == before["active"]
+    assert after["views"] == before["views"]
+    for table in ("stg_booking", "stg_holiday", "stg_weather", "load_batch_source", "quality_issue"):
+        assert after["stored"][table] == before["stored"][table]
+    with connect(test_database) as conn:
+        assert conn.execute("SELECT status FROM staging.load_batch WHERE batch_id=%s", (first["batch_id"],)).fetchone() == ("published",)
+        assert conn.execute("SELECT count(*) FROM staging.load_batch WHERE status='failed'").fetchone()[0] == 1
+
+
+def test_quality_reads_one_snapshot_during_publication(test_database, tmp_path):
+    manifest_a, manifest_b = make_source_versions(tmp_path)
+    first = run(manifest_a, dbname=test_database)
+    checksum_a = first["sources"]["booking"]["sha256"]
+    published = []
+    observed = []
+
+    class PublishingCursor(Cursor):
+        def execute(self, query, params=None, **kwargs):
+            if "FROM staging.load_batch_source WHERE batch_id=" in str(query) and not published:
+                # Publish B after quality has read A's header, before its other queries.
+                published.append(run(manifest_b, dbname=test_database))
+                settings = self.connection.execute(
+                    "SELECT current_setting('transaction_isolation'),current_setting('transaction_read_only')"
+                ).fetchone()
+                checksums = self.connection.execute(
+                    "SELECT DISTINCT _source_file_sha256 FROM staging.v_booking_current"
+                ).fetchall()
+                observed.append((settings, checksums))
+            return super().execute(query, params, **kwargs)
+
+    with connect(test_database) as conn:
+        conn.cursor_factory = PublishingCursor
+        quality_a = report(conn)
+        assert quality_a["passed"] is True
+        assert quality_a["batch_id"] == first["batch_id"]
+        assert quality_a["sources"]["booking"]["sha256"] == checksum_a
+        assert observed == [(("repeatable read", "on"), [(checksum_a,)])]
+        assert conn.info.transaction_status == pq.TransactionStatus.IDLE
+        quality_b = report(conn)
+        assert quality_b["passed"] is True
+        assert quality_b["batch_id"] == published[0]["batch_id"]
+        assert quality_b["sources"]["booking"]["sha256"] != checksum_a
+    before = staging_state(test_database)
+    with connect(test_database) as conn:
+        assert report(conn)["passed"] is True
+    assert staging_state(test_database) == before
+
+
+def test_quality_requires_idle_connection(test_database, tmp_path):
+    manifest = make_sources(tmp_path)
+    run(manifest, dbname=test_database)
+    before = staging_state(test_database)
+    with connect(test_database) as conn:
+        conn.execute("SELECT 1")
+        with pytest.raises(ValueError, match="Staging quality requires an idle connection"):
+            report(conn)
+        assert conn.info.transaction_status == pq.TransactionStatus.INTRANS
+        conn.rollback()
+        assert report(conn)["passed"] is True
+    assert staging_state(test_database) == before
+
+
+def test_quality_detects_current_view_with_wrong_checksum(test_database, tmp_path):
+    manifest_a, manifest_b = make_source_versions(tmp_path)
+    first = run(manifest_a, dbname=test_database)
+    second = run(manifest_b, dbname=test_database)
+    run(manifest_a, dbname=test_database)
+    with connect(test_database) as conn:
+        conn.execute(sql.SQL("""CREATE OR REPLACE VIEW staging.v_booking_current AS
+                                SELECT * FROM staging.stg_booking WHERE _source_file_sha256={}""").format(
+            sql.Literal(second["sources"]["booking"]["sha256"])))
+    before = staging_state(test_database)
+    with connect(test_database) as conn:
+        quality = report(conn)
+    assert quality["batch_id"] == first["batch_id"]
+    assert quality["active_counts"]["booking"] == first["sources"]["booking"]["staged_count"]
+    assert quality["passed"] is False
+    assert "booking: current checksums differ from batch registry" in quality["errors"]
+    assert staging_state(test_database) == before
+
+
+def test_quality_rejects_active_batch_that_is_not_published(test_database, tmp_path):
+    first = run(make_sources(tmp_path), dbname=test_database)
+    with connect(test_database) as conn:
+        conn.execute("UPDATE staging.load_batch SET status='failed' WHERE batch_id=%s", (first["batch_id"],))
+    before = staging_state(test_database)
+    with connect(test_database) as conn:
+        quality = report(conn)
+    assert quality["passed"] is False
+    assert "Active Staging batch is not published" in quality["errors"]
+    assert staging_state(test_database) == before
+
+
 def test_load_rerun_failure_retry_and_quality(test_database, tmp_path):
     manifest_path = make_sources(tmp_path)
     first = run(manifest_path, dbname=test_database)
@@ -127,6 +359,7 @@ def test_load_rerun_failure_retry_and_quality(test_database, tmp_path):
             assert cur.fetchone()[0] == 1
             cur.execute("SELECT count(*) FROM staging.quality_issue WHERE batch_id=%s AND source_id='holiday' AND issue_type='invalid'", (first["batch_id"],))
             assert cur.fetchone()[0] >= 3
+        conn.rollback()  # Finish inspection before quality opens its own snapshot.
         quality = report(conn)
         assert quality["passed"] is True
         assert quality["database_version"].startswith("17.")
