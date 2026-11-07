@@ -1,89 +1,411 @@
-# Design System: Hotel Operations DSS (Lumina Analytics)
-**Project ID:** `projects/16851751821645352227`
-**Domain:** Hospitality Data Warehouse & Decision Support System (City Hotel — Lisbon, Portugal)
+# Design System: Hotel Operations DSS
+
+## Lumina Analytics — Anti-AI-Slop Design Guidelines
+
+**Project ID:** `projects/16851751821645352227`  
+**Domain:** Hospitality Data Warehouse & Decision Support System  
+**Reference:** City Hotel — Lisbon, Portugal
 
 ---
 
-## 1. Visual Theme & Atmosphere
+## 1. Design Philosophy
 
-**Lumina Analytics (Quixotic / Apple HIG Enterprise Aesthetic)** is a high-craft, daylight-first hospitality intelligence interface engineered for executive clarity and operational precision. Rather than relying on heavy dark-mode chromes or stark black-and-white grid borders, the interface uses **tonal surface layering**—floating pure white elevated cards over a cool, soft alabaster-slate canvas (`#f4f5f8`) with subtle translucent glassmorphism in sticky navigation bars.
+### 1.1. Visual Direction
 
-The atmosphere balances **editorial authority** with **analytical density**:
-- **Tactile Card Elevation:** Cards sit on a whisper-soft ambient shadow (`0 16px 36px -8px rgba(15, 23, 42, 0.04)`) with generous `24px–28px` (`1.5rem–1.75rem`) border radii, eliminating visual clutter while separating functional domains (OLAP Slice & Dice, KPI Reconciliations, and 7-Day ML Forecast Schedules).
-- **Dual-Accent Semantic Hierarchy:** High-trust **Executive Azure (`#0059b5` / `#0071e3`)** anchors analytical navigation, primary actions, and OLAP time-series curves, while **Hospitality Emerald (`#059669` / `#10b981`)** highlights operational health, verified mart states, and Decision Support System (DSS) forecast signals.
-- **High-Scannability Data Surfaces:** Tabular logs, multi-dimensional OLAP pivot matrices, and 7-day staffing schedules pair uppercase micro-tracked headers with tabular numerals (`font-variant-numeric: tabular-nums`) and semantic pill badges.
+**Editorial Data Intelligence — Minimal, Functional, Data-Driven.**
 
----
+Build a professional analytical interface inspired by editorial publications, financial research platforms, and enterprise data applications.
 
-## 2. Color Palette & Roles
+The interface must prioritize information hierarchy, data readability, and operational efficiency over decorative UI elements.
 
-### Surface & Canvas Tokens
-- **Primary Canvas Background (`#f4f5f8`):** Cool alabaster-slate background behind the main workspace that provides gentle contrast for pure white cards.
-- **Secondary Well / Filter Surface (`#f8fafc` to `#f1f5f9`):** Recessed container fill used for filter toolbars, pill selectors, table headers, and inactive tab wells.
-- **Elevated Card Surface (`#ffffff`):** Pure crisp white used for KPI cards, chart containers, OLAP pivot tables, and executive summary blocks.
-- **Translucent Glass Header (`rgba(255, 255, 255, 0.85)`):** Frosted top bar surface paired with `backdrop-filter: blur(20px)`.
-- **Executive Dark Card Gradient (`linear-gradient(135deg, #0f172a 0%, #1e293b 100%)`):** High-contrast deep navy slate surface used for executive shift allocation directives and system engine status cards.
+**Core principles:**
 
-### Brand & Semantic Accents
-- **Executive Azure Primary (`#0059b5` / `#0071e3`):** Primary interactive accent for active navigation indicators, primary CTA buttons, OLAP demand curves, and selected time-grain pills.
-- **Azure Soft Tint (`#eff6ff` / `#dbeafe`):** Subtle highlight fill for active sidebar routes, holiday impact callouts, and info badges.
-- **Hospitality Emerald Brand (`#059669`):** Primary operational accent for DSS forecast highlights, active model badges, and positive KPI deltas.
-- **Emerald Vibrant Accent (`#10b981`):** Used for live status dots (`Mart Healthy / Ready`), forecast area gradients, and high-confidence completion bars.
-- **Emerald Soft Tint (`#ecfdf5` / `#d1fae5`):** Background fill for normal capacity badges (`Bình thường`), verified mart pills, and DSS model banners.
+- **Content over decoration:** Every element must communicate information or provide functionality.
+- **Layout over containers:** Use spacing, alignment, typography, and subtle dividers instead of wrapping everything in cards.
+- **Data over decoration:** Charts and metrics are the primary visual elements.
+- **Restraint over repetition:** Avoid repetitive colors, icons, badges, shadows, and rounded components.
+- **Concise communication:** UI copy must be short, specific, and actionable.
 
-### Typography & Ink Hierarchy
-- **Primary Deep Ink (`#0f172a`):** High-contrast slate-navy for page titles, hero KPI numerals, and primary table row identifiers.
-- **Secondary Body Ink (`#334155` / `#475569`):** Balanced slate for analytical descriptions, table data cells, and inactive navigation labels.
-- **Muted Metadata Ink (`#64748b` / `#94a3b8`):** Subtle grey-slate for axis labels, timestamps, release hashes (`v9fe497e2`), and micro-captions.
+### 1.2. Anti-AI-Slop Rules
 
-### Alert & Threshold Status Tokens
-- **High Alert / Surge Crimson (`#ef4444` / `#f43f5e`):** Semantic danger accent for high-demand threshold breaches (`Cao (> 142.7)`), peak surge dots, and critical staffing alerts.
-- **High Alert Soft Fill (`#fef2f2` / `#fee2e2`):** Background tint for peak surge table rows and high-demand warning badges (`#b91c1c` text).
-- **Amber Caution / Moderate Notice (`#f59e0b` / `#d97706`):** Used for weather anomaly notices, degraded mart states, or weekend transition markers (`#fffbeb` fill).
-- **Border & Hairline Divider (`#e2e8f0` / `#f1f5f9`):** Delicate 1px structural borders (`rgba(226, 232, 240, 0.8)`) that define cards and table rows without visual heaviness.
+Strictly avoid the following common AI-generated design patterns:
+
+- Excessive card grids, Bento layouts, and nested containers.
+- Rounded cards with `rounded-2xl`, `rounded-3xl`, or larger radii.
+- Gradient backgrounds, decorative glows, and unnecessary glassmorphism.
+- Repetitive blue-purple gradients and excessive emerald accents.
+- Decorative icons inside every heading or metric.
+- Excessive uppercase labels and letter spacing.
+- Unnecessary descriptions, subtitles, and explanatory paragraphs.
+- Repeated pill badges for ordinary information.
+- Artificially symmetrical layouts when the content requires different visual priorities.
+- Decorative charts that do not communicate meaningful data.
+
+**Design test:** If removing an element does not reduce information clarity or functionality, remove it.
 
 ---
 
-## 3. Typography Rules
+## 2. Color System
 
-### Font Families
-- **Display & Headlines (`Plus Jakarta Sans`):** Geometric, modern sans-serif used for page headers, section titles, and large KPI hero numerals.
-- **UI, Controls & Data Tables (`Inter`):** High-legibility neo-grotesque sans-serif used for body copy, filter controls, badges, and dense multi-column tables.
-- **Monospace / Technical Identifiers (`JetBrains Mono` / `monospace`):** Used for dataset release hashes (`v9fe497e2`), SQL mart view names (`mart.operations_daily`), and formula expressions.
+### 2.1. Core Palette
 
-### Typographic Scale & Weight Hierarchy
-- **Page Hero Title:** `1.875rem` (`30px`), `font-weight: 800`, `letter-spacing: -0.025em`, line-height `1.2`, color `#0f172a`.
-- **Card Section Header:** `1.125rem` (`18px`), `font-weight: 700`, `letter-spacing: -0.015em`, color `#0f172a`.
-- **Hero KPI Metric Value:** `1.875rem` to `2.25rem` (`30px–36px`), `font-weight: 800`, `letter-spacing: -0.03em`, `font-variant-numeric: tabular-nums`.
-- **Body & Analytical Copy:** `0.875rem` (`14px`), `font-weight: 400–500`, line-height `1.5`, color `#475569`.
-- **Table & Filter Labels (Micro-Header):** `0.6875rem` (`11px`), `font-weight: 700`, uppercase, `letter-spacing: 0.08em`, color `#64748b`.
+Use a restrained, neutral palette. Colors must have distinct semantic purposes.
+
+| Role            | Color     | Usage                               |
+| --------------- | --------- | ----------------------------------- |
+| Main background | `#FAFAF8` | Overall workspace                   |
+| Primary surface | `#FFFFFF` | Main content areas                  |
+| Primary text    | `#252525` | Headlines and important values      |
+| Secondary text  | `#666666` | Descriptions and supporting data    |
+| Muted text      | `#999999` | Timestamps and metadata             |
+| Divider         | `#E5E5E0` | Section separators                  |
+| Primary accent  | `#315B52` | Selected states and primary actions |
+
+### 2.2. Data Visualization Colors
+
+Use a limited categorical palette for charts. Each color must represent a distinct data series.
+
+| Data category | Color     | Purpose               |
+| ------------- | --------- | --------------------- |
+| Series 1      | `#315B52` | Primary data          |
+| Series 2      | `#C58B55` | Secondary comparison  |
+| Series 3      | `#547A9B` | Additional comparison |
+| Series 4      | `#9B7185` | Additional comparison |
+| Series 5      | `#92958B` | Supporting data       |
+
+Semantic status colors:
+
+- **Success:** `#477A61`
+- **Warning:** `#C58B35`
+- **Critical:** `#B64C43`
+
+Rules:
+
+- Do not use every color in every chart.
+- Use neutral grey for secondary or historical data.
+- Reserve accent colors for important series and meaningful comparisons.
+- Maintain consistent color-to-category mapping across the application.
+- Never use color as the only means of communicating status.
+
+### 2.3. Background Rules
+
+- Prefer solid backgrounds.
+- Avoid gradients and decorative background patterns.
+- Avoid placing every section inside a white card.
+- Use whitespace and thin dividers to separate content.
+- Dark backgrounds are reserved for exceptional use cases, not ordinary dashboard sections.
 
 ---
 
-## 4. Component Stylings
+## 3. Typography
 
-### App Shell & Navigation
-- **Fixed Left Sidebar (`260px` width):** Pure white surface (`#ffffff`) with a subtle right border (`1px solid rgba(226, 232, 240, 0.8)`). Features brand identity header (`DWDSS — HOTEL INTELLIGENCE`), primary navigation links with `12px` (`rounded-xl`) corners, a collapsible/clearly labeled `PHASE 2 (OUT OF SCOPE)` section with `LOCKED` pills, and a dark slate engine status card at the bottom.
-- **Sticky Glass Topbar (`64px` height):** Translucent white header (`rgba(255, 255, 255, 0.85)`) with `backdrop-filter: blur(20px)`. Houses context pills (`City Hotel — Lisbon, Portugal | Europe/Lisbon`, `01/07/2015 – 31/08/2017 (793 days)`), live `Mart Healthy / Ready` indicator with pulsing emerald dot, quick search, and user profile.
+### 3.1. Font Families
 
-### Cards & Containers
-- **Elevated Analytical Card:** Background `#ffffff`, border-radius `24px–28px` (`1.5rem–1.75rem`), border `1px solid rgba(226, 232, 240, 0.8)`, ambient shadow `0 16px 36px -8px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02)`. Hover state gently lifts shadow (`0 20px 40px -12px rgba(15, 23, 42, 0.08)`).
-- **KPI Summary Card:** Compact `p-6` (`24px`) card with a top row containing an uppercase tracking label (`11px`) and a `40px × 40px` (`rounded-2xl`) tinted icon badge, followed by the large tabular numeral and a bottom semantic pill badge (`+4.2% YoY`, `Peak Cap`, or `Optimal`).
+- **Primary:** Inter
+- **Alternative:** IBM Plex Sans
+- **Technical identifiers:** JetBrains Mono
 
-### Interactive Filter Bar & Segmented Controls
-- **Filter Toolbar Card:** Full-width rounded card (`rounded-[24px]`) containing labeled select dropdowns (`bg-[#f8fafc]`, `border-slate-200/80`, `rounded-xl`), segmented pill toggles (`Day | Week | Month | Quarter | Year`), and high-contrast action buttons (`Apply Filters`, `Export CSV`).
-- **Segmented Pill Selector:** Recessed slate well (`bg-slate-100/90 p-1 rounded-xl`) where the active option receives an elevated white or primary-tinted pill (`bg-white text-[#0059b5] shadow-sm font-bold` or `bg-[#059669] text-white`).
+Use one primary font throughout the application. Do not mix multiple display fonts.
 
-### Data Tables & OLAP Matrices
-- **Accessible Scroll Container:** Wrapped in a keyboard-focusable scroll container (`role="region"`, `tabIndex={0}`) with sticky `<thead>` (`position: sticky; top: 0; z-index: 10; background: rgba(248, 250, 252, 0.95)`).
-- **Row Styling:** `1px solid #f1f5f9` horizontal dividers, generous `14px 24px` cell padding, right-aligned numeric columns with `tabular-nums`, and soft row hover highlight (`#f8fafc`). Peak alert rows receive a warm crimson tint (`bg-rose-50/40 hover:bg-rose-50/70`).
+### 3.2. Type Scale
+
+| Element         |    Size | Weight |
+| --------------- | ------: | -----: |
+| Page title      | 28–32px |    650 |
+| Section heading | 18–20px |    600 |
+| Metric value    | 28–36px |    600 |
+| Body text       |    14px |    400 |
+| Supporting text | 12–13px |    400 |
+| Technical data  | 12–13px |    400 |
+
+Typography rules:
+
+- Use sentence case instead of excessive uppercase labels.
+- Avoid unnecessary bold text.
+- Keep line heights comfortable and consistent.
+- Use tabular numerals for metrics, financial values, and time-series data.
+- Use monospace only for SQL identifiers, technical values, and system metadata.
 
 ---
 
-## 5. Layout Principles & Viewport Budget
+## 4. Layout & Composition
 
-- **Desktop-First Bento Grid:** Designed for `1440px` reference viewports with a fixed `260px` sidebar and a fluid main canvas (`margin-left: 260px`, `padding: 32px`, `max-width: 1600px`).
-- **12-Column Analytical Grid:**
-  - **KPI Row:** 4 equal columns (`grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5`) or 5-column KPI strip on Analytics.
-  - **Asymmetric Split Views:** `8 / 4` or `7 / 5` column splits pairing wide time-series/pivot visualizations on the left with stacked contextual impact cards (Holiday Lift, Weather Correlation, Top 5 Geographic Markets) or executive staffing directives on the right.
-- **Whitespace Mandate:** Maintain `24px–28px` (`gap-6` to `gap-7`) between major analytical groups and `24px–32px` internal card padding so dense hospitality metrics remain effortless to scan.
+### 4.1. General Layout
+
+Use an editorial, section-based layout rather than a card-based dashboard.
+
+- Reference viewport: `1440px`.
+- Sidebar width: `240px`.
+- Main content: fluid width.
+- Main content padding: `32px–40px`.
+- Maximum content width: `1600px`.
+- Section spacing: `32px–48px`.
+
+### 4.2. Section-Based Composition
+
+Organize the interface using:
+
+1. Clear section headings.
+2. Horizontal dividers.
+3. Consistent alignment.
+4. Intentional whitespace.
+5. Asymmetric content distribution.
+
+Do not wrap every chart, KPI, filter, or text block in an individual card.
+
+Example composition:
+
+```text
+--------------------------------------------------
+Page Title                         Date Selection
+Short contextual information
+--------------------------------------------------
+
+KEY PERFORMANCE INDICATORS
+
+  Total Bookings      Revenue       Occupancy
+  12,450              €1.25M        78.4%
+
+--------------------------------------------------
+
+REVENUE PERFORMANCE
+
+  [Large Canvas Chart]
+
+  Supporting metrics / observations
+
+--------------------------------------------------
+
+OPERATIONAL ANALYSIS
+
+  [Wide Visualization]     [Compact Insight]
+
+--------------------------------------------------
+```
+
+### 4.3. KPI Presentation
+
+Display KPIs as typographic data groups rather than individual cards.
+
+- Large numerical values.
+- Small descriptive labels.
+- Optional percentage changes.
+- Thin vertical or horizontal dividers when necessary.
+- No decorative icon containers.
+- No unnecessary background colors.
+
+Only emphasize metrics that require immediate attention.
+
+### 4.4. Navigation
+
+**Sidebar:**
+
+- Fixed width: `240px`.
+- Solid background.
+- Thin right divider.
+- Simple text-based navigation.
+- Active state indicated by text weight and a subtle accent indicator.
+- Avoid icon-heavy navigation.
+
+**Topbar:**
+
+- Height: `56px–64px`.
+- Solid background.
+- Minimal bottom divider.
+- Display only essential context: hotel, date range, system status, and user controls.
+- No glassmorphism or excessive contextual pills.
+
+---
+
+## 5. Data Visualization
+
+### 5.1. Rendering Requirements
+
+Use HTML Canvas-based chart rendering for analytical visualizations, preferably through a suitable charting library.
+
+Canvas charts must have:
+
+- Clear axis labels.
+- Readable tick values.
+- Distinct series colors.
+- Visible legends where needed.
+- Tooltips for detailed values.
+- Consistent scales.
+- Appropriate number formatting.
+- Responsive dimensions.
+
+Do not use decorative charts merely to fill empty space.
+
+### 5.2. Chart Design
+
+**Line charts**
+
+- Use for revenue trends, occupancy, and demand forecasting.
+- Use clearly differentiated series.
+- Avoid excessive gridlines.
+- Highlight important dates and anomalies.
+
+**Bar charts**
+
+- Use for category comparisons, geographic markets, and operational performance.
+- Prefer horizontal bars when category names are long.
+- Display values directly when practical.
+
+**Area charts**
+
+- Use sparingly for cumulative trends and forecast intervals.
+- Avoid excessive opacity and gradient fills.
+
+**Heatmaps**
+
+- Use for weekday/weekend patterns, seasonal demand, and operational intensity.
+- Provide a clear color scale and readable labels.
+
+### 5.3. Chart Color Rules
+
+- Primary series: muted green.
+- Comparison series: muted blue or ochre.
+- Historical/reference series: neutral grey.
+- Forecast series: distinguish using a dashed line or another visual treatment.
+- Critical thresholds: muted red.
+
+Do not assign random colors to datasets on each render.
+
+### 5.4. Data Tables
+
+Avoid using tables as the default layout for presenting information.
+
+Prefer:
+
+- Horizontal bar charts for rankings.
+- Heatmaps for multidimensional comparisons.
+- Canvas-based visualizations for trends and distributions.
+- Aligned typographic rows for compact metric summaries.
+- Section-based layouts for related information.
+
+Use actual data tables only when users need precise row-by-row inspection, sorting, or comparison.
+
+When necessary:
+
+- Keep borders minimal.
+- Use clear column alignment.
+- Right-align numeric values.
+- Use tabular numerals.
+- Avoid decorative backgrounds and excessive rounded containers.
+
+---
+
+## 6. Component Styling
+
+### 6.1. Borders & Containers
+
+- Default border radius: `0px–4px`.
+- Buttons and input controls: maximum `4px–6px`.
+- Avoid large rounded card containers.
+- Use `1px solid #E5E5E0` for structural dividers.
+- Avoid shadows unless elevation is functionally necessary.
+
+### 6.2. Buttons
+
+- Primary: solid `#315B52`, white text.
+- Secondary: transparent background, neutral border.
+- Tertiary: text-only action.
+- Avoid oversized buttons and pill-shaped buttons.
+- Use concise action labels.
+
+### 6.3. Inputs & Filters
+
+- Simple rectangular input fields.
+- Minimal borders.
+- Clear labels.
+- Consistent heights.
+- Avoid nesting filters inside decorative toolbar cards.
+
+### 6.4. Status Indicators
+
+Use compact text labels with small semantic indicators.
+
+Examples:
+
+- `Healthy`
+- `Warning`
+- `Critical`
+- `Forecast`
+- `Verified`
+
+Do not turn every status into a large colorful badge.
+
+---
+
+## 7. Content & Microcopy Rules
+
+### 7.1. Writing Style
+
+All UI content must be concise, factual, and directly relevant to the user's task.
+
+**Forbidden:**
+
+- Generic marketing language.
+- Unnecessary introductions.
+- Repeating information already visible in the interface.
+- Descriptions that explain obvious functionality.
+- Artificial AI-generated insights without supporting data.
+
+**Preferred:**
+
+| Avoid                                  | Prefer               |
+| -------------------------------------- | -------------------- |
+| Your hotel performance at a glance     | Hotel Performance    |
+| Explore your revenue trends            | Revenue Trends       |
+| Discover valuable operational insights | Operational Insights |
+| Your system is running smoothly        | System Healthy       |
+| Here is an overview of your bookings   | Bookings             |
+
+### 7.2. AI-Generated Text
+
+If the application generates analytical summaries:
+
+- State the finding first.
+- Include supporting numerical evidence.
+- Explain the operational implication only when relevant.
+- Avoid generic recommendations.
+- Never invent explanations unsupported by the dataset.
+
+Example:
+
+**Bad:**  
+"Your hotel is experiencing an impressive increase in booking performance, demonstrating strong operational efficiency."
+
+**Good:**  
+"Bookings increased 12.4% compared with the previous month."
+
+---
+
+## 8. Responsive Design
+
+- Desktop: prioritize analytical density and wide visualizations.
+- Tablet: reduce sidebar width and reorganize multi-column sections.
+- Mobile: stack content vertically and simplify chart legends.
+- Charts must resize without losing labels or readability.
+- Avoid horizontal overflow except for genuinely wide data tables.
+
+---
+
+## 9. Final Design Constraints
+
+Every implementation must follow these rules:
+
+1. No excessive cards or Bento grids.
+2. No decorative gradients or glassmorphism.
+3. No unnecessary rounded containers.
+4. No repetitive blue/green color combinations.
+5. No decorative icons without functional meaning.
+6. No redundant descriptions or AI-generated filler text.
+7. No tables when charts or structured layouts communicate better.
+8. Canvas-based rendering for analytical charts.
+9. Consistent color mapping across all visualizations.
+10. Use typography, spacing, and dividers to establish hierarchy.
+11. Prioritize actual data over decorative UI.
+12. Preserve accessibility, contrast, and readability.
+
+**Final principle: Design the interface around the information, not around the components.**

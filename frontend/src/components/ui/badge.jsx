@@ -2,26 +2,31 @@ import * as React from "react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+/**
+ * Compact status indicator & metadata label (DESIGN.md Section 6.4):
+ * Restrained, non-pill, minimal borders, semantic dot option.
+ */
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center gap-1.5 rounded-[3px] border px-1.5 py-0.5 text-[11px] font-medium leading-tight transition-colors",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/80",
+          "border-[#E5E5E0] bg-[#FFFFFF] text-[#252525]",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border-[#E5E5E0] bg-[#F4F4F0] text-[#666666]",
         destructive:
-          "border-transparent bg-destructive/15 text-destructive border-destructive/20",
-        outline: "text-foreground",
+          "border-[#B64C43]/30 bg-[#B64C43]/5 text-[#B64C43]",
+        outline:
+          "border-[#E5E5E0] bg-transparent text-[#666666]",
         emerald:
-          "border-emerald-200 bg-emerald-50 text-emerald-700",
+          "border-[#477A61]/30 bg-[#477A61]/5 text-[#477A61]",
         amber:
-          "border-amber-200 bg-amber-50 text-amber-700",
+          "border-[#C58B35]/35 bg-[#C58B35]/5 text-[#9A681E]",
         blue:
-          "border-blue-200 bg-blue-50 text-blue-700",
+          "border-[#547A9B]/30 bg-[#547A9B]/5 text-[#547A9B]",
         slate:
-          "border-slate-200 bg-slate-100 text-slate-700",
+          "border-[#E5E5E0] bg-[#F4F4F0] text-[#666666]",
       },
     },
     defaultVariants: {
@@ -32,7 +37,7 @@ const badgeVariants = cva(
 
 function Badge({ className, variant, ...props }) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <span className={cn(badgeVariants({ variant }), className)} {...props} />
   );
 }
 

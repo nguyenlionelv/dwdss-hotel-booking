@@ -12,7 +12,7 @@ export default {
       center: true,
       padding: '2rem',
       screens: {
-        '2xl': '1400px',
+        '2xl': '1440px',
       },
     },
     extend: {
@@ -51,30 +51,54 @@ export default {
           foreground: 'hsl(var(--card-foreground))',
         },
         chart: {
-          1: 'hsl(var(--chart-1))',
-          2: 'hsl(var(--chart-2))',
-          3: 'hsl(var(--chart-3))',
-          4: 'hsl(var(--chart-4))',
-          5: 'hsl(var(--chart-5))',
+          1: '#315B52',
+          2: '#C58B55',
+          3: '#547A9B',
+          4: '#9B7185',
+          5: '#92958B',
         },
-        // Hospitality Domain Specific Tokens
-        'emerald-brand': '#059669',
-        'emerald-accent': '#10b981',
-        'emerald-soft': '#ecfdf5',
-        'navy-dark': '#0f172a',
-        'slate-soft': '#f8fafc',
+        // Lumina Analytics Semantic & Surface Tokens (DESIGN.md Section 2)
+        surface: {
+          workspace: '#FAFAF8',
+          primary: '#FFFFFF',
+          subtle: '#F4F4F0',
+        },
+        ink: {
+          primary: '#252525',
+          secondary: '#666666',
+          muted: '#999999',
+        },
+        divider: '#E5E5E0',
+        brand: {
+          DEFAULT: '#315B52',
+          hover: '#264942',
+          subtle: '#EBF1EF',
+        },
+        series: {
+          1: '#315B52', // Primary data (muted green)
+          2: '#C58B55', // Secondary comparison (ochre)
+          3: '#547A9B', // Additional comparison (muted blue)
+          4: '#9B7185', // Additional comparison (muted plum)
+          5: '#92958B', // Supporting data (neutral grey)
+        },
+        status: {
+          success: '#477A61',
+          warning: '#C58B35',
+          critical: '#B64C43',
+        },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: '4px',
+        md: '4px',
+        sm: '2px',
+        DEFAULT: '4px',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['"Plus Jakarta Sans"', 'sans-serif'],
-        headline: ['"Plus Jakarta Sans"', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
-        label: ['Inter', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        headline: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        body: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        label: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       keyframes: {
