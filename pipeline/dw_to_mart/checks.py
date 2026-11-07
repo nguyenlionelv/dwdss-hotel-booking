@@ -94,8 +94,7 @@ def validate_operations(conn, run_id, bundle: dict, *, require_state: bool = Tru
         counts[table] = count
         checks.update({f"{table}_{name}": value for name,value in problems.items()})
     # Reconcile additive country values only; context/day-level quality is not additive.
-    fields = ("total_bookings", "non_canceled_bookings", "total_cancellations", "guest_valid_booking_count",
-              "stay_valid_booking_count", "lead_time_valid_count", "adr_valid_count", *SUM_COLUMNS)
+    fields = (*COUNT_COLUMNS, *SUM_COLUMNS)
     rollup = sql.SQL(",").join(sql.SQL("sum({0}) AS {0}").format(sql.Identifier(c)) for c in fields)
     # Empty country cells can be zero while a populated, entirely ineligible group
     # has an unknown daily sum. Per-cell checks above already enforce that case.

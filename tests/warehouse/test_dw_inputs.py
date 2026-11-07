@@ -158,8 +158,12 @@ def test_accepted_booking_assumption_is_bounded_and_preserves_measure_quality():
     zero_guest_day = measure_values([rows[5]], "COMPLETE", 0)
     assert zero_guest_day["guest_data_status"] == "PARTIAL"
     assert zero_guest_day["target_guests"] is None
+    assert zero_guest_day["observed_total_guests"] == 0
+    assert zero_guest_day["guest_valid_booking_count"] == 0
+    assert zero_guest_day["missing_guest_bookings_count"] == 1
     canceled_missing = {**rows[3], "is_canceled": 1}
     assert measure_values([canceled_missing], "COMPLETE", 0)["target_guests"] == 0
+    assert measure_values([canceled_missing], "COMPLETE", 0)["missing_guest_bookings_count"] == 0
 
 
 def test_mapping_rejects_duplicates_and_conflicting_names(tmp_path):

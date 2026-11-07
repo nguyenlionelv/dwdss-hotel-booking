@@ -53,13 +53,16 @@ def measure_values(rows: list[dict], coverage: str, rejected_count: int, exclude
     non_canceled = [row for row in rows if row["is_canceled"] == 0]
     guests = [row for row in non_canceled if all(valid_number(row[f], integer=True) for f in GUEST_FIELDS)
               and sum(row[f] for f in GUEST_FIELDS) > 0]
+    missing_guests = [row for row in non_canceled if all(valid_number(row[f], integer=True) for f in GUEST_FIELDS)
+                      and sum(row[f] for f in GUEST_FIELDS) == 0]
+    only_missing_guests = bool(missing_guests) and len(missing_guests) == len(non_canceled)
     stays = [row for row in non_canceled if all(valid_number(row[f], integer=True) for f in NIGHT_FIELDS)]
     leads = [row for row in non_canceled if valid_number(row["lead_time"], integer=True)]
     adrs = [row for row in non_canceled if valid_number(row["adr"])]
     unresolved_rejections = rejected_count - excluded_count
     empty_known = coverage == "COMPLETE" and not non_canceled and not unresolved_rejections
 
-    def observed_sum(eligible, fields):
+    def observed_sum(eligible, fields, *, known_zero=False):
         if eligible:
             values = [Decimal(str(row[f])) for row in eligible for f in fields]
             # NUMERIC input may exceed Decimal's default 28 digits. Keep sums exact.
@@ -67,12 +70,12 @@ def measure_values(rows: list[dict], coverage: str, rejected_count: int, exclude
             with localcontext() as context:
                 context.prec = max(28, precision + len(str(len(values))) + 2)
                 return sum(values)
-        return 0 if empty_known else None
+        return 0 if empty_known or known_zero else None
 
     def average(total, count):
         return total / count if count and total is not None else None
 
-    guest_sum = observed_sum(guests, GUEST_FIELDS)
+    guest_sum = observed_sum(guests, GUEST_FIELDS, known_zero=only_missing_guests)
     stay_sum = observed_sum(stays, NIGHT_FIELDS)
     lead_sum = observed_sum(leads, ("lead_time",))
     adr_sum = observed_sum(adrs, ("adr",))
@@ -86,12 +89,13 @@ def measure_values(rows: list[dict], coverage: str, rejected_count: int, exclude
         "non_canceled_bookings": len(non_canceled) if rows or empty_known else None,
         "total_cancellations": len(rows) - len(non_canceled) if rows or empty_known else None,
         "guest_valid_booking_count": len(guests), "stay_valid_booking_count": len(stays),
+        "missing_guest_bookings_count": len(missing_guests),
         "lead_time_valid_count": len(leads), "adr_valid_count": len(adrs),
         "guest_ineligible_booking_count": len(non_canceled) - len(guests),
         "stay_ineligible_booking_count": len(non_canceled) - len(stays),
-        "observed_total_adults": observed_sum(guests, ("adults",)),
-        "observed_total_children": observed_sum(guests, ("children",)),
-        "observed_total_babies": observed_sum(guests, ("babies",)),
+        "observed_total_adults": observed_sum(guests, ("adults",), known_zero=only_missing_guests),
+        "observed_total_children": observed_sum(guests, ("children",), known_zero=only_missing_guests),
+        "observed_total_babies": observed_sum(guests, ("babies",), known_zero=only_missing_guests),
         "observed_total_guests": guest_sum, "observed_total_stay_nights": stay_sum,
         "sum_lead_time": lead_sum, "sum_adr": adr_sum,
         "cancellation_rate": (len(rows) - len(non_canceled)) / len(rows) if rows else None,
