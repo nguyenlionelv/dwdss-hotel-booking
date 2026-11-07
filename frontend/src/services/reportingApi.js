@@ -1,10 +1,10 @@
 import { apiRequest } from './apiClient';
 import { MOCK_REPORTS_BY_WEEK, MOCK_DSS_FORECAST } from '../data/mockData';
 
-export async function fetchWeeklyOperationsReport(params = '2017-W32') {
+export async function fetchWeeklyOperationsReport(params = 'LATEST_4W') {
   const queryParams =
     typeof params === 'string' ? { week: params } : { ...params };
-  const weekKey = queryParams.week || '2017-W32';
+  const weekKey = queryParams.week || 'LATEST_4W';
 
   try {
     const qs = new URLSearchParams(
@@ -13,16 +13,52 @@ export async function fetchWeeklyOperationsReport(params = '2017-W32') {
     const res = await apiRequest(`/api/reports/operations/weekly-demand?${qs}`);
     return { ...res, is_mock: false };
   } catch {
-    const report =
-      MOCK_REPORTS_BY_WEEK[weekKey] || MOCK_REPORTS_BY_WEEK['2017-W32'];
-    return { ...report, is_mock: true };
+    const baseReport =
+      MOCK_REPORTS_BY_WEEK[weekKey] || MOCK_REPORTS_BY_WEEK['LATEST_4W'];
+
+    if (
+      queryParams.start_date &&
+      queryParams.end_date &&
+      (!MOCK_REPORTS_BY_WEEK[weekKey] ||
+        queryParams.start_date !== baseReport.period.start_date ||
+        queryParams.end_date !== baseReport.period.end_date)
+    ) {
+      const allRows = MOCK_REPORTS_BY_WEEK['LATEST_4W'].daily_rows || [];
+      const filtered = allRows.filter(
+        (r) =>
+          (r.full_date || r.stay_date) >= queryParams.start_date &&
+          (r.full_date || r.stay_date) <= queryParams.end_date
+      );
+      const rows = filtered.length > 0 ? filtered : baseReport.daily_rows;
+      return {
+        ...baseReport,
+        period: {
+          ...baseReport.period,
+          start_date: queryParams.start_date,
+          end_date: queryParams.end_date,
+          calendar_days_count: rows.length,
+          is_complete_week: rows.length >= 7,
+        },
+        period_summary: {
+          ...baseReport.period_summary,
+          start_date: queryParams.start_date,
+          end_date: queryParams.end_date,
+          calendar_days_count: rows.length,
+          is_complete_week: rows.length >= 7,
+        },
+        daily_rows: rows,
+        is_mock: true,
+      };
+    }
+
+    return { ...baseReport, is_mock: true };
   }
 }
 
-export async function fetchCapacitySummaryReport(params = '2017-W32') {
+export async function fetchCapacitySummaryReport(params = 'LATEST_4W') {
   const queryParams =
     typeof params === 'string' ? { week: params } : { ...params };
-  const weekKey = queryParams.week || '2017-W32';
+  const weekKey = queryParams.week || 'LATEST_4W';
 
   try {
     const qs = new URLSearchParams(
@@ -34,7 +70,7 @@ export async function fetchCapacitySummaryReport(params = '2017-W32') {
     return { ...res, is_mock: false };
   } catch {
     const report =
-      MOCK_REPORTS_BY_WEEK[weekKey] || MOCK_REPORTS_BY_WEEK['2017-W32'];
+      MOCK_REPORTS_BY_WEEK[weekKey] || MOCK_REPORTS_BY_WEEK['LATEST_4W'];
     const rows = report.daily_rows || [];
     const totGuests = rows.reduce((a, r) => a + r.observed_total_guests, 0);
     const totAdults = rows.reduce((a, r) => a + r.observed_total_adults, 0);

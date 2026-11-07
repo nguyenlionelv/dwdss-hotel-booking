@@ -1,13 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { fetchDemandForecast } from '../../../services/dssApi';
-import KpiCard from '../../../components/kpi/KpiCard';
+import React, { useEffect, useMemo, useState } from "react";
+import { fetchDemandForecast } from "../../../services/dssApi";
+import KpiCard from "../../../components/kpi/KpiCard";
 import {
   CanvasForecastChart,
   CanvasHorizontalBarChart,
-} from '../../../components/charts/TrendChart';
-import ResponsiveTableContainer from '../../../components/tables/ResponsiveTableContainer';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+} from "../../../components/charts/TrendChart";
+import ResponsiveTableContainer from "../../../components/tables/ResponsiveTableContainer";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableHeader,
@@ -15,28 +15,28 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 
 const MODEL_OPTIONS = [
-  { id: 'xgboost_regressor', label: 'XGBoost Regressor (Selected Production)' },
-  { id: 'random_forest', label: 'Random Forest Regressor' },
-  { id: 'ridge_regression', label: 'Ridge Regression' },
-  { id: 'seasonal_naive', label: 'Seasonal Naive Baseline (Lag-7)' },
+  { id: "xgboost_regressor", label: "XGBoost Regressor (Selected Production)" },
+  { id: "random_forest", label: "Random Forest Regressor" },
+  { id: "ridge_regression", label: "Ridge Regression" },
+  { id: "seasonal_naive", label: "Seasonal Naive Baseline (Lag-7)" },
 ];
 
 const CUTOFF_OPTIONS = [
   {
-    value: '2017-08-24',
-    label: 'T = 2017-08-24 (Horizon: 2017-08-25 → 2017-08-31)',
+    value: "2017-08-24",
+    label: "T = 2017-08-24 (Horizon: 2017-08-25 → 2017-08-31)",
   },
   {
-    value: '2017-08-17',
-    label: 'T = 2017-08-17 (Backtest Horizon: 2017-08-18 → 2017-08-24)',
+    value: "2017-08-17",
+    label: "T = 2017-08-17 (Backtest Horizon: 2017-08-18 → 2017-08-24)",
   },
 ];
 
 function getDemandStatusBadge(level) {
-  if (level === 'HIGH') {
+  if (level === "HIGH") {
     return (
       <Badge variant="destructive" className="gap-1.5 font-mono">
         <span className="w-1.5 h-1.5 rounded-full bg-[#B64C43]" />
@@ -44,7 +44,7 @@ function getDemandStatusBadge(level) {
       </Badge>
     );
   }
-  if (level === 'LOW') {
+  if (level === "LOW") {
     return (
       <Badge variant="amber" className="gap-1.5 font-mono">
         <span className="w-1.5 h-1.5 rounded-full bg-[#C58B35]" />
@@ -61,10 +61,10 @@ function getDemandStatusBadge(level) {
 }
 
 export default function DemandForecastPage() {
-  const [cutoffDate, setCutoffDate] = useState('2017-08-24');
-  const [selectedModel, setSelectedModel] = useState('xgboost_regressor');
+  const [cutoffDate, setCutoffDate] = useState("2017-08-24");
+  const [selectedModel, setSelectedModel] = useState("xgboost_regressor");
   const [stdMultiplier, setStdMultiplier] = useState(1.0);
-  const [targetMetric, setTargetMetric] = useState('guests'); // 'guests' | 'stay_nights'
+  const [targetMetric, setTargetMetric] = useState("guests"); // 'guests' | 'stay_nights'
   const [forecastData, setForecastData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -111,9 +111,9 @@ export default function DemandForecastPage() {
     942;
   const totalStayNights7d = kpis.total_predicted_room_nights ?? 2840;
   const peakDayObj = summary.peak_forecast_days?.[0] || {
-    forecast_date: kpis.peak_day_date || '2017-08-26',
+    forecast_date: kpis.peak_day_date || "2017-08-26",
     predicted_guest_count: kpis.peak_day_arrivals || 164,
-    demand_level: 'HIGH',
+    demand_level: "HIGH",
   };
   const levelCounts = summary.demand_level_counts || {
     HIGH: kpis.high_alert_days_count ?? 3,
@@ -125,11 +125,7 @@ export default function DemandForecastPage() {
     return modelComparison.map((m) => ({
       label: m.model_label || m.model_name,
       value: Number(m.overall_mae || 0),
-      color: m.is_selected
-        ? '#315B52'
-        : m.is_baseline
-          ? '#92958B'
-          : '#547A9B',
+      color: m.is_selected ? "#315B52" : m.is_baseline ? "#92958B" : "#547A9B",
       sublabel: `RMSE ${Number(m.overall_rmse || 0).toFixed(2)}`,
     }));
   }, [modelComparison]);
@@ -141,10 +137,6 @@ export default function DemandForecastPage() {
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#666666]">
-              <span className="font-mono text-[#315B52] font-medium">
-                DO-M01 • ML-03 • ML-05
-              </span>
-              <span className="text-[#E5E5E0]">/</span>
               <span>Short-Horizon 7-Day Demand Forecasting &amp; DSS</span>
               <span className="text-[#E5E5E0]">/</span>
               <span className="font-mono text-[11px]">
@@ -152,29 +144,31 @@ export default function DemandForecastPage() {
               </span>
             </div>
             <h1 className="editorial-page-title">
-              Decision Support System — 7-Day Demand Forecast &amp; Action Schedule
+              Decision Support System — 7-Day Demand Forecast &amp; Action
+              Schedule
             </h1>
             <p className="text-[14px] text-[#666666] max-w-3xl leading-relaxed">
-              Forecast at cutoff{' '}
+              Forecast at cutoff{" "}
               <code className="font-mono text-[12px] text-[#252525]">
                 T = {cutoffDate}
-              </code>{' '}
-              for next 7 days (<code className="font-mono text-[12px]">T+1</code>{' '}
-              to <code className="font-mono text-[12px]">T+7</code>). Uses
-              history up to <code className="font-mono text-[12px]">T</code>{' '}
-              only; no actuals after{' '}
-              <code className="font-mono text-[12px]">T</code> are read by the
-              model.
+              </code>{" "}
+              for next 7 days (
+              <code className="font-mono text-[12px]">T+1</code> to{" "}
+              <code className="font-mono text-[12px]">T+7</code>). Uses history
+              up to <code className="font-mono text-[12px]">T</code> only; no
+              actuals after <code className="font-mono text-[12px]">T</code> are
+              read by the model.
             </p>
           </div>
 
           <div className="border border-[#E5E5E0] bg-[#FFFFFF] rounded-[4px] px-3.5 py-2.5 text-[12px]">
             <div className="font-medium text-[#252525]">
-              Active Model: {modelMeta.selected_model_family || 'XGBoost Regressor'}
+              Active Model:{" "}
+              {modelMeta.selected_model_family || "XGBoost Regressor"}
             </div>
             <div className="font-mono text-[11px] text-[#666666] mt-0.5">
-              MAE: {modelMeta.validation_mae ?? 8.42} · RMSE:{' '}
-              {modelMeta.validation_rmse ?? 11.15} · vs. Naive:{' '}
+              MAE: {modelMeta.validation_mae ?? 8.42} · RMSE:{" "}
+              {modelMeta.validation_rmse ?? 11.15} · vs. Naive:{" "}
               <span className="text-[#477A61]">
                 -{modelMeta.improvement_vs_baseline_pct ?? 48.0}% error
               </span>
@@ -252,22 +246,22 @@ export default function DemandForecastPage() {
             <div className="inline-flex w-full rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] p-0.5">
               <button
                 type="button"
-                onClick={() => setTargetMetric('guests')}
+                onClick={() => setTargetMetric("guests")}
                 className={`flex-1 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
-                  targetMetric === 'guests'
-                    ? 'bg-[#315B52] text-[#FFFFFF] font-medium'
-                    : 'text-[#666666] hover:text-[#252525]'
+                  targetMetric === "guests"
+                    ? "bg-[#315B52] text-[#FFFFFF] font-medium"
+                    : "text-[#666666] hover:text-[#252525]"
                 }`}
               >
                 Target Guests
               </button>
               <button
                 type="button"
-                onClick={() => setTargetMetric('stay_nights')}
+                onClick={() => setTargetMetric("stay_nights")}
                 className={`flex-1 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
-                  targetMetric === 'stay_nights'
-                    ? 'bg-[#315B52] text-[#FFFFFF] font-medium'
-                    : 'text-[#666666] hover:text-[#252525]'
+                  targetMetric === "stay_nights"
+                    ? "bg-[#315B52] text-[#FFFFFF] font-medium"
+                    : "text-[#666666] hover:text-[#252525]"
                 }`}
               >
                 Stay Nights
@@ -288,7 +282,7 @@ export default function DemandForecastPage() {
               8-Week Rolling Statistical Thresholds &amp; 7-Day Horizon Summary
             </h2>
             <p className="text-[12px] text-[#666666] mt-0.5">
-              Computed over the 56 calendar days preceding cutoff{' '}
+              Computed over the 56 calendar days preceding cutoff{" "}
               <code className="font-mono text-[11px]">{cutoffDate}</code> (
               {observedDaysCount}/56 COMPLETE days observed).
             </p>
@@ -335,7 +329,9 @@ export default function DemandForecastPage() {
             />
             <KpiCard
               label="High Alert Threshold"
-              value={sufficientHistory ? Number(highThreshold).toFixed(1) : 'N/A'}
+              value={
+                sufficientHistory ? Number(highThreshold).toFixed(1) : "N/A"
+              }
               unit="guests"
               badgeText={`μ + ${stdMultiplier.toFixed(2)}σ`}
               statusTone="critical"
@@ -343,7 +339,9 @@ export default function DemandForecastPage() {
             />
             <KpiCard
               label="Low Demand Threshold"
-              value={sufficientHistory ? Number(lowThreshold).toFixed(1) : 'N/A'}
+              value={
+                sufficientHistory ? Number(lowThreshold).toFixed(1) : "N/A"
+              }
               unit="guests"
               badgeText={`max(0, μ - ${stdMultiplier.toFixed(2)}σ)`}
               statusTone="warning"
@@ -354,13 +352,13 @@ export default function DemandForecastPage() {
               value={peakDayObj.forecast_date}
               badgeText={`${Math.round(peakDayObj.predicted_guest_count)} guests`}
               statusTone="critical"
-              subtext={`Tier: ${peakDayObj.demand_level || 'HIGH'}`}
+              subtext={`Tier: ${peakDayObj.demand_level || "HIGH"}`}
             />
             <KpiCard
               label="Demand Tier Distribution"
               value={`${levelCounts.HIGH ?? 0}H / ${levelCounts.NORMAL ?? 0}N / ${levelCounts.LOW ?? 0}L`}
               badgeText="7-Day Horizon"
-              statusTone={levelCounts.HIGH > 0 ? 'critical' : 'success'}
+              statusTone={levelCounts.HIGH > 0 ? "critical" : "success"}
               subtext={`${levelCounts.HIGH ?? 0} high-alert days require action`}
             />
           </div>
@@ -378,10 +376,11 @@ export default function DemandForecastPage() {
               Actual History (Pre-Cutoff) vs. 7-Day Forward Forecast Trajectory
             </h2>
             <p className="text-[12px] text-[#666666] mt-0.5">
-              Solid line plots observed demand up to cutoff{' '}
+              Solid line plots observed demand up to cutoff{" "}
               <code className="font-mono text-[11px]">T = {cutoffDate}</code>;
-              dashed curve projects <code className="font-mono text-[11px]">T+1 → T+7</code>{' '}
-              against 8-week statistical alert thresholds.
+              dashed curve projects{" "}
+              <code className="font-mono text-[11px]">T+1 → T+7</code> against
+              8-week statistical alert thresholds.
             </p>
           </div>
 
@@ -432,9 +431,6 @@ export default function DemandForecastPage() {
         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[11px] font-semibold text-[#315B52]">
-                DO-M01
-              </span>
               <h2
                 id="dss-schedule-table-heading"
                 className="editorial-section-title"
@@ -443,11 +439,14 @@ export default function DemandForecastPage() {
               </h2>
             </div>
             <p className="text-[12px] text-[#666666] mt-0.5">
-              Canonical decision matrix mapping each forecast horizon day to its statistical demand tier and non-hallucinated operational directive.
+              Canonical decision matrix mapping each forecast horizon day to its
+              statistical demand tier and non-hallucinated operational
+              directive.
             </p>
           </div>
           <span className="font-mono text-[11px] text-[#666666]">
-            as_of_date: {cutoffDate} · model: {forecastData?.model_version || selectedModel}
+            as_of_date: {cutoffDate} · model:{" "}
+            {forecastData?.model_version || selectedModel}
           </span>
         </div>
 
@@ -467,7 +466,9 @@ export default function DemandForecastPage() {
                   Projected Stay Nights
                 </TableHead>
                 <TableHead className="text-center">Demand Level</TableHead>
-                <TableHead>Recommended Operational Action (Section 8.3)</TableHead>
+                <TableHead>
+                  Recommended Operational Action (Section 8.3)
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -479,17 +480,17 @@ export default function DemandForecastPage() {
                   row.predicted_guest_count_display ?? Math.round(predExact);
                 const actualBacktest = row.actual_guest_count;
                 const level = sufficientHistory
-                  ? row.demand_level || 'NORMAL'
-                  : 'INSUFFICIENT_HISTORY';
+                  ? row.demand_level || "NORMAL"
+                  : "INSUFFICIENT_HISTORY";
 
                 return (
                   <TableRow
                     key={fDate}
                     className={
-                      level === 'HIGH'
-                        ? 'bg-[#B64C43]/[0.04]'
-                        : level === 'LOW'
-                          ? 'bg-[#C58B35]/[0.04]'
+                      level === "HIGH"
+                        ? "bg-[#B64C43]/[0.04]"
+                        : level === "LOW"
+                          ? "bg-[#C58B35]/[0.04]"
                           : undefined
                     }
                   >
@@ -506,10 +507,10 @@ export default function DemandForecastPage() {
                         {row.day_of_week}
                       </div>
                       <div className="text-[11px] text-[#666666]">
-                        {row.weather_status || 'Clear'}
+                        {row.weather_status || "Clear"}
                         {row.holiday_local_name
                           ? ` · ★ ${row.holiday_local_name}`
-                          : ''}
+                          : ""}
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
@@ -523,16 +524,16 @@ export default function DemandForecastPage() {
                     <TableCell className="text-right font-mono tabular-nums text-[#666666]">
                       {actualBacktest != null ? (
                         <span>
-                          {actualBacktest.toLocaleString()}{' '}
+                          {actualBacktest.toLocaleString()}{" "}
                           <span className="text-[11px]">
-                            (err:{' '}
-                            {(predExact - actualBacktest >= 0 ? '+' : '') +
+                            (err:{" "}
+                            {(predExact - actualBacktest >= 0 ? "+" : "") +
                               (predExact - actualBacktest).toFixed(1)}
                             )
                           </span>
                         </span>
                       ) : (
-                        '—'
+                        "—"
                       )}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums text-[#252525]">
@@ -565,13 +566,14 @@ export default function DemandForecastPage() {
         <div className="lg:col-span-6 space-y-4">
           <div>
             <span className="font-mono text-[11px] font-semibold text-[#315B52]">
-              ML-03 • ML-05 BENCHMARK
+              ML BENCHMARK
             </span>
             <h2 className="editorial-section-title mt-0.5">
               Cross-Model Forecast Error Comparison (Overall MAE)
             </h2>
             <p className="text-[12px] text-[#666666] mt-0.5">
-              Rolling-origin evaluation across 7-day horizons comparing ML regressors against the mandatory Seasonal Naive (lag-7) baseline.
+              Rolling-origin evaluation across 7-day horizons comparing ML
+              regressors against the mandatory Seasonal Naive (lag-7) baseline.
             </p>
           </div>
 
@@ -590,7 +592,8 @@ export default function DemandForecastPage() {
               MAE by Forecast Horizon (h=1..7) &amp; Cutoff Rules
             </h2>
             <p className="text-[12px] text-[#666666] mt-0.5">
-              Detailed error metrics per model and strict temporal feature engineering guarantees.
+              Detailed error metrics per model and strict temporal feature
+              engineering guarantees.
             </p>
           </div>
 
@@ -611,7 +614,9 @@ export default function DemandForecastPage() {
                   <TableRow
                     key={m.model_name}
                     className={
-                      m.is_selected ? 'bg-[#315B52]/[0.05] font-medium' : undefined
+                      m.is_selected
+                        ? "bg-[#315B52]/[0.05] font-medium"
+                        : undefined
                     }
                   >
                     <TableCell className="text-[12px] text-[#252525]">
@@ -629,13 +634,13 @@ export default function DemandForecastPage() {
                       {Number(m.overall_rmse).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums text-[#666666]">
-                      {m.mae_by_horizon?.h1 ?? '—'}
+                      {m.mae_by_horizon?.h1 ?? "—"}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums text-[#666666]">
-                      {m.mae_by_horizon?.h3 ?? '—'}
+                      {m.mae_by_horizon?.h3 ?? "—"}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums text-[#666666]">
-                      {m.mae_by_horizon?.h7 ?? '—'}
+                      {m.mae_by_horizon?.h7 ?? "—"}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -652,13 +657,14 @@ export default function DemandForecastPage() {
                 </span>
               </div>
               <p className="text-[11px] leading-relaxed">
-                Lag features (<code className="font-mono">lag_1</code>,{' '}
-                <code className="font-mono">lag_7</code>,{' '}
-                <code className="font-mono">lag_14</code>,{' '}
-                <code className="font-mono">rolling_mean_7d</code>,{' '}
+                Lag features (<code className="font-mono">lag_1</code>,{" "}
+                <code className="font-mono">lag_7</code>,{" "}
+                <code className="font-mono">lag_14</code>,{" "}
+                <code className="font-mono">rolling_mean_7d</code>,{" "}
                 <code className="font-mono">rolling_std_28d</code>) and 8-week
                 thresholds are computed strictly from historical observations on
-                or before <code className="font-mono">as_of_date = {cutoffDate}</code>.
+                or before{" "}
+                <code className="font-mono">as_of_date = {cutoffDate}</code>.
               </p>
             </div>
           </div>

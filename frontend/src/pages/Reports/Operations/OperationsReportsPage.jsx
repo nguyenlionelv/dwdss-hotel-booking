@@ -27,10 +27,22 @@ import { Printer, Download, ArrowRight } from "lucide-react";
 
 const AVAILABLE_WEEKS = [
   {
-    id: "2017-W32",
-    label: "2017 — Week 32 (2017-08-07 → 2017-08-13)",
-    start_date: "2017-08-07",
-    end_date: "2017-08-13",
+    id: "LATEST_4W",
+    label: "Latest 4 Weeks Combined (2017-08-04 → 2017-08-31 • 28 days)",
+    start_date: "2017-08-04",
+    end_date: "2017-08-31",
+  },
+  {
+    id: "2017-W35",
+    label: "2017 — Week 35 (2017-08-28 → 2017-08-31 • 4 days to cutoff)",
+    start_date: "2017-08-28",
+    end_date: "2017-08-31",
+  },
+  {
+    id: "2017-W34",
+    label: "2017 — Week 34 (2017-08-21 → 2017-08-27)",
+    start_date: "2017-08-21",
+    end_date: "2017-08-27",
   },
   {
     id: "2017-W33",
@@ -38,14 +50,20 @@ const AVAILABLE_WEEKS = [
     start_date: "2017-08-14",
     end_date: "2017-08-20",
   },
+  {
+    id: "2017-W32",
+    label: "2017 — Week 32 (2017-08-07 → 2017-08-13)",
+    start_date: "2017-08-07",
+    end_date: "2017-08-13",
+  },
 ];
 
 export default function OperationsReportsPage() {
   const [reportMode, setReportMode] = useState("ALL"); // 'ALL' | 'DO-R01' | 'DO-R02'
   const [periodMode, setPeriodMode] = useState("ISO_WEEK"); // 'ISO_WEEK' | 'CUSTOM_RANGE'
-  const [selectedWeek, setSelectedWeek] = useState("2017-W32");
-  const [customStartDate, setCustomStartDate] = useState("2017-08-07");
-  const [customEndDate, setCustomEndDate] = useState("2017-08-13");
+  const [selectedWeek, setSelectedWeek] = useState("LATEST_4W");
+  const [customStartDate, setCustomStartDate] = useState("2017-08-04");
+  const [customEndDate, setCustomEndDate] = useState("2017-08-31");
   const [dayTypeFilter, setDayTypeFilter] = useState("ALL");
   const [reportData, setReportData] = useState(null);
   const [capacityReport, setCapacityReport] = useState(null);
@@ -55,6 +73,9 @@ export default function OperationsReportsPage() {
     let active = true;
     setLoading(true);
 
+    const selectedWeekObj =
+      AVAILABLE_WEEKS.find((w) => w.id === selectedWeek) || AVAILABLE_WEEKS[0];
+
     const queryParams =
       periodMode === "CUSTOM_RANGE"
         ? {
@@ -62,7 +83,11 @@ export default function OperationsReportsPage() {
             start_date: customStartDate,
             end_date: customEndDate,
           }
-        : selectedWeek;
+        : {
+            week: selectedWeek,
+            start_date: selectedWeekObj.start_date,
+            end_date: selectedWeekObj.end_date,
+          };
 
     Promise.all([
       fetchWeeklyOperationsReport(queryParams),
@@ -279,16 +304,6 @@ export default function OperationsReportsPage() {
             <h1 className="editorial-page-title">
               Operations Reports — Weekly Demand &amp; Capacity Summary
             </h1>
-            <p className="text-[14px] text-[#666666] max-w-3xl leading-relaxed">
-              Standardized executive report templates reconciled 1-to-1 against{" "}
-              <Link
-                to="/analytics/operations"
-                className="text-[#315B52] underline underline-offset-2 font-medium"
-              >
-                Operations Analytics (BI-05)
-              </Link>{" "}
-              under identical date and arrival-day filters.
-            </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -471,9 +486,11 @@ export default function OperationsReportsPage() {
               {period.actual_end || period.end_date || customEndDate}
             </span>
             <Badge variant={isCompleteWeek ? "emerald" : "amber"}>
-              {isCompleteWeek
-                ? `COMPLETE_WEEK (${reconciled.days_count}/7 days)`
-                : `INCOMPLETE_WEEK (${reconciled.days_count}/7 days available)`}
+              {reconciled.days_count > 7
+                ? `LATEST_4_WEEKS (${reconciled.days_count}/28 days)`
+                : isCompleteWeek
+                  ? `COMPLETE_WEEK (${reconciled.days_count}/7 days)`
+                  : `INCOMPLETE_WEEK (${reconciled.days_count}/7 days available)`}
             </Badge>
             <Badge
               variant={overallGuestStatus === "COMPLETE" ? "emerald" : "amber"}
@@ -492,13 +509,8 @@ export default function OperationsReportsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
           <div>
             <h2 className="editorial-section-title">
-              Executive Period Summary (BI-05 Reconciled Metrics)
+              Executive Period Summary
             </h2>
-            <p className="text-[12px] text-[#666666] mt-0.5">
-              Aggregated directly from the {reconciled.days_count} displayed
-              stay dates. Guaranteed mathematical parity with OLAP Analytics
-              under identical date bounds.
-            </p>
           </div>
           <span className="font-mono text-[11px] text-[#477A61]">
             ● Reconciled against mart.daily_hotel_ops
@@ -582,9 +594,6 @@ export default function OperationsReportsPage() {
           <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-[11px] font-semibold text-[#315B52]">
-                  DO-R02
-                </span>
                 <h2 className="editorial-section-title">
                   Operations Capacity &amp; Workload Summary
                 </h2>
@@ -796,9 +805,6 @@ export default function OperationsReportsPage() {
           <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-[11px] font-semibold text-[#315B52]">
-                  DO-R01
-                </span>
                 <h2
                   id="daily-operations-log-heading"
                   className="editorial-section-title"

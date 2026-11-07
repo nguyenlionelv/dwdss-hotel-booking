@@ -11,7 +11,7 @@ export function resolvePresetDates(presetId) {
   if (found) {
     return { start_date: found.start_date, end_date: found.end_date };
   }
-  return { start_date: "2015-07-01", end_date: "2017-08-31" };
+  return { start_date: "2015-08-31", end_date: "2017-08-31" };
 }
 
 export async function fetchOperationsTrend(params = {}) {
@@ -235,63 +235,197 @@ export async function fetchOperationsPivot(params = {}) {
     const res = await apiRequest(`/api/analytics/operations/pivot?${query}`);
     return { ...res, is_mock: false };
   } catch {
-    const matrix =
-      col_dim === "day_type" || col_dim === "is_weekend"
-        ? MOCK_ANALYTICS_PIVOT.day_type_by_quarter
-        : MOCK_ANALYTICS_PIVOT.country_by_quarter;
+    const effStart = start_date || "2015-08-31";
+    const effEnd = end_date || "2017-08-31";
+    const normRowDim = (row_dim || "quarter").toLowerCase();
+    const isDayTypeCol = col_dim === "day_type" || col_dim === "is_weekend";
 
-    const factor =
-      measure === "non_canceled_bookings" || measure === "arrivals"
-        ? 0.52
-        : measure === "total_bookings"
-          ? 0.84
-          : measure === "observed_total_stay_nights" || measure === "room_nights"
-            ? 1.62
-            : 1.0;
+    const columns = isDayTypeCol
+      ? MOCK_ANALYTICS_PIVOT.day_type_by_quarter.columns
+      : MOCK_ANALYTICS_PIVOT.country_by_quarter.columns;
+    const column_defs = isDayTypeCol
+      ? MOCK_ANALYTICS_PIVOT.day_type_by_quarter.column_defs
+      : MOCK_ANALYTICS_PIVOT.country_by_quarter.column_defs;
 
-    const scaleValues = (vals) =>
-      Object.fromEntries(
-        Object.entries(vals).map(([k, v]) => [k, Math.round(v * factor)])
-      );
+    const colShares = isDayTypeCol
+      ? { Weekday: 0.655, Weekend: 0.298, Holiday: 0.047 }
+      : { PRT: 0.365, FRA: 0.212, DEU: 0.161, GBR: 0.129, ESP: 0.095, UNK: 0.038 };
 
-    const rows = matrix.rows.map((r) => {
-      const scaled = scaleValues(r.values);
-      const rowTotal = Object.values(scaled).reduce((a, b) => a + b, 0);
+    const getMonthMeasureVal = (mRow) => {
+      if (measure === "non_canceled_bookings" || measure === "arrivals") {
+        return mRow.non_canceled_bookings ?? mRow.arrivals ?? 0;
+      }
+      if (measure === "total_bookings") {
+        return mRow.total_bookings ?? 0;
+      }
+      if (measure === "observed_total_stay_nights" || measure === "room_nights") {
+        return mRow.observed_total_stay_nights ?? mRow.room_nights ?? 0;
+      }
+      return mRow.observed_total_guests ?? mRow.active_guests ?? 0;
+    };
+
+    const splitIntoCols = (totalVal) => {
+      const vals = {};
+      let allocated = 0;
+      columns.forEach((col, idx) => {
+        if (idx === columns.length - 1) {
+          vals[col] = Math.max(0, totalVal - allocated);
+        } else {
+          const v = Math.round(totalVal * (colShares[col] || 0));
+          vals[col] = v;
+          allocated += v;
+        }
+      });
+      return vals;
+    };
+
+    const sumCellMaps = (items) => {
+      const acc = Object.fromEntries(columns.map((c) => [c, 0]));
+      items.forEach((it) => {
+        columns.forEach((c) => {
+          acc[c] += it.values[c] || 0;
+        });
+      });
+      return acc;
+    };
+
+    const filteredMonths = (MOCK_ANALYTICS_TREND_BY_GRAIN.month || []).filter(
+      (m) => !(m.period_end < effStart || m.period_start > effEnd)
+    );
+
+    const monthItems = filteredMonths.map((m) => {
+      const [yStr, mStr] = m.period_label.split("-");
+      const yr = Number(yStr);
+      const mn = Number(mStr);
+      const qt = Math.ceil(mn / 3);
+      const totalVal = getMonthMeasureVal(m);
+      const values = splitIntoCols(totalVal);
       return {
-        ...r,
-        values: scaled,
-        cells: scaled,
-        total: rowTotal,
-        row_total: rowTotal,
-        children: r.children
-          ? r.children.map((c) => {
-              const cScaled = scaleValues(c.values);
-              const cTotal = Object.values(cScaled).reduce((a, b) => a + b, 0);
-              return {
-                ...c,
-                values: cScaled,
-                cells: cScaled,
-                total: cTotal,
-                row_total: cTotal,
-              };
-            })
-          : undefined,
+        year: yr,
+        quarter: qt,
+        month: mn,
+        quarter_key: `${yr}-Q${qt}`,
+        row_key: m.period_label,
+        row_label: m.period_label,
+        values,
+        cells: values,
+        total: totalVal,
+        row_total: totalVal,
       };
     });
 
+    let rows = [];
+    if (normRowDim === "month") {
+      const maxTot = Math.max(...monthItems.map((m) => m.total), 0);
+      rows = monthItems.map((m) => ({
+        row_key: m.row_key,
+        row_label: m.row_label,
+        values: m.values,
+        cells: m.values,
+        total: m.total,
+        row_total: m.total,
+        is_expandable: false,
+        is_highlighted: m.total === maxTot && maxTot > 0,
+        children: undefined,
+      }));
+    } else if (normRowDim === "year") {
+      const yearsMap = new Map();
+      monthItems.forEach((m) => {
+        const yKey = String(m.year);
+        if (!yearsMap.has(yKey)) {
+          yearsMap.set(yKey, []);
+        }
+        yearsMap.get(yKey).push(m);
+      });
+
+      const yearRows = Array.from(yearsMap.entries()).map(([yKey, mList]) => {
+        const qMap = new Map();
+        mList.forEach((m) => {
+          if (!qMap.has(m.quarter_key)) qMap.set(m.quarter_key, []);
+          qMap.get(m.quarter_key).push(m);
+        });
+        const qChildren = Array.from(qMap.entries()).map(([qKey, qMonths]) => {
+          const qVals = sumCellMaps(qMonths);
+          const qTot = Object.values(qVals).reduce((a, b) => a + b, 0);
+          return {
+            row_key: qKey,
+            row_label: qKey,
+            values: qVals,
+            cells: qVals,
+            total: qTot,
+            row_total: qTot,
+          };
+        });
+        const yVals = sumCellMaps(qChildren);
+        const yTot = Object.values(yVals).reduce((a, b) => a + b, 0);
+        return {
+          row_key: yKey,
+          row_label: yKey,
+          values: yVals,
+          cells: yVals,
+          total: yTot,
+          row_total: yTot,
+          is_expandable: qChildren.length > 0,
+          children: qChildren,
+        };
+      });
+
+      const maxTot = Math.max(...yearRows.map((r) => r.total), 0);
+      rows = yearRows.map((r) => ({
+        ...r,
+        is_highlighted: r.total === maxTot && maxTot > 0,
+      }));
+    } else {
+      // Default: quarter rows with month children
+      const qMap = new Map();
+      monthItems.forEach((m) => {
+        if (!qMap.has(m.quarter_key)) qMap.set(m.quarter_key, []);
+        qMap.get(m.quarter_key).push(m);
+      });
+
+      const qRows = Array.from(qMap.entries()).map(([qKey, qMonths]) => {
+        const qVals = sumCellMaps(qMonths);
+        const qTot = Object.values(qVals).reduce((a, b) => a + b, 0);
+        const children = qMonths.map((m) => ({
+          row_key: m.row_key,
+          row_label: m.row_label,
+          values: m.values,
+          cells: m.values,
+          total: m.total,
+          row_total: m.total,
+        }));
+        return {
+          row_key: qKey,
+          row_label: qKey,
+          values: qVals,
+          cells: qVals,
+          total: qTot,
+          row_total: qTot,
+          is_expandable: children.length > 0,
+          children,
+        };
+      });
+
+      const maxTot = Math.max(...qRows.map((r) => r.total), 0);
+      rows = qRows.map((r) => ({
+        ...r,
+        is_highlighted: r.total === maxTot && maxTot > 0,
+      }));
+    }
+
     const column_totals = {};
-    matrix.columns.forEach((col) => {
+    columns.forEach((col) => {
       column_totals[col] = rows.reduce((acc, r) => acc + (r.values[col] || 0), 0);
     });
     const grand_total = rows.reduce((acc, r) => acc + r.total, 0);
 
     return {
       data_version: "9fe497e2-45e0-4a8a-93cb-b09e25c040d3",
-      row_dim,
+      row_dim: normRowDim,
       col_dim,
       measure,
-      columns: matrix.columns,
-      column_defs: matrix.column_defs,
+      columns,
+      column_defs,
       rows,
       column_totals,
       grand_total,

@@ -129,8 +129,9 @@ export default function OperationsAnalyticsPage() {
   const [pivotMeasure, setPivotMeasure] = useState("observed_total_guests");
   const [swapAxes, setSwapAxes] = useState(false);
   const [expandedRows, setExpandedRows] = useState({
+    2016: true,
     "2016-Q3": true,
-    "2016 - Q3 (Jul-Sep) [Peak]": true,
+    "2016 - Q3": true,
   });
 
   // Data State
@@ -578,7 +579,7 @@ export default function OperationsAnalyticsPage() {
             <span>
               Coverage:{" "}
               <strong className="font-mono text-[#252525]">
-                {coverage.calendar_days_count || 793} calendar days
+                {coverage.calendar_days_count || 732} calendar days
               </strong>
             </span>
             <span>•</span>
@@ -625,7 +626,7 @@ export default function OperationsAnalyticsPage() {
                 strictAvgGuests != null ? "Strict avg" : "Observed avg"
               }
               statusTone={strictAvgGuests != null ? "success" : "warning"}
-              subtext={`Over ${coverage.calendar_days_count || 793} calendar days`}
+              subtext={`Over ${coverage.calendar_days_count || 732} calendar days`}
             />
 
             <KpiCard
@@ -1000,7 +1001,7 @@ export default function OperationsAnalyticsPage() {
           <div className="space-y-3">
             <div className="flex items-baseline justify-between border-b border-[#E5E5E0] pb-2">
               <h2 className="editorial-section-title">
-                Holiday vs. Non-Holiday Demand (DO-A03)
+                Holiday vs. Non-Holiday Demand
               </h2>
               <span className="text-[12px] font-mono text-[#315B52] font-medium">
                 +{impactData?.holiday_impact?.lift_pct ?? 11.5}% daily demand
@@ -1065,7 +1066,7 @@ export default function OperationsAnalyticsPage() {
           <div className="space-y-4">
             <div className="flex items-baseline justify-between border-b border-[#E5E5E0] pb-2">
               <h2 className="editorial-section-title">
-                Lisbon Weather &amp; Demand Correlation (DO-A04)
+                Lisbon Weather &amp; Demand Correlation
               </h2>
               <span className="text-[12px] font-mono text-[#666666]">
                 ERA5 Lisbon •{" "}
@@ -1111,9 +1112,7 @@ export default function OperationsAnalyticsPage() {
         {/* Right 5 Columns: Source Country Ranking (DO-A05) */}
         <div className="lg:col-span-5 lg:border-l lg:border-[#E5E5E0] lg:pl-8 space-y-4">
           <div className="flex items-baseline justify-between border-b border-[#E5E5E0] pb-2">
-            <h2 className="editorial-section-title">
-              Source Market Breakdown (DO-A05)
-            </h2>
+            <h2 className="editorial-section-title">Source Market Breakdown</h2>
             <span className="text-[12px] text-[#666666]">
               Includes <code className="font-mono">UNK</code>
             </span>

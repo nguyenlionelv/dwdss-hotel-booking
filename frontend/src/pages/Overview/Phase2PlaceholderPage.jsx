@@ -70,7 +70,7 @@ export default function Phase2PlaceholderPage() {
           <code className="font-mono text-[12px] text-[#315B52]">
             mart.daily_hotel_ops
           </code>{' '}
-          table (793 continuous days, 2015-07-01 → 2017-08-31).
+          table (732 continuous days, 2015-08-31 → 2017-08-31).
         </p>
       </section>
 

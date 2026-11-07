@@ -64,6 +64,21 @@ class AnalyticsService:
             return False
         return None
 
+    @staticmethod
+    def _resolve_default_dates(
+        state: dict,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> tuple[str, str]:
+        actual_start_str = state["actual_start"].isoformat()
+        actual_end_str = state["actual_end"].isoformat()
+        default_start = (
+            "2015-08-31"
+            if actual_start_str <= "2015-08-31" <= actual_end_str
+            else actual_start_str
+        )
+        return start_date or default_start, end_date or actual_end_str
+
     @classmethod
     def get_operations_trend(
         cls,
@@ -102,8 +117,7 @@ class AnalyticsService:
         """
         state = OperationsRepository.get_published_state(conn)
         data_version = str(state["data_version"])
-        eff_start = start_date or state["actual_start"].isoformat()
-        eff_end = end_date or state["actual_end"].isoformat()
+        eff_start, eff_end = cls._resolve_default_dates(state, start_date, end_date)
 
         norm_grain = grain.lower().strip() if grain else "month"
         if norm_grain not in VALID_GRAINS:
@@ -280,8 +294,7 @@ class AnalyticsService:
         """
         state = OperationsRepository.get_published_state(conn)
         data_version = str(state["data_version"])
-        eff_start = start_date or state["actual_start"].isoformat()
-        eff_end = end_date or state["actual_end"].isoformat()
+        eff_start, eff_end = cls._resolve_default_dates(state, start_date, end_date)
 
         matrix = OperationsRepository.fetch_pivot_data(
             conn,
@@ -330,8 +343,7 @@ class AnalyticsService:
         """
         state = OperationsRepository.get_published_state(conn)
         data_version = str(state["data_version"])
-        eff_start = start_date or state["actual_start"].isoformat()
-        eff_end = end_date or state["actual_end"].isoformat()
+        eff_start, eff_end = cls._resolve_default_dates(state, start_date, end_date)
 
         raw = OperationsRepository.fetch_impact_data(
             conn,

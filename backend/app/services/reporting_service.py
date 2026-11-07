@@ -279,10 +279,15 @@ class ReportingService:
         )
         surge_str = f"{'+' if surge_val >= 0 else ''}{surge_val}%"
 
-        week_key_str = f"{eff_iso_year}-W{eff_iso_week:02d}"
+        is_latest_4w = bool(week and week.strip().upper() == "LATEST_4W") or days_count > 7
+        week_key_str = "LATEST_4W" if is_latest_4w else f"{eff_iso_year}-W{eff_iso_week:02d}"
         start_short = raw_rows[0]["full_date"].strftime("%d/%m")
         end_short = raw_rows[-1]["full_date"].strftime("%d/%m")
-        week_label_str = f"{eff_iso_year} - Week {eff_iso_week:02d} ({start_short} - {end_short})"
+        week_label_str = (
+            f"Latest 4 Weeks ({start_short} - {end_short})"
+            if is_latest_4w
+            else f"{eff_iso_year} - Week {eff_iso_week:02d} ({start_short} - {end_short})"
+        )
 
         period_info = ReportPeriodInfo(
             iso_year=eff_iso_year,
