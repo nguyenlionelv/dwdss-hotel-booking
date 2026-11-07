@@ -15,9 +15,9 @@ from .operations import (COLUMNS, CONTEXT_COLUMNS, COUNT_COLUMNS, COUNTRY_COLUMN
                          QUALITY_COLUMNS, SUM_COLUMNS, TABLES, build_fingerprint)
 
 
-def expected_measures(facts: list[dict], coverage: str, rejected: int) -> dict:
+def expected_measures(facts: list[dict], coverage: str, rejected: int, excluded: int = 0) -> dict:
     """Reuse preflight reference arithmetic, independent of the SQL aggregate."""
-    values = measure_values(facts,coverage,rejected)
+    values = measure_values(facts,coverage,rejected,excluded)
     return {name:values[name] for name in (*COUNT_COLUMNS,*SUM_COLUMNS,*KPI_COLUMNS)}
 
 
@@ -86,7 +86,8 @@ def validate_operations(conn, run_id, bundle: dict, *, require_state: bool = Tru
                 if not daily:
                     problems["country"] += any(row[c] != countries[row["country_key"]][c] for c in COUNTRY_COLUMNS)
                 facts = by_date.get(day, []) if daily else by_country.get(key, [])
-                expected = expected_measures(facts, coverage[dates[day]["full_date"]], qualities[day]["rejected_booking_count"])
+                expected = expected_measures(facts, coverage[dates[day]["full_date"]],
+                                             qualities[day]["rejected_booking_count"], qualities[day]["excluded_booking_count"])
                 expected["target_guests"] = expected["observed_total_guests"] if qualities[day]["guest_data_status"] == "COMPLETE" else None
                 problems["measures"] += any(not same_value(field,row[field],value) for field,value in expected.items())
         problems["keys"] += len(wanted ^ seen)

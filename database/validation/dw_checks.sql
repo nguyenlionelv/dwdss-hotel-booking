@@ -23,14 +23,23 @@ bad AS (
         CASE WHEN lead_time>=0 AND NOT ('lead_time'=ANY(bad_fields)) THEN lead_time END AS e_lead,
         CASE WHEN adr>=0 AND adr<'Infinity'::numeric AND NOT ('adr'=ANY(bad_fields)) THEN adr END AS e_adr
     FROM src s
+), classified AS (
+    SELECT e.*, (e_adults::bigint+e_children+e_babies=0 AND
+      (is_canceled=1 OR (adr>'-Infinity'::numeric AND adr<'Infinity'::numeric AND adr<=0
+                        AND e_week::bigint+e_weekend=0))) IS TRUE AS cleaning_excluded
+    FROM expected e
 ), fact AS (SELECT * FROM dw.fact_booking), rejection AS (
     SELECT * FROM dw.booking_rejection WHERE run_id=%(run_id)s
 ), input_keys AS (SELECT _source_file_sha256 AS sha,_source_row_id AS row_id FROM src),
 output_keys AS (SELECT source_file_sha256 AS sha,source_row_id AS row_id FROM fact
                UNION SELECT source_file_sha256,source_row_id FROM rejection),
-expected_fact_keys AS (SELECT _source_file_sha256 AS sha,_source_row_id AS row_id FROM expected WHERE core_valid),
+expected_fact_keys AS (SELECT _source_file_sha256 AS sha,_source_row_id AS row_id FROM classified WHERE core_valid AND NOT cleaning_excluded),
 source_counts AS (SELECT arrival_date,count(*) AS n FROM src WHERE arrival_date IS NOT NULL GROUP BY arrival_date),
-rejection_counts AS (SELECT arrival_date,count(*) AS n FROM rejection WHERE arrival_date IS NOT NULL GROUP BY arrival_date),
+rejection_counts AS (
+    SELECT arrival_date,count(*) AS n,
+      count(*) FILTER (WHERE reason_codes=ARRAY['EXCLUDED_ZERO_GUEST_BOOKING']) AS excluded
+    FROM rejection WHERE arrival_date IS NOT NULL GROUP BY arrival_date
+),
 fact_counts AS (
     SELECT date_key,count(*) AS n,count(*) FILTER (WHERE is_canceled=0) AS active,
       count(*) FILTER (WHERE is_canceled=0 AND NOT guest_eligible) AS guest_bad,
@@ -112,6 +121,10 @@ UNION ALL SELECT 'source_key_extra',count(*) FROM (SELECT * FROM output_keys EXC
 UNION ALL SELECT 'fact_rejection_overlap',count(*) FROM fact f JOIN rejection r USING (source_file_sha256,source_row_id)
 UNION ALL SELECT 'core_acceptance_missing',count(*) FROM (SELECT * FROM expected_fact_keys EXCEPT SELECT source_file_sha256,source_row_id FROM fact) x
 UNION ALL SELECT 'core_acceptance_extra',count(*) FROM (SELECT source_file_sha256,source_row_id FROM fact EXCEPT SELECT * FROM expected_fact_keys) x
+UNION ALL SELECT 'cleaning_rejection_reason',count(*) FROM classified e
+    LEFT JOIN rejection r ON r.source_file_sha256=e._source_file_sha256 AND r.source_row_id=e._source_row_id
+    WHERE (e.core_valid AND e.cleaning_excluded) IS DISTINCT FROM
+          coalesce(r.reason_codes=ARRAY['EXCLUDED_ZERO_GUEST_BOOKING'],false)
 UNION ALL SELECT 'fact_wrong_run',count(*) FROM fact WHERE dw_run_id<>%(run_id)s
 UNION ALL SELECT 'first_batch_lineage',count(*) FROM fact f JOIN src s ON f.source_file_sha256=s._source_file_sha256 AND f.source_row_id=s._source_row_id
     WHERE f.source_first_batch_id<>s._batch_id
@@ -134,19 +147,19 @@ UNION ALL SELECT 'coverage_extra',count(*) FROM (
 UNION ALL SELECT 'daily_quality_counts',count(*) FROM dw.daily_data_quality q JOIN dw.dim_date d USING(date_key)
     LEFT JOIN source_counts s ON s.arrival_date=d.full_date LEFT JOIN fact_counts f ON f.date_key=d.date_key
     LEFT JOIN rejection_counts r ON r.arrival_date=d.full_date
-    WHERE ROW(q.source_booking_count,q.fact_booking_count,q.rejected_booking_count,q.non_canceled_booking_count,
+    WHERE ROW(q.source_booking_count,q.fact_booking_count,q.rejected_booking_count,q.excluded_booking_count,q.non_canceled_booking_count,
               q.guest_ineligible_booking_count,q.stay_ineligible_booking_count,q.lead_time_unknown_booking_count,q.adr_unknown_booking_count,
               q.unknown_party_booking_count,q.unknown_channel_booking_count,q.unknown_segment_booking_count,q.unknown_customer_type_booking_count,
               q.unknown_repeat_booking_count,q.room_ineligible_booking_count)
-    IS DISTINCT FROM ROW(coalesce(s.n,0),coalesce(f.n,0),coalesce(r.n,0),coalesce(f.active,0),coalesce(f.guest_bad,0),coalesce(f.stay_bad,0),
+    IS DISTINCT FROM ROW(coalesce(s.n,0),coalesce(f.n,0),coalesce(r.n,0),coalesce(r.excluded,0),coalesce(f.active,0),coalesce(f.guest_bad,0),coalesce(f.stay_bad,0),
                          coalesce(f.lead_bad,0),coalesce(f.adr_bad,0),coalesce(f.party_bad,0),coalesce(f.channel_bad,0),coalesce(f.segment_bad,0),
                          coalesce(f.type_bad,0),coalesce(f.repeat_bad,0),coalesce(f.room_bad,0))
 UNION ALL SELECT 'daily_quality_status',count(*) FROM dw.daily_data_quality q JOIN dw.dim_date d USING(date_key)
     JOIN dw.source_coverage cv ON cv.run_id=%(run_id)s AND cv.source_id='booking' AND cv.local_date=d.full_date
     WHERE ROW(q.booking_data_status,q.guest_data_status,q.stay_data_status) IS DISTINCT FROM ROW(
-        CASE WHEN q.rejected_booking_count>0 THEN 'PARTIAL' ELSE cv.coverage_status END,
-        CASE WHEN q.rejected_booking_count>0 OR q.guest_ineligible_booking_count>0 THEN 'PARTIAL' ELSE cv.coverage_status END,
-        CASE WHEN q.rejected_booking_count>0 OR q.stay_ineligible_booking_count>0 THEN 'PARTIAL' ELSE cv.coverage_status END)
+        CASE WHEN q.rejected_booking_count>q.excluded_booking_count THEN 'PARTIAL' ELSE cv.coverage_status END,
+        CASE WHEN q.rejected_booking_count>q.excluded_booking_count OR q.guest_ineligible_booking_count>0 THEN 'PARTIAL' ELSE cv.coverage_status END,
+        CASE WHEN q.rejected_booking_count>q.excluded_booking_count OR q.stay_ineligible_booking_count>0 THEN 'PARTIAL' ELSE cv.coverage_status END)
 UNION ALL SELECT 'weather_context',count(*) FROM dw.daily_hotel_context c JOIN weather_expected w USING(date_key)
     WHERE ROW(c.weather_record_count,c.temperature_mean,c.precipitation,c.temperature_status,c.precipitation_status)
     IS DISTINCT FROM ROW(w.n,w.temp,w.rain,w.temp_status,w.rain_status)

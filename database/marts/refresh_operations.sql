@@ -34,7 +34,7 @@ WITH aggregates AS (
            q.booking_data_status,q.guest_data_status,q.stay_data_status,
            q.rejected_booking_count,q.guest_ineligible_booking_count,q.stay_ineligible_booking_count,
            c.country_key,c.country_code,c.country_name,c.is_daily,
-           (v.coverage_status='COMPLETE' AND q.rejected_booking_count=0) AS allow_empty,
+           (v.coverage_status='COMPLETE' AND q.rejected_booking_count=q.excluded_booking_count) AS allow_empty,
            coalesce(a.total_bookings,0) AS n,coalesce(a.non_canceled_bookings,0) AS b,
            coalesce(a.total_cancellations,0) AS canceled,
            coalesce(a.guest_valid_booking_count,0) AS g,coalesce(a.stay_valid_booking_count,0) AS s,

@@ -39,7 +39,10 @@ def source_dimension_expectations(conn, run_id, mappings: dict) -> tuple[dict, d
                          ON i.source_file_sha256=b._source_file_sha256 AND i.source_row_id=b._source_row_id
                        WHERE r.run_id=%s AND b.arrival_date IS NOT NULL AND b.is_canceled IN (0,1)
                          AND NOT (coalesce(i.bad,'{}'::text[]) &&
-                           ARRAY['arrival_date','arrival_date_year','arrival_date_month','arrival_date_day_of_month','is_canceled'])""", (run_id, run_id))
+                           ARRAY['arrival_date','arrival_date_year','arrival_date_month','arrival_date_day_of_month','is_canceled'])
+                         AND NOT EXISTS (
+                           SELECT 1 FROM dw.booking_rejection x WHERE x.run_id=r.run_id
+                             AND x.source_file_sha256=b._source_file_sha256 AND x.source_row_id=b._source_row_id)""", (run_id, run_id))
         source = cur.fetchall()
     targets = {"dim_country": {("UNK",)}, "dim_channel": {("UNKNOWN",)}, "dim_market_segment": {("UNKNOWN",)},
                "dim_customer_profile": {("UNKNOWN", "UNKNOWN")}, "dim_room_type": {("UNKNOWN",)}}

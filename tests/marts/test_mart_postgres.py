@@ -19,7 +19,7 @@ from pipeline.staging_to_dw.config import load_config
 from pipeline.staging_to_dw.migrations import WRITER_LOCK
 from pipeline.staging_to_dw.run import run as load_dw
 from tests.warehouse.test_dw_inputs_postgres import make_sources
-from tests.warehouse.test_dw_postgres import database, config_for, change_config, changed_booking_manifest, active_state, write_json
+from tests.warehouse.test_dw_postgres import database, config_for, change_config, changed_booking_manifest, active_state, write_json, make_cleaning_sources
 
 
 EXPECTED = json.loads((ROOT / "tests/fixtures/dw/operations_expected.json").read_text(encoding="utf-8"))
@@ -41,6 +41,29 @@ def mart_state(database):
         daily = conn.execute("SELECT * FROM mart.daily_hotel_operations ORDER BY date_key").fetchall()
         country = conn.execute("SELECT * FROM mart.daily_hotel_operations_by_country ORDER BY date_key,country_key").fetchall()
     return state,daily,country
+
+
+def test_mart_after_cleaning_returns_zero_only_for_known_empty_day(database, tmp_path):
+    manifest = make_cleaning_sources(tmp_path)
+    stage(manifest, dbname=database)
+    config = config_for(tmp_path, manifest)
+    with connect(database) as conn:
+        apply_mart_migration(conn)
+    loaded = load_dw(config, dbname=database)
+    assert loaded["mart"]["passed"]
+    with connect(database) as conn:
+        assert conn.execute("""SELECT date_key,total_bookings,rejected_booking_count,observed_total_guests,
+                                      guest_data_status,target_guests
+                               FROM mart.daily_hotel_operations ORDER BY date_key""").fetchall() == [
+            (20170801, 0, 2, 0, "COMPLETE", 0),
+            (20170802, 4, 0, 2, "PARTIAL", None),
+            (20170803, None, 1, None, "PARTIAL", None),
+        ]
+        assert conn.execute("""SELECT DISTINCT total_bookings,observed_total_guests,target_guests
+                               FROM mart.daily_hotel_operations_by_country WHERE date_key=20170801""").fetchall() == [(0, 0, 0)]
+    before = mart_state(database)
+    assert load_dw(config, dbname=database)["status"] == "no-op"
+    assert mart_state(database) == before
 
 
 def test_first_refresh_exact_fixture_country_calendar_and_rerun(database,tmp_path):

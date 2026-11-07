@@ -12,7 +12,7 @@ from pipeline.source_to_staging.common import ROOT
 
 
 MIGRATION_DIR = ROOT / "database/dw"
-MIGRATION_FILES = ("001_control.sql", "002_dimensions.sql", "003_fact_context_quality.sql")
+MIGRATION_FILES = ("001_control.sql", "002_dimensions.sql", "003_fact_context_quality.sql", "004_booking_cleaning_quality.sql")
 WRITER_LOCK = 634718250
 
 

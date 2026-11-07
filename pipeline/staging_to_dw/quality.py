@@ -7,9 +7,10 @@ from datetime import date
 
 from .config import coverage_status
 from .context import combined_coverage
+from .transform import EXCLUDED_ZERO_GUEST_BOOKING
 
 
-QUALITY_COUNTS = ("source_booking_count", "fact_booking_count", "rejected_booking_count", "non_canceled_booking_count",
+QUALITY_COUNTS = ("source_booking_count", "fact_booking_count", "rejected_booking_count", "excluded_booking_count", "non_canceled_booking_count",
     "guest_ineligible_booking_count", "stay_ineligible_booking_count", "lead_time_unknown_booking_count", "adr_unknown_booking_count",
     "unknown_party_booking_count", "unknown_channel_booking_count", "unknown_segment_booking_count", "unknown_customer_type_booking_count",
     "unknown_repeat_booking_count", "room_ineligible_booking_count")
@@ -55,8 +56,11 @@ def build_daily_quality(calendar: list[dict], source: list[dict], facts: list[di
         day = calendar_row["full_date"]
         all_facts, rejected = fact_by_day[day], rejected_by_day[day]
         active = [r for r in all_facts if r["is_canceled"] == 0]
+        excluded_count = sum(r["reason_codes"] == [EXCLUDED_ZERO_GUEST_BOOKING] for r in rejected)
+        unresolved_rejections = len(rejected) - excluded_count
         row = {"date_key": calendar_row["date_key"], "source_booking_count": len(source_by_day[day]),
-               "fact_booking_count": len(all_facts), "rejected_booking_count": len(rejected), "non_canceled_booking_count": len(active)}
+               "fact_booking_count": len(all_facts), "rejected_booking_count": len(rejected),
+               "excluded_booking_count": excluded_count, "non_canceled_booking_count": len(active)}
         conditions = {
             "guest_ineligible_booking_count": lambda f: not f["guest_eligible"],
             "stay_ineligible_booking_count": lambda f: not f["stay_eligible"],
@@ -71,12 +75,14 @@ def build_daily_quality(calendar: list[dict], source: list[dict], facts: list[di
         }
         row.update({key: sum(condition(f) for f in active) for key, condition in conditions.items()})
         base = coverage_status(coverage, "booking", "all", day)
-        row["booking_data_status"] = "PARTIAL" if rejected else base
-        row["guest_data_status"] = "PARTIAL" if rejected or row["guest_ineligible_booking_count"] else base
-        row["stay_data_status"] = "PARTIAL" if rejected or row["stay_ineligible_booking_count"] else base
+        row["booking_data_status"] = "PARTIAL" if unresolved_rejections else base
+        row["guest_data_status"] = "PARTIAL" if unresolved_rejections or row["guest_ineligible_booking_count"] else base
+        row["stay_data_status"] = "PARTIAL" if unresolved_rejections or row["stay_ineligible_booking_count"] else base
         reasons = [f"BOOKING_COVERAGE_{base}"] if base != "COMPLETE" else []
-        if rejected:
+        if unresolved_rejections:
             reasons.append("CORE_REJECTION")
+        if excluded_count:
+            reasons.append(EXCLUDED_ZERO_GUEST_BOOKING)
         if row["guest_ineligible_booking_count"]:
             reasons.append("GUEST_INELIGIBLE")
         if row["stay_ineligible_booking_count"]:
