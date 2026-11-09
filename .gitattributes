@@ -1,0 +1,3 @@
+# Preserve the original bytes of DW migrations recorded in PostgreSQL's ledger.
+database/dw/*.sql text eol=lf
+database/marts/002_guest_components.sql text eol=lf

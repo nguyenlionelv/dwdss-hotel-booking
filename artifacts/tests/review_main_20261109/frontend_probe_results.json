@@ -1,0 +1,16 @@
+{
+  "backend_outage": {
+    "health_status": "healthy",
+    "db_connected": true,
+    "mart_published": true,
+    "health_is_mock": true,
+    "trend_is_mock": true,
+    "trend_bookings": 77386
+  },
+  "partial_input": {
+    "observed_total_guests": 42,
+    "target_guests": null,
+    "precipitation": null
+  },
+  "exported_csv": "full_date,day_of_week,is_weekend,is_holiday,holiday_names,temperature_mean,precipitation,total_bookings,non_canceled_bookings,total_cancellations,cancellation_rate,observed_total_adults,observed_total_children,observed_total_babies,observed_total_guests,target_guests,observed_total_stay_nights,avg_party_size,avg_stay_nights,avg_lead_time,avg_adr,guest_data_status\n\"2017-08-02\",\"3\",\"false\",\"false\",\"Holiday \"A\"\",\"\",\"0\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"42\",\"42\",\"\",\"\",\"\",\"\",\"\",\"PARTIAL\""
+}
