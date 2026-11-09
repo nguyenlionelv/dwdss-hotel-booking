@@ -563,7 +563,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [] }) {
         ref={canvasRef}
         style={{ width: `${width}px`, height: `${height}px` }}
         role="img"
-        aria-label="Weekly daily guest arrivals and stay nights balance chart"
+        aria-label="Daily observed guests, non-canceled bookings, and stay-nights trajectory chart"
       />
     </div>
   );

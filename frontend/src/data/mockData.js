@@ -482,10 +482,16 @@ function enrichReportDailyRow(r) {
   const children = r.observed_total_children ?? Math.max(0, guests - adults - 1);
   const babies = Math.max(0, guests - adults - children);
   const stayNights = r.observed_total_stay_nights ?? r.room_nights ?? Math.round(nonCanceled * 3.3);
-  const avgParty = nonCanceled > 0 ? Number((guests / nonCanceled).toFixed(2)) : 1.95;
-  const avgStay = nonCanceled > 0 ? Number((stayNights / nonCanceled).toFixed(2)) : 3.3;
+  const guestValidCount = r.guest_valid_booking_count ?? nonCanceled;
+  const stayValidCount = r.stay_valid_booking_count ?? nonCanceled;
+  const leadValidCount = r.lead_time_valid_count ?? totalBookings;
+  const adrValidCount = r.adr_valid_count ?? nonCanceled;
+  const avgParty = guestValidCount > 0 ? Number((guests / guestValidCount).toFixed(2)) : 1.95;
+  const avgStay = stayValidCount > 0 ? Number((stayNights / stayValidCount).toFixed(2)) : 3.3;
   const avgLead = r.avg_lead_time ?? 98.4;
   const avgAdr = Number((r.avg_adr ?? r.adr ?? 128.5).toFixed(2));
+  const sumLead = r.sum_lead_time ?? Number((avgLead * leadValidCount).toFixed(2));
+  const sumAdr = r.sum_adr ?? Number((avgAdr * adrValidCount).toFixed(2));
   const status = r.guest_data_status || "COMPLETE";
 
   return {
@@ -506,6 +512,13 @@ function enrichReportDailyRow(r) {
     observed_total_guests: guests,
     target_guests: status === "COMPLETE" ? guests : null,
     observed_total_stay_nights: stayNights,
+    guest_valid_booking_count: guestValidCount,
+    stay_valid_booking_count: stayValidCount,
+    lead_time_valid_count: leadValidCount,
+    adr_valid_count: adrValidCount,
+    sum_lead_time: sumLead,
+    sum_adr: sumAdr,
+    departures: null,
     avg_party_size: avgParty,
     avg_stay_nights: avgStay,
     avg_lead_time: avgLead,

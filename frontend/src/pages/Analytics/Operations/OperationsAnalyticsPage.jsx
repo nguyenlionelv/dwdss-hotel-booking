@@ -111,7 +111,7 @@ function getPeriodRange(item, grain) {
 }
 
 export default function OperationsAnalyticsPage() {
-  const { metadata } = useSystemContext();
+  const { metadata, demoMode } = useSystemContext();
 
   // OLAP Filter & Grain State
   const [preset, setPreset] = useState("full_793");
@@ -189,6 +189,7 @@ export default function OperationsAnalyticsPage() {
     pivotColDim,
     pivotMeasure,
     drilldownRange,
+    demoMode,
   ]);
 
   const handleGrainChange = (newGrain) => {
@@ -279,23 +280,23 @@ export default function OperationsAnalyticsPage() {
   const avgStayNights =
     summary.avg_stay_nights != null
       ? Number(summary.avg_stay_nights).toFixed(2)
-      : "3.05";
+      : "0.00";
   const avgPartySize =
     summary.avg_party_size != null
       ? Number(summary.avg_party_size).toFixed(2)
-      : "1.93";
+      : "0.00";
   const avgLeadTime =
     summary.avg_lead_time != null
       ? Number(summary.avg_lead_time).toFixed(1)
-      : "95.4";
+      : "0.0";
   const avgAdr =
-    summary.avg_adr != null ? Number(summary.avg_adr).toFixed(2) : "106.80";
+    summary.avg_adr != null ? Number(summary.avg_adr).toFixed(2) : "0.00";
 
   const peakDays = summary.peak_demand_days || [];
   const peakLabel =
     peakDays.length > 0
       ? peakDays.map((p) => p.full_date).join(", ")
-      : summary.peak_period || "2016-08";
+      : summary.peak_period || "—";
   const peakGuestsVal =
     peakDays.length > 0
       ? `${Number(peakDays[0].observed_total_guests).toLocaleString()} guests`
@@ -397,6 +398,19 @@ export default function OperationsAnalyticsPage() {
           </Button>
         </div>
       </header>
+
+      {trendData?.api_error && (
+        <div
+          role="alert"
+          className="rounded-[4px] border border-[#B64C43]/30 bg-[#B64C43]/[0.05] px-4 py-3 text-[12px] text-[#252525]"
+        >
+          <span className="font-semibold text-[#B64C43]">
+            Analytics Data Unavailable:
+          </span>{" "}
+          {trendData.error_message ||
+            "Unable to load OLAP analytics from mart.daily_hotel_ops."}
+        </div>
+      )}
 
       {/* Section 1: Flat OLAP Slice, Dice & Grain Controls (No decorative Card wrapper) */}
       <section
