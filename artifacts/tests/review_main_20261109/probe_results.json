@@ -1,0 +1,347 @@
+{
+  "mart_migrations": [
+    {
+      "version": "002_guest_components.sql",
+      "file_sha256": "0773e4d9a3ac5d32d974e423e327901974a73206e578ebd6f780250e995715d3"
+    },
+    {
+      "version": "operations_mart.sql",
+      "file_sha256": "72c151f20277c54fa375be58b0781f065df21a1d9a067e22d92ae024b6393757"
+    }
+  ],
+  "expected_mart_migrations": {
+    "operations_mart.sql": "72c151f20277c54fa375be58b0781f065df21a1d9a067e22d92ae024b6393757",
+    "002_guest_components.sql": "a363dcddaaf80c66c87fb1879b712fdb5b8c16d942d26f04781899c08549c0e7"
+  },
+  "counts": {
+    "days": 793,
+    "first_date": "2015-07-01",
+    "last_date": "2017-08-31",
+    "bookings": "79250",
+    "non_canceled": "46171"
+  },
+  "weekend_mismatches": {
+    "mismatches": 0
+  },
+  "ledger_tables": [
+    {
+      "tablename": "daily_hotel_operations"
+    },
+    {
+      "tablename": "daily_hotel_operations_by_country"
+    },
+    {
+      "tablename": "dataset_state"
+    },
+    {
+      "tablename": "schema_migration"
+    }
+  ],
+  "report_kpi_reference": {
+    "avg_adr": "137.42",
+    "avg_party_size": "2.16",
+    "avg_stay_nights": "3.29",
+    "avg_lead_time": "143.1",
+    "frontend_avg_adr": "137.42",
+    "frontend_avg_party_size": "2.16",
+    "frontend_avg_stay_nights": "3.29",
+    "frontend_avg_lead_time": "140.5"
+  },
+  "api": {
+    "/health": {
+      "status": 200,
+      "data": {
+        "status": "healthy",
+        "mart_published": true,
+        "matches_active_dw": true
+      }
+    },
+    "/api/metadata": {
+      "status": 200,
+      "data": {
+        "date_range": {
+          "actual_start": "2015-07-01",
+          "actual_end": "2017-08-31",
+          "total_days": 793
+        }
+      }
+    },
+    "/api/analytics/operations/trend": {
+      "status": 200,
+      "data": {
+        "coverage": {
+          "calendar_days_count": 732,
+          "booking_complete_days": 732,
+          "guest_complete_days": 659,
+          "guest_partial_days": 73,
+          "overall_guest_status": "PARTIAL",
+          "rejected_booking_count": 80,
+          "guest_ineligible_booking_count": 79
+        },
+        "summary": {
+          "total_bookings": 75452,
+          "non_canceled_bookings": 44515,
+          "total_cancellations": 30937,
+          "cancellation_rate": 0.410022,
+          "observed_total_adults": 81464,
+          "observed_total_children": 4463,
+          "observed_total_babies": 312,
+          "observed_total_guests": 86239,
+          "target_guests": null,
+          "strict_avg_guests_per_day": null,
+          "observed_avg_guests_per_day": 117.8128,
+          "observed_total_stay_nights": 130679,
+          "avg_party_size": 1.9407,
+          "avg_stay_nights": 2.9356,
+          "avg_lead_time": 81.51,
+          "avg_adr": 106.86,
+          "peak_demand_days": [
+            {
+              "full_date": "2016-06-24",
+              "observed_total_guests": 298,
+              "observed_total_stay_nights": 428,
+              "guest_data_status": "COMPLETE"
+            },
+            {
+              "full_date": "2016-05-26",
+              "observed_total_guests": 296,
+              "observed_total_stay_nights": 455,
+              "guest_data_status": "COMPLETE"
+            },
+            {
+              "full_date": "2015-12-05",
+              "observed_total_guests": 282,
+              "observed_total_stay_nights": 443,
+              "guest_data_status": "COMPLETE"
+            }
+          ],
+          "total_arrivals": 44515,
+          "total_room_nights": 130679,
+          "avg_daily_active_guests": 118,
+          "peak_period": "2017-07",
+          "peak_room_nights": 6872
+        },
+        "filters_applied": {
+          "start_date": "2015-08-31",
+          "end_date": "2017-08-31",
+          "grain": "month",
+          "country_code": null,
+          "day_type": null,
+          "is_weekend": null,
+          "is_holiday": null
+        }
+      }
+    },
+    "/api/analytics/operations/trend?start_date=2015-07-01&end_date=2017-08-31": {
+      "status": 200,
+      "data": {
+        "coverage": {
+          "calendar_days_count": 793,
+          "booking_complete_days": 793,
+          "guest_complete_days": 713,
+          "guest_partial_days": 80,
+          "overall_guest_status": "PARTIAL",
+          "rejected_booking_count": 80,
+          "guest_ineligible_booking_count": 87
+        },
+        "summary": {
+          "total_bookings": 79250,
+          "non_canceled_bookings": 46171,
+          "total_cancellations": 33079,
+          "cancellation_rate": 0.417401,
+          "observed_total_adults": 84510,
+          "observed_total_children": 4618,
+          "observed_total_babies": 328,
+          "observed_total_guests": 89456,
+          "target_guests": null,
+          "strict_avg_guests_per_day": null,
+          "observed_avg_guests_per_day": 112.8071,
+          "observed_total_stay_nights": 135153,
+          "avg_party_size": 1.9412,
+          "avg_stay_nights": 2.9272,
+          "avg_lead_time": 80.8,
+          "avg_adr": 105.88,
+          "peak_demand_days": [
+            {
+              "full_date": "2016-06-24",
+              "observed_total_guests": 298,
+              "observed_total_stay_nights": 428,
+              "guest_data_status": "COMPLETE"
+            },
+            {
+              "full_date": "2016-05-26",
+              "observed_total_guests": 296,
+              "observed_total_stay_nights": 455,
+              "guest_data_status": "COMPLETE"
+            },
+            {
+              "full_date": "2015-12-05",
+              "observed_total_guests": 282,
+              "observed_total_stay_nights": 443,
+              "guest_data_status": "COMPLETE"
+            }
+          ],
+          "total_arrivals": 46171,
+          "total_room_nights": 135153,
+          "avg_daily_active_guests": 113,
+          "peak_period": "2017-07",
+          "peak_room_nights": 6872
+        },
+        "filters_applied": {
+          "start_date": "2015-07-01",
+          "end_date": "2017-08-31",
+          "grain": "month",
+          "country_code": null,
+          "day_type": null,
+          "is_weekend": null,
+          "is_holiday": null
+        }
+      }
+    },
+    "/api/reports/operations/weekly-demand?week=2000-W01": {
+      "status": 200,
+      "data": {
+        "summary": {
+          "total_bookings": 2790,
+          "non_canceled_bookings": 1795,
+          "total_cancellations": 995,
+          "cancellation_rate": 0.356631,
+          "observed_total_adults": 3505,
+          "observed_total_children": 361,
+          "observed_total_babies": 14,
+          "observed_total_guests": 3880,
+          "target_guests": 3880,
+          "strict_avg_guests_per_day": 138.5714,
+          "observed_avg_guests_per_day": 138.5714,
+          "observed_total_stay_nights": 5909,
+          "avg_party_size": 2.1616,
+          "avg_stay_nights": 3.2919,
+          "avg_lead_time": 143.06,
+          "avg_adr": 137.42,
+          "peak_day_date": "2017-08-25",
+          "peak_day_guests": 213
+        },
+        "period": {
+          "iso_year": 2017,
+          "iso_week": 31,
+          "week_key": "LATEST_4W",
+          "week_label": "Latest 4 Weeks (04/08 - 31/08)",
+          "start_date": "2017-08-04",
+          "end_date": "2017-08-31",
+          "calendar_days_count": 28,
+          "is_complete_week": false,
+          "overall_guest_status": "COMPLETE",
+          "total_arrivals": 1795,
+          "total_departures": 1652,
+          "total_room_nights": 5909,
+          "avg_daily_active_guests": 139,
+          "peak_day_date": "2017-08-25",
+          "peak_day_guests": 213,
+          "holiday_days_count": 1,
+          "weather_Completeness_ratio": 0.0,
+          "yoy_arrivals_delta": "+4.2% YoY",
+          "yoy_room_nights_delta": "+1.8% YoY"
+        }
+      }
+    },
+    "/api/reports/operations/weekly-demand?start_date=2017-08-04&end_date=2017-08-31": {
+      "status": 200,
+      "data": {
+        "summary": {
+          "total_bookings": 2790,
+          "non_canceled_bookings": 1795,
+          "total_cancellations": 995,
+          "cancellation_rate": 0.356631,
+          "observed_total_adults": 3505,
+          "observed_total_children": 361,
+          "observed_total_babies": 14,
+          "observed_total_guests": 3880,
+          "target_guests": 3880,
+          "strict_avg_guests_per_day": 138.5714,
+          "observed_avg_guests_per_day": 138.5714,
+          "observed_total_stay_nights": 5909,
+          "avg_party_size": 2.1616,
+          "avg_stay_nights": 3.2919,
+          "avg_lead_time": 143.06,
+          "avg_adr": 137.42,
+          "peak_day_date": "2017-08-25",
+          "peak_day_guests": 213
+        },
+        "period": {
+          "iso_year": 2017,
+          "iso_week": 31,
+          "week_key": "LATEST_4W",
+          "week_label": "Latest 4 Weeks (04/08 - 31/08)",
+          "start_date": "2017-08-04",
+          "end_date": "2017-08-31",
+          "calendar_days_count": 28,
+          "is_complete_week": false,
+          "overall_guest_status": "COMPLETE",
+          "total_arrivals": 1795,
+          "total_departures": 1652,
+          "total_room_nights": 5909,
+          "avg_daily_active_guests": 139,
+          "peak_day_date": "2017-08-25",
+          "peak_day_guests": 213,
+          "holiday_days_count": 1,
+          "weather_Completeness_ratio": 0.0,
+          "yoy_arrivals_delta": "+4.2% YoY",
+          "yoy_room_nights_delta": "+1.8% YoY"
+        }
+      }
+    },
+    "/api/analytics/operations/trend?country_code=BAD": {
+      "status": 200,
+      "data": {
+        "coverage": {
+          "calendar_days_count": 0,
+          "booking_complete_days": 0,
+          "guest_complete_days": 0,
+          "guest_partial_days": 0,
+          "overall_guest_status": "MISSING",
+          "rejected_booking_count": 0,
+          "guest_ineligible_booking_count": 0
+        },
+        "summary": {
+          "total_bookings": 0,
+          "non_canceled_bookings": 0,
+          "total_cancellations": 0,
+          "cancellation_rate": null,
+          "observed_total_adults": 0,
+          "observed_total_children": 0,
+          "observed_total_babies": 0,
+          "observed_total_guests": 0,
+          "target_guests": null,
+          "strict_avg_guests_per_day": null,
+          "observed_avg_guests_per_day": 0.0,
+          "observed_total_stay_nights": 0,
+          "avg_party_size": null,
+          "avg_stay_nights": null,
+          "avg_lead_time": null,
+          "avg_adr": 0.0,
+          "peak_demand_days": [],
+          "total_arrivals": 0,
+          "total_room_nights": 0,
+          "avg_daily_active_guests": 0,
+          "peak_period": "2015-08",
+          "peak_room_nights": 0
+        },
+        "filters_applied": {
+          "start_date": "2015-08-31",
+          "end_date": "2017-08-31",
+          "grain": "month",
+          "country_code": "BAD",
+          "day_type": null,
+          "is_weekend": null,
+          "is_holiday": null
+        }
+      }
+    },
+    "/api/dss/demand-forecast": {
+      "status": 404,
+      "data": {
+        "detail": "Not Found"
+      }
+    }
+  }
+}

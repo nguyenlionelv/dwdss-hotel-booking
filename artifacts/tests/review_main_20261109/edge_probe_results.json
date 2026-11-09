@@ -1,0 +1,146 @@
+{
+  "weather": [
+    {
+      "temperature_status": "COMPLETE",
+      "precipitation_status": "COMPLETE",
+      "days": 793
+    }
+  ],
+  "capacity_reference": [
+    {
+      "is_weekend": false,
+      "avg_adr": "136.91",
+      "avg_party_size": "2.1487",
+      "avg_stay_nights": "3.2329"
+    },
+    {
+      "is_weekend": true,
+      "avg_adr": "138.67",
+      "avg_party_size": "2.1927",
+      "avg_stay_nights": "3.4351"
+    }
+  ],
+  "missing_measure_day": {
+    "full_date": "2015-07-23",
+    "guest_data_status": "PARTIAL",
+    "observed_total_guests": 73,
+    "target_guests": null,
+    "avg_party_size": "1.9210526315789474"
+  },
+  "zero_arrival_day": {
+    "full_date": "2015-07-05",
+    "non_canceled_bookings": 0
+  },
+  "capacity_api": {
+    "status": 200,
+    "groups": [
+      {
+        "day_type": "Weekday",
+        "days_count": 20,
+        "total_arrivals": 1271,
+        "avg_daily_arrivals": 63.5,
+        "total_room_nights": 4109,
+        "avg_daily_room_nights": 205.4,
+        "total_active_guests": 2731,
+        "avg_daily_active_guests": 136.6,
+        "avg_adr": 137.38,
+        "avg_party_size": 2.1616,
+        "avg_stay_nights": 3.2919
+      },
+      {
+        "day_type": "Weekend",
+        "days_count": 8,
+        "total_arrivals": 524,
+        "avg_daily_arrivals": 65.5,
+        "total_room_nights": 1800,
+        "avg_daily_room_nights": 225.0,
+        "total_active_guests": 1149,
+        "avg_daily_active_guests": 143.6,
+        "avg_adr": 139.62,
+        "avg_party_size": 2.1616,
+        "avg_stay_nights": 3.2919
+      }
+    ]
+  },
+  "weather_impact_api": {
+    "status": 200,
+    "weather_impact": {
+      "bands": [
+        {
+          "band_label": "Nắng ấm lý tưởng (22°C – 28°C, < 1mm mưa)",
+          "days_count": 5,
+          "avg_room_nights": 236.8,
+          "avg_active_guests": 151.0,
+          "avg_arrivals": 68.0,
+          "avg_adr": 140.22,
+          "demand_index": 1.12
+        },
+        {
+          "band_label": "Ôn hòa dễ chịu (15°C – 21°C, khô ráo)",
+          "days_count": 23,
+          "avg_room_nights": 205.4,
+          "avg_active_guests": 135.9,
+          "avg_arrivals": 63.3,
+          "avg_adr": 137.54,
+          "demand_index": 0.97
+        }
+      ],
+      "completeness_ratio": 0.0,
+      "missing_days": 28,
+      "insight": "Nhiệt độ trung bình tại Lisbon trên 22°C giúp tăng công suất đêm phòng so với trung bình năm."
+    }
+  },
+  "zero_arrivals_report": [
+    {
+      "date_key": 20150705,
+      "full_date": "2015-07-05",
+      "day_of_week_num": 7,
+      "is_weekend": true,
+      "is_holiday": false,
+      "holiday_names": [],
+      "temperature_mean": 19.9,
+      "precipitation": 0.0,
+      "total_bookings": 8,
+      "non_canceled_bookings": 0,
+      "total_cancellations": 8,
+      "cancellation_rate": 1.0,
+      "observed_total_adults": 0,
+      "observed_total_children": 0,
+      "observed_total_babies": 0,
+      "observed_total_guests": 0,
+      "target_guests": 0,
+      "observed_total_stay_nights": 0,
+      "avg_party_size": null,
+      "avg_stay_nights": null,
+      "avg_lead_time": null,
+      "avg_adr": 0.0,
+      "guest_data_status": "COMPLETE",
+      "stay_date": "2015-07-05",
+      "date_display": "05/07/2015",
+      "day_of_week": "Chủ Nhật",
+      "day_type": "Weekend",
+      "arrivals": 0,
+      "departures": 1,
+      "active_stays": 0,
+      "room_nights": 0,
+      "active_guests": 0,
+      "adr": 0.0,
+      "is_pt_holiday": false,
+      "holiday_local_name": null,
+      "weather_temp_mean": 19.9,
+      "weather_precip_sum": 0.0,
+      "weather_status": "Partly Cloudy",
+      "is_peak_day": true
+    }
+  ],
+  "migration_hashes": {
+    "raw": "a363dcddaaf80c66c87fb1879b712fdb5b8c16d942d26f04781899c08549c0e7",
+    "lf": "0773e4d9a3ac5d32d974e423e327901974a73206e578ebd6f780250e995715d3"
+  },
+  "db_unreachable_http_statuses": {
+    "/health": 200,
+    "/api/metadata": 500,
+    "/api/analytics/operations/trend": 500,
+    "/api/reports/operations/weekly-demand": 500
+  }
+}
