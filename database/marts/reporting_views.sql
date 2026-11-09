@@ -29,7 +29,7 @@ WITH weekly_aggregates AS (
         round(sum(sum_adr)::numeric / nullif(sum(adr_valid_count), 0), 2) AS avg_adr,
         round(sum(total_cancellations)::numeric / nullif(sum(total_bookings), 0), 4) AS cancellation_rate,
         count(*) FILTER (WHERE is_holiday = true) AS holiday_days_count,
-        round(count(*) FILTER (WHERE temperature_status = 'OBSERVED')::numeric / count(*), 4) AS weather_completeness_ratio
+        round(count(*) FILTER (WHERE temperature_status = 'COMPLETE')::numeric / count(*), 4) AS weather_completeness_ratio
     FROM mart.daily_hotel_operations
     GROUP BY iso_year, iso_week
 ),
