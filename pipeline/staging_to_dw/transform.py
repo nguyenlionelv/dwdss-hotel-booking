@@ -15,7 +15,8 @@ from pipeline.source_to_staging.common import INTEGER_RE
 from .config import mapped_value
 
 
-TRANSFORM_VERSION = "booking-transform-v1"
+TRANSFORM_VERSION = "booking-transform-v2"
+EXCLUDED_ZERO_GUEST_BOOKING = "EXCLUDED_ZERO_GUEST_BOOKING"
 INTEGER_MAX = 2147483647
 GUEST_FIELDS = ("adults", "children", "babies")
 NIGHT_FIELDS = ("stays_in_week_nights", "stays_in_weekend_nights")
@@ -54,6 +55,17 @@ def checked_number(value: Any, *, integer: bool) -> tuple[int | Decimal | None, 
             return None, "Number exceeds PostgreSQL INTEGER range"
         return int(number), None
     return number, None
+
+
+def exclude_zero_guest_booking(total_guests: int | Decimal | None, is_canceled: int,
+                              adr: int | Decimal | None, total_stay_nights: int | None) -> bool:
+    """Exclude zero-guest cancellations and bookings with no price or nights."""
+    if total_guests != 0:
+        return False
+    if is_canceled == 1:
+        return True
+    return (adr is not None and Decimal(adr).is_finite()
+            and adr <= 0 and total_stay_nights == 0)
 
 
 def classify_party(adults: int | None, children: int | None, babies: int | None,
@@ -215,6 +227,14 @@ def transform_booking(row: dict[str, Any], config: dict, mappings: dict,
     fact["guest_eligible"] = fact["total_guests"] is not None and fact["total_guests"] > 0
     fact["total_stay_nights"] = sum(nights) if all(value is not None for value in nights) else None
     fact["stay_eligible"] = fact["total_stay_nights"] is not None
+    # Use the source ADR here: negative ADR is nulled in the accepted fact measures.
+    if exclude_zero_guest_booking(fact["total_guests"], canceled, row["adr"], fact["total_stay_nights"]):
+        add_issue("adults,children,babies", EXCLUDED_ZERO_GUEST_BOOKING, "invalid", "REJECT_FACT",
+                  "Zero guests with cancellation, or nonpositive ADR and zero stay nights",
+                  raw_value={field: raw[field] for field in (*GUEST_FIELDS, "is_canceled", "adr", *NIGHT_FIELDS)})
+        rejection = {"source_file_sha256": sha, "source_row_id": row_id, "arrival_date": arrival_date,
+                     "reason_codes": [EXCLUDED_ZERO_GUEST_BOOKING]}
+        return BookingTransformResult(None, rejection, issues)
     for fields, total, code in ((GUEST_FIELDS, fact["total_guests"], "ZERO_GUESTS"),
                                 (NIGHT_FIELDS, fact["total_stay_nights"], "ZERO_STAY_NIGHTS")):
         if total == 0:

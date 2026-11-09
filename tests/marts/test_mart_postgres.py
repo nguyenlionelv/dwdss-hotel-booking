@@ -8,9 +8,10 @@ import subprocess
 import sys
 
 import pytest
+import psycopg
 from psycopg.rows import dict_row
 
-from pipeline.dw_to_mart.migrations import MIGRATION, apply_mart_migration
+from pipeline.dw_to_mart.migrations import MIGRATION, GUEST_COMPONENTS_MIGRATION, apply_mart_migration
 from pipeline.dw_to_mart.run import run as refresh
 from pipeline.quality.mart_checks import report
 from pipeline.source_to_staging.common import ROOT, connect, sha256
@@ -19,7 +20,7 @@ from pipeline.staging_to_dw.config import load_config
 from pipeline.staging_to_dw.migrations import WRITER_LOCK
 from pipeline.staging_to_dw.run import run as load_dw
 from tests.warehouse.test_dw_inputs_postgres import make_sources
-from tests.warehouse.test_dw_postgres import database, config_for, change_config, changed_booking_manifest, active_state, write_json
+from tests.warehouse.test_dw_postgres import database, config_for, change_config, changed_booking_manifest, active_state, write_json, make_cleaning_sources
 
 
 EXPECTED = json.loads((ROOT / "tests/fixtures/dw/operations_expected.json").read_text(encoding="utf-8"))
@@ -41,6 +42,97 @@ def mart_state(database):
         daily = conn.execute("SELECT * FROM mart.daily_hotel_operations ORDER BY date_key").fetchall()
         country = conn.execute("SELECT * FROM mart.daily_hotel_operations_by_country ORDER BY date_key,country_key").fetchall()
     return state,daily,country
+
+
+def setup_guest_components(database, tmp_path):
+    manifest = make_sources(tmp_path)
+    selected = json.loads(manifest.read_text(encoding="utf-8"))
+    booking = tmp_path / "booking.csv"
+    with booking.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fields, rows = reader.fieldnames, list(reader)
+    rows[5]["country"] = "GBR"  # Give the zero-guest booking its own country group.
+    with booking.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+    selected["sources"]["booking"]["sha256"] = sha256(booking)
+    write_json(manifest, selected)
+    stage(manifest, dbname=database)
+    config = config_for(tmp_path, manifest)
+    with connect(database) as conn:
+        apply_mart_migration(conn)
+    assert load_dw(config, dbname=database)["mart"]["passed"]
+    return config
+
+
+def test_guest_components_are_counted_at_each_grain(database, tmp_path):
+    config = setup_guest_components(database, tmp_path)
+    with connect(database) as conn:
+        assert conn.execute("""SELECT observed_total_guests,guest_valid_booking_count,missing_guest_bookings_count
+                               FROM mart.daily_hotel_operations WHERE date_key=20170802""").fetchone() == (2, 1, 1)
+        assert conn.execute("""SELECT country_code,observed_total_guests,guest_valid_booking_count,
+                                      missing_guest_bookings_count,guest_ineligible_booking_count
+                               FROM mart.daily_hotel_operations_by_country
+                               WHERE date_key=20170802 ORDER BY country_code""").fetchall() == [
+            ("GBR", 0, 0, 1, 2), ("PRT", None, 0, 0, 2), ("UNK", 2, 1, 0, 2)]
+        conn.execute("""UPDATE mart.daily_hotel_operations_by_country SET missing_guest_bookings_count=2
+                        WHERE date_key=20170802 AND country_code='GBR'""")
+        conn.commit()
+        checked = report(conn, load_config(config))
+        assert checked["checks"]["daily_hotel_operations_by_country_measures"] == 1
+        assert checked["checks"]["country_daily_reconciliation"] == 1
+
+
+def test_guest_components_upgrade_preserves_data_and_rolls_back_on_failure(database, tmp_path, monkeypatch):
+    setup_guest_components(database, tmp_path)
+    expected = mart_state(database)
+    # Recreate the previous schema and its NULL sums for the missing-only country.
+    with connect(database) as conn:
+        for table in ("daily_hotel_operations", "daily_hotel_operations_by_country"):
+            conn.execute(f"""UPDATE mart.{table} SET observed_total_adults=NULL,observed_total_children=NULL,
+                             observed_total_babies=NULL,observed_total_guests=NULL
+                             WHERE guest_valid_booking_count=0 AND missing_guest_bookings_count>0
+                               AND non_canceled_bookings=missing_guest_bookings_count""")
+            conn.execute(f"ALTER TABLE mart.{table} DROP COLUMN missing_guest_bookings_count")
+        conn.execute("DELETE FROM mart.schema_migration WHERE version=%s", (GUEST_COMPONENTS_MIGRATION.name,))
+    previous = mart_state(database)
+    broken = tmp_path / GUEST_COMPONENTS_MIGRATION.name
+    broken.write_text(GUEST_COMPONENTS_MIGRATION.read_text(encoding="utf-8") + "\nSELECT 1/0;\n", encoding="utf-8")
+    with connect(database) as conn:
+        with monkeypatch.context() as patch:
+            patch.setattr("pipeline.dw_to_mart.migrations.GUEST_COMPONENTS_MIGRATION", broken)
+            with pytest.raises(psycopg.errors.DivisionByZero):
+                apply_mart_migration(conn)
+        assert mart_state(database) == previous
+        upgraded = apply_mart_migration(conn)
+        assert upgraded["applied"] == [GUEST_COMPONENTS_MIGRATION.name]
+        assert upgraded["skipped"] == [MIGRATION.name]
+        assert apply_mart_migration(conn)["status"] == "no-op"
+    assert mart_state(database) == expected
+
+
+def test_mart_after_cleaning_returns_zero_only_for_known_empty_day(database, tmp_path):
+    manifest = make_cleaning_sources(tmp_path)
+    stage(manifest, dbname=database)
+    config = config_for(tmp_path, manifest)
+    with connect(database) as conn:
+        apply_mart_migration(conn)
+    loaded = load_dw(config, dbname=database)
+    assert loaded["mart"]["passed"]
+    with connect(database) as conn:
+        assert conn.execute("""SELECT date_key,total_bookings,rejected_booking_count,observed_total_guests,
+                                      guest_data_status,target_guests
+                               FROM mart.daily_hotel_operations ORDER BY date_key""").fetchall() == [
+            (20170801, 0, 2, 0, "COMPLETE", 0),
+            (20170802, 4, 0, 2, "PARTIAL", None),
+            (20170803, None, 1, None, "PARTIAL", None),
+        ]
+        assert conn.execute("""SELECT DISTINCT total_bookings,observed_total_guests,target_guests
+                               FROM mart.daily_hotel_operations_by_country WHERE date_key=20170801""").fetchall() == [(0, 0, 0)]
+    before = mart_state(database)
+    assert load_dw(config, dbname=database)["status"] == "no-op"
+    assert mart_state(database) == before
 
 
 def test_first_refresh_exact_fixture_country_calendar_and_rerun(database,tmp_path):

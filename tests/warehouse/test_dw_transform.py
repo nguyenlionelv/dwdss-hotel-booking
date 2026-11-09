@@ -96,6 +96,31 @@ def test_d02_zero_guests_keep_zeros_and_one_warning(bundle):
     assert [(i["rule_code"], i["issue_type"], i["disposition"]) for i in result.issues] == [("ZERO_GUESTS", "warning", "WARN_ONLY")]
 
 
+@pytest.mark.parametrize("adults,canceled,adr,nights,excluded", [
+    (0, 1, 100, 2, True),
+    (0, 0, 0, 0, True),
+    (0, 0, -5, 0, True),
+    (0, 0, 0, 2, False),
+    (0, 0, 100, 2, False),
+    (0, 0, 100, 0, False),
+    (2, 1, 0, 0, False),
+])
+def test_zero_guest_cleaning_rule(bundle, adults, canceled, adr, nights, excluded):
+    row = booking_row(adults=Decimal(adults), children=Decimal(0), babies=Decimal(0),
+                      is_canceled=canceled, adr=Decimal(adr), stays_in_week_nights=nights)
+    result = transform(row, bundle)
+    assert (result.fact is None) is excluded
+    assert result.block_publish is False
+    if excluded:
+        assert result.rejection == {"source_file_sha256": SOURCE_SHA, "source_row_id": 2,
+                                    "arrival_date": date(2017, 8, 1),
+                                    "reason_codes": ["EXCLUDED_ZERO_GUEST_BOOKING"]}
+        assert result.issues[-1]["disposition"] == "REJECT_FACT"
+    else:
+        assert result.rejection is None
+        assert result.fact["total_guests"] == adults
+
+
 @pytest.mark.parametrize("field", ["adults", "children", "babies"])
 @pytest.mark.parametrize("value", [Decimal("1.5"), Decimal("-1"), Decimal("NaN"), Decimal("Infinity"),
                                    Decimal("-Infinity"), Decimal("2147483648"), Decimal("1e999999"), True, 2.0])
@@ -192,7 +217,7 @@ def test_partial_customer_profile_keeps_known_half(bundle, kind, repeat, expecte
 
 
 @pytest.mark.parametrize("adults,children,babies,party", [(1,0,0,"SINGLE"), (2,0,0,"COUPLE"),
-    (3,0,0,"OTHER_GROUP"), (2,1,0,"FAMILY"), (2,0,1,"FAMILY"), (0,1,0,"FAMILY"), (0,0,0,"UNKNOWN")])
+    (3,0,0,"OTHER_GROUP"), (2,1,0,"FAMILY"), (2,0,1,"FAMILY"), (0,1,0,"FAMILY")])
 def test_party_rules_for_both_canceled_and_non_canceled(bundle, adults, children, babies, party):
     for canceled in (0, 1):
         result = transform(booking_row(adults=adults, children=children, babies=babies, is_canceled=canceled), bundle)

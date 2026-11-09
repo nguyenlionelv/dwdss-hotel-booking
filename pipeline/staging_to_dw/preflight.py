@@ -13,6 +13,7 @@ from psycopg.rows import dict_row
 
 from pipeline.source_to_staging.common import ROOT, connect, sha256, verify_sources
 from .config import coverage_status, mapped_value
+from .transform import exclude_zero_guest_booking, EXCLUDED_ZERO_GUEST_BOOKING
 
 
 CATEGORICAL_FIELDS = {
@@ -47,17 +48,21 @@ def quality_status(base: str, affected: bool) -> str:
     return "PARTIAL" if affected else base
 
 
-def measure_values(rows: list[dict], coverage: str, rejected_count: int) -> dict:
+def measure_values(rows: list[dict], coverage: str, rejected_count: int, excluded_count: int = 0) -> dict:
     """Profile expected observed measures; this is not a DW loader or a Mart refresh."""
     non_canceled = [row for row in rows if row["is_canceled"] == 0]
     guests = [row for row in non_canceled if all(valid_number(row[f], integer=True) for f in GUEST_FIELDS)
               and sum(row[f] for f in GUEST_FIELDS) > 0]
+    missing_guests = [row for row in non_canceled if all(valid_number(row[f], integer=True) for f in GUEST_FIELDS)
+                      and sum(row[f] for f in GUEST_FIELDS) == 0]
+    only_missing_guests = bool(missing_guests) and len(missing_guests) == len(non_canceled)
     stays = [row for row in non_canceled if all(valid_number(row[f], integer=True) for f in NIGHT_FIELDS)]
     leads = [row for row in non_canceled if valid_number(row["lead_time"], integer=True)]
     adrs = [row for row in non_canceled if valid_number(row["adr"])]
-    empty_known = coverage == "COMPLETE" and not non_canceled and not rejected_count
+    unresolved_rejections = rejected_count - excluded_count
+    empty_known = coverage == "COMPLETE" and not non_canceled and not unresolved_rejections
 
-    def observed_sum(eligible, fields):
+    def observed_sum(eligible, fields, *, known_zero=False):
         if eligible:
             values = [Decimal(str(row[f])) for row in eligible for f in fields]
             # NUMERIC input may exceed Decimal's default 28 digits. Keep sums exact.
@@ -65,30 +70,32 @@ def measure_values(rows: list[dict], coverage: str, rejected_count: int) -> dict
             with localcontext() as context:
                 context.prec = max(28, precision + len(str(len(values))) + 2)
                 return sum(values)
-        return 0 if empty_known else None
+        return 0 if empty_known or known_zero else None
 
     def average(total, count):
         return total / count if count and total is not None else None
 
-    guest_sum = observed_sum(guests, GUEST_FIELDS)
+    guest_sum = observed_sum(guests, GUEST_FIELDS, known_zero=only_missing_guests)
     stay_sum = observed_sum(stays, NIGHT_FIELDS)
     lead_sum = observed_sum(leads, ("lead_time",))
     adr_sum = observed_sum(adrs, ("adr",))
-    booking_status = quality_status(coverage, bool(rejected_count))
-    guest_status = quality_status(coverage, bool(rejected_count or len(guests) != len(non_canceled)))
-    stay_status = quality_status(coverage, bool(rejected_count or len(stays) != len(non_canceled)))
+    booking_status = quality_status(coverage, bool(unresolved_rejections))
+    guest_status = quality_status(coverage, bool(unresolved_rejections or len(guests) != len(non_canceled)))
+    stay_status = quality_status(coverage, bool(unresolved_rejections or len(stays) != len(non_canceled)))
     return {
         "observed_fact_booking_count": len(rows), "rejected_booking_count": rejected_count,
-        "total_bookings": len(rows) if rows or coverage == "COMPLETE" and not rejected_count else None,
+        "excluded_booking_count": excluded_count,
+        "total_bookings": len(rows) if rows or coverage == "COMPLETE" and not unresolved_rejections else None,
         "non_canceled_bookings": len(non_canceled) if rows or empty_known else None,
         "total_cancellations": len(rows) - len(non_canceled) if rows or empty_known else None,
         "guest_valid_booking_count": len(guests), "stay_valid_booking_count": len(stays),
+        "missing_guest_bookings_count": len(missing_guests),
         "lead_time_valid_count": len(leads), "adr_valid_count": len(adrs),
         "guest_ineligible_booking_count": len(non_canceled) - len(guests),
         "stay_ineligible_booking_count": len(non_canceled) - len(stays),
-        "observed_total_adults": observed_sum(guests, ("adults",)),
-        "observed_total_children": observed_sum(guests, ("children",)),
-        "observed_total_babies": observed_sum(guests, ("babies",)),
+        "observed_total_adults": observed_sum(guests, ("adults",), known_zero=only_missing_guests),
+        "observed_total_children": observed_sum(guests, ("children",), known_zero=only_missing_guests),
+        "observed_total_babies": observed_sum(guests, ("babies",), known_zero=only_missing_guests),
         "observed_total_guests": guest_sum, "observed_total_stay_nights": stay_sum,
         "sum_lead_time": lead_sum, "sum_adr": adr_sum,
         "cancellation_rate": (len(rows) - len(non_canceled)) / len(rows) if rows else None,
@@ -106,7 +113,7 @@ def profile_bookings(rows: list[dict], bundle: dict) -> dict:
     actual_start = date.fromisoformat(config["actual"]["start"])
     actual_end = date.fromisoformat(config["actual"]["end"])
     inventories = {f: {} for f in CATEGORICAL_FIELDS}
-    daily, rejections = defaultdict(list), Counter()
+    daily, rejections, exclusions = defaultdict(list), Counter(), Counter()
     dimensions = {name: set() for name in mappings}
     profile_counts = Counter()
     affected = defaultdict(list)
@@ -116,6 +123,15 @@ def profile_bookings(rows: list[dict], bundle: dict) -> dict:
         row_id = row["_source_row_id"]
         day = row["arrival_date"]
         core_ok = day is not None and row["is_canceled"] in (0, 1)
+        guests = [row[f] for f in GUEST_FIELDS]
+        nights = [row[f] for f in NIGHT_FIELDS]
+        total_guests = sum(guests) if all(valid_number(v, integer=True) for v in guests) else None
+        total_nights = sum(nights) if all(valid_number(v, integer=True) for v in nights) else None
+        excluded = core_ok and exclude_zero_guest_booking(total_guests, row["is_canceled"], row["adr"], total_nights)
+        if excluded:
+            exclusions[day] += 1
+            affected[EXCLUDED_ZERO_GUEST_BOOKING].append(row_id)
+        accepted_ok = core_ok and not excluded
         if day is None:
             affected["UNKNOWN_ARRIVAL_DATE"].append(row_id)
         elif not first <= day <= last:
@@ -124,7 +140,7 @@ def profile_bookings(rows: list[dict], bundle: dict) -> dict:
             affected["OUTSIDE_ACTUAL_INTERVAL"].append(row_id)
         if row["is_canceled"] not in (0, 1):
             affected["INVALID_CANCELLATION"].append(row_id)
-        if not core_ok:
+        if not accepted_ok:
             if day is not None:
                 rejections[day] += 1
         else:
@@ -141,12 +157,12 @@ def profile_bookings(rows: list[dict], bundle: dict) -> dict:
                 "all_rows": 0, "accepted_candidate_rows": 0, "example_row_ids": [],
             })
             entry["all_rows"] += 1
-            entry["accepted_candidate_rows"] += int(core_ok)
+            entry["accepted_candidate_rows"] += int(accepted_ok)
             if len(entry["example_row_ids"]) < 3:
                 entry["example_row_ids"].append(row_id)
-            if core_ok:
+            if accepted_ok:
                 dimensions[name].add(code)
-        if core_ok:
+        if accepted_ok:
             repeat = {0: "NEW", 1: "REPEAT"}.get(row["is_repeated_guest"], "UNKNOWN")
             profile_counts[(codes["customer_type"], repeat)] += 1
         if not all(valid_number(row[f], integer=True) for f in GUEST_FIELDS):
@@ -179,7 +195,7 @@ def profile_bookings(rows: list[dict], bundle: dict) -> dict:
     for day in days_between(actual_start, actual_end):
         base = coverage_status(bundle["coverage"], "booking", "all", day)
         actual_days.append({"date": day.isoformat(), "source_coverage_status": base,
-                            **measure_values(daily[day], base, rejections[day])})
+                            **measure_values(daily[day], base, rejections[day], exclusions[day])})
     room_unknown = config["mappings"]["room_type"]["unknown_code"]
     room_comparable = []
     room_changed = []

@@ -92,6 +92,23 @@ def test_design_fixture_counts_sums_and_quality():
     assert result["room_comparison"]["different_code_rows"] == 6
 
 
+def test_preflight_excludes_zero_guest_noise_before_guest_quality():
+    template = fixture_bookings()[0]
+    rows = [
+        {**template, "_source_row_id": 2, "adults": 0, "children": 0, "is_canceled": 1},
+        {**template, "_source_row_id": 3, "adults": 0, "children": 0, "adr": 0, "stays_in_week_nights": 0},
+        {**template, "_source_row_id": 4},
+    ]
+    result = profile_bookings(rows, fixture_bundle())
+    assert result["accepted_candidate_count"] == 1
+    assert result["rejected_candidate_count"] == 2
+    first_day = result["daily_measures"][0]
+    assert first_day["excluded_booking_count"] == 2
+    assert first_day["guest_ineligible_booking_count"] == 0
+    assert first_day["guest_data_status"] == "COMPLETE"
+    assert first_day["target_guests"] == 3
+
+
 def test_unknown_date_calendar_and_unreviewed_codes_are_explicit_errors():
     rows = fixture_bookings()
     rows[0]["arrival_date"] = None
@@ -141,8 +158,12 @@ def test_accepted_booking_assumption_is_bounded_and_preserves_measure_quality():
     zero_guest_day = measure_values([rows[5]], "COMPLETE", 0)
     assert zero_guest_day["guest_data_status"] == "PARTIAL"
     assert zero_guest_day["target_guests"] is None
+    assert zero_guest_day["observed_total_guests"] == 0
+    assert zero_guest_day["guest_valid_booking_count"] == 0
+    assert zero_guest_day["missing_guest_bookings_count"] == 1
     canceled_missing = {**rows[3], "is_canceled": 1}
     assert measure_values([canceled_missing], "COMPLETE", 0)["target_guests"] == 0
+    assert measure_values([canceled_missing], "COMPLETE", 0)["missing_guest_bookings_count"] == 0
 
 
 def test_mapping_rejects_duplicates_and_conflicting_names(tmp_path):

@@ -18,7 +18,7 @@ CONTEXT_COLUMNS = ("is_holiday", "has_national_holiday", "has_lisboa_holiday", "
 QUALITY_COLUMNS = ("booking_data_status", "guest_data_status", "stay_data_status", "rejected_booking_count",
                    "guest_ineligible_booking_count", "stay_ineligible_booking_count")
 COUNT_COLUMNS = ("total_bookings", "non_canceled_bookings", "total_cancellations", "guest_valid_booking_count",
-                 "stay_valid_booking_count", "lead_time_valid_count", "adr_valid_count")
+                 "missing_guest_bookings_count", "stay_valid_booking_count", "lead_time_valid_count", "adr_valid_count")
 SUM_COLUMNS = ("observed_total_adults", "observed_total_children", "observed_total_babies", "observed_total_guests",
                "observed_total_stay_nights", "sum_lead_time", "sum_adr")
 KPI_COLUMNS = ("cancellation_rate", "avg_party_size", "avg_stay_nights", "avg_lead_time", "avg_adr")
@@ -26,7 +26,7 @@ COLUMNS = (*DATE_COLUMNS, "data_version", *CONTEXT_COLUMNS, *QUALITY_COLUMNS,
            *COUNT_COLUMNS, *SUM_COLUMNS, *KPI_COLUMNS, "target_guests")
 COUNTRY_COLUMNS = ("country_key", "country_code", "country_name")
 TABLES = ("daily_hotel_operations", "daily_hotel_operations_by_country")
-RUNTIME_FILES = ("database/marts/operations_mart.sql", "database/marts/refresh_operations.sql",
+RUNTIME_FILES = ("database/marts/operations_mart.sql", "database/marts/002_guest_components.sql", "database/marts/refresh_operations.sql",
                  "pipeline/dw_to_mart/operations.py", "pipeline/dw_to_mart/migrations.py",
                  "pipeline/dw_to_mart/checks.py", "pipeline/dw_to_mart/run.py",
                  "pipeline/staging_to_dw/preflight.py", "pipeline/quality/mart_checks.py")

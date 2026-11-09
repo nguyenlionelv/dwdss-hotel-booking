@@ -2,6 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+import csv
 from datetime import date
 from decimal import Decimal
 import json
@@ -70,6 +71,64 @@ def change_config(path, version):
     config = json.loads(path.read_text(encoding="utf-8"))
     config["config_version"] = version
     write_json(path, config)
+
+
+def make_cleaning_sources(tmp_path):
+    manifest = make_sources(tmp_path)
+    selected = json.loads(manifest.read_text(encoding="utf-8"))
+    booking = Path(selected["sources"]["booking"]["file"])
+    with booking.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fields, template = reader.fieldnames, next(reader)
+    zero = {**template, "adults": "0", "children": "0", "babies": "0"}
+    rows = [
+        {**zero, "is_canceled": "1"},
+        {**zero, "adr": "0", "stays_in_week_nights": "0", "stays_in_weekend_nights": "0"},
+        {**zero, "arrival_date_day_of_month": "2", "adr": "0"},
+        {**zero, "arrival_date_day_of_month": "2", "adr": "100"},
+        {**template, "arrival_date_day_of_month": "2", "adults": "2", "children": "0"},
+        {**template, "arrival_date_day_of_month": "2", "is_canceled": "1"},
+        {**template, "arrival_date_day_of_month": "3", "is_canceled": "2"},
+    ]
+    with booking.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+    selected["sources"]["booking"]["sha256"] = sha256(booking)
+    write_json(manifest, selected)
+    return manifest
+
+
+def test_cleaning_exclusions_keep_audit_and_do_not_make_day_partial(database, tmp_path):
+    manifest = make_cleaning_sources(tmp_path)
+    stage(manifest, dbname=database)
+    config = config_for(tmp_path, manifest)
+    loaded = run(config, dbname=database)
+    assert loaded["quality"]["passed"]
+    assert loaded["counts"]["fact_booking"] == 4
+    assert loaded["counts"]["booking_rejection"] == 3
+    with connect(database) as conn:
+        assert conn.execute("SELECT count(*) FROM staging.v_booking_current").fetchone()[0] == 7
+        assert conn.execute("SELECT source_row_id FROM dw.fact_booking ORDER BY source_row_id").fetchall() == [(4,), (5,), (6,), (7,)]
+        assert conn.execute("""SELECT date_key,rejected_booking_count,excluded_booking_count,
+                                      guest_ineligible_booking_count,booking_data_status,guest_data_status
+                               FROM dw.daily_data_quality WHERE date_key BETWEEN 20170801 AND 20170803
+                               ORDER BY date_key""").fetchall() == [
+            (20170801, 2, 2, 0, "COMPLETE", "COMPLETE"),
+            (20170802, 0, 0, 2, "COMPLETE", "PARTIAL"),
+            (20170803, 1, 0, 0, "PARTIAL", "PARTIAL"),
+        ]
+        assert conn.execute("""SELECT source_row_id,reason_codes FROM dw.booking_rejection
+                               WHERE reason_codes=ARRAY['EXCLUDED_ZERO_GUEST_BOOKING']
+                               ORDER BY source_row_id""").fetchall() == [
+            (2, ["EXCLUDED_ZERO_GUEST_BOOKING"]), (3, ["EXCLUDED_ZERO_GUEST_BOOKING"])]
+    before = active_state(database)
+    assert run(config, dbname=database)["status"] == "no-op"
+    change_config(config, "cleaning-rollback")
+    with pytest.raises(RuntimeError, match="Injected failure"):
+        run(config, dbname=database, inject_failure_after="facts")
+    assert active_state(database) == before
+    assert run(config, dbname=database)["quality"]["passed"]
 
 
 def active_state(name):

@@ -15,7 +15,7 @@
     "source_count": 7, "accepted_candidate_count": 6, "rejected_candidate_count": 1,
     "2017-08-01": {
       "observed_fact_booking_count": 3, "total_bookings": 3, "non_canceled_bookings": 2, "total_cancellations": 1,
-      "guest_valid_booking_count": 2, "stay_valid_booking_count": 2, "lead_time_valid_count": 2, "adr_valid_count": 2,
+      "guest_valid_booking_count": 2, "missing_guest_bookings_count": 0, "stay_valid_booking_count": 2, "lead_time_valid_count": 2, "adr_valid_count": 2,
       "observed_total_adults": 3, "observed_total_children": 1, "observed_total_babies": 0, "observed_total_guests": 4,
       "observed_total_stay_nights": 2, "sum_lead_time": 20, "sum_adr": 220,
       "cancellation_rate": 0.3333333333333333, "avg_party_size": 2, "avg_stay_nights": 1, "avg_lead_time": 10, "avg_adr": 110,
@@ -23,7 +23,7 @@
     },
     "2017-08-02": {
       "observed_fact_booking_count": 3, "rejected_booking_count": 1, "total_bookings": 3, "non_canceled_bookings": 3, "total_cancellations": 0,
-      "guest_valid_booking_count": 1, "stay_valid_booking_count": 3, "lead_time_valid_count": 3, "adr_valid_count": 2,
+      "guest_valid_booking_count": 1, "missing_guest_bookings_count": 1, "stay_valid_booking_count": 3, "lead_time_valid_count": 3, "adr_valid_count": 2,
       "guest_ineligible_booking_count": 2, "stay_ineligible_booking_count": 0,
       "observed_total_adults": 2, "observed_total_children": 0, "observed_total_babies": 0, "observed_total_guests": 2,
       "observed_total_stay_nights": 3, "sum_lead_time": 30, "sum_adr": 140,
@@ -32,7 +32,7 @@
     },
     "2017-08-03": {
       "total_bookings": 0, "non_canceled_bookings": 0, "total_cancellations": 0,
-      "guest_valid_booking_count": 0, "stay_valid_booking_count": 0, "lead_time_valid_count": 0, "adr_valid_count": 0,
+      "guest_valid_booking_count": 0, "missing_guest_bookings_count": 0, "stay_valid_booking_count": 0, "lead_time_valid_count": 0, "adr_valid_count": 0,
       "observed_total_adults": 0, "observed_total_children": 0, "observed_total_babies": 0, "observed_total_guests": 0,
       "observed_total_stay_nights": 0, "sum_lead_time": 0, "sum_adr": 0,
       "cancellation_rate": null, "avg_party_size": null, "avg_stay_nights": null, "avg_lead_time": null, "avg_adr": null,
@@ -45,7 +45,9 @@
     {"name": "partial_empty", "coverage": "PARTIAL", "rows": [], "expected": {"total_bookings": null, "observed_total_guests": null, "guest_data_status": "PARTIAL", "target_guests": null}},
     {"name": "partial_known_subset", "coverage": "PARTIAL", "rows": [{"adults": 3, "adr": 0}], "expected": {"total_bookings": 1, "guest_valid_booking_count": 1, "observed_total_guests": 3, "sum_adr": 0, "avg_adr": 0, "guest_data_status": "PARTIAL", "target_guests": null}},
     {"name": "unknown_capture_with_known_guest_defect", "coverage": "UNKNOWN", "rows": [{"children": null}], "expected": {"total_bookings": 1, "observed_total_guests": null, "guest_valid_booking_count": 0, "guest_data_status": "PARTIAL", "target_guests": null}},
-    {"name": "only_zero_guests", "coverage": "COMPLETE", "rows": [{"adults": 0}], "expected": {"total_bookings": 1, "guest_valid_booking_count": 0, "observed_total_guests": null, "avg_party_size": null, "guest_data_status": "PARTIAL", "target_guests": null}},
+    {"name": "only_zero_guests", "coverage": "COMPLETE", "rows": [{"adults": 0}], "expected": {"total_bookings": 1, "guest_valid_booking_count": 0, "missing_guest_bookings_count": 1, "observed_total_guests": 0, "observed_total_adults": 0, "observed_total_children": 0, "observed_total_babies": 0, "avg_party_size": null, "guest_data_status": "PARTIAL", "target_guests": null}},
+    {"name": "known_and_zero_guests", "coverage": "COMPLETE", "rows": [{"adults": 3}, {"adults": 0}], "expected": {"guest_valid_booking_count": 1, "missing_guest_bookings_count": 1, "observed_total_guests": 3, "avg_party_size": 3, "guest_data_status": "PARTIAL", "target_guests": null}},
+    {"name": "zero_guests_and_missing_components", "coverage": "COMPLETE", "rows": [{"adults": 0}, {"children": null}], "expected": {"guest_valid_booking_count": 0, "missing_guest_bookings_count": 1, "observed_total_guests": null, "guest_ineligible_booking_count": 2, "guest_data_status": "PARTIAL", "target_guests": null}},
     {"name": "only_canceled_missing_guest", "coverage": "COMPLETE", "rows": [{"is_canceled": 1, "children": null}], "expected": {"total_bookings": 1, "non_canceled_bookings": 0, "total_cancellations": 1, "observed_total_guests": 0, "guest_data_status": "COMPLETE", "target_guests": 0, "avg_party_size": null}},
     {"name": "invalid_separate_measures", "coverage": "COMPLETE", "rows": [{"stays_in_week_nights": null, "lead_time": -1, "adr": null}], "expected": {"observed_total_guests": 2, "guest_data_status": "COMPLETE", "target_guests": 2, "stay_data_status": "PARTIAL", "stay_valid_booking_count": 0, "observed_total_stay_nights": null, "lead_time_valid_count": 0, "sum_lead_time": null, "adr_valid_count": 0, "sum_adr": null, "avg_stay_nights": null, "avg_lead_time": null, "avg_adr": null}},
     {"name": "zero_nights_valid", "coverage": "COMPLETE", "rows": [{"stays_in_week_nights": 0, "adr": 0}], "expected": {"stay_valid_booking_count": 1, "observed_total_stay_nights": 0, "avg_stay_nights": 0, "adr_valid_count": 1, "sum_adr": 0, "avg_adr": 0}},

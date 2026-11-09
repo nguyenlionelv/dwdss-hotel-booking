@@ -207,7 +207,7 @@ def test_parallel_setup_serializes_on_the_shared_writer_lock(database_factory):
             holder.commit()
             assert sorted(f.result(timeout=30) for f in futures) == ["applied", "no-op"]
     with connect(name) as connection:
-        assert connection.execute("SELECT count(*) FROM dw.schema_migration").fetchone()[0] == 3
+        assert connection.execute("SELECT count(*) FROM dw.schema_migration").fetchone()[0] == len(MIGRATION_FILES)
 
 
 @pytest.mark.parametrize("overrides", [
@@ -350,6 +350,16 @@ def quality_values(booking):
              "unknown_segment_booking_count", "unknown_customer_type_booking_count", "unknown_repeat_booking_count", "room_ineligible_booking_count")
     return {**dict.fromkeys(names, 0), "date_key": booking["date_key"], "dw_run_id": booking["dw_run_id"],
             "booking_data_status": "UNKNOWN", "guest_data_status": "UNKNOWN", "stay_data_status": "UNKNOWN"}
+
+
+def test_cleaning_exclusions_allow_complete_quality(conn, booking):
+    values = {**quality_values(booking), "source_booking_count": 1, "rejected_booking_count": 1,
+              "excluded_booking_count": 1, "booking_data_status": "COMPLETE",
+              "guest_data_status": "COMPLETE", "stay_data_status": "COMPLETE"}
+    insert_row(conn, "daily_data_quality", values)
+    with pytest.raises(psycopg.errors.CheckViolation):
+        with conn.transaction():
+            conn.execute("UPDATE dw.daily_data_quality SET excluded_booking_count=0")
 
 
 def test_quality_rejections_and_active_publication_constraints(conn, booking):

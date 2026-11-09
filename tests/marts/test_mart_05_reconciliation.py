@@ -123,6 +123,8 @@ def test_mart_05_reconciliation_dw_totals_match_mart(database, tmp_path):
                 count(*) AS dw_total_bookings,
                 count(*) FILTER (WHERE is_canceled = 0) AS dw_non_canceled,
                 count(*) FILTER (WHERE is_canceled = 1) AS dw_cancellations,
+                count(*) FILTER (WHERE is_canceled = 0 AND guest_eligible) AS dw_guest_valid,
+                count(*) FILTER (WHERE is_canceled = 0 AND total_guests = 0) AS dw_guest_missing,
                 sum(adults) FILTER (WHERE is_canceled = 0 AND guest_eligible) AS dw_adults,
                 sum(children) FILTER (WHERE is_canceled = 0 AND guest_eligible) AS dw_children,
                 sum(babies) FILTER (WHERE is_canceled = 0 AND guest_eligible) AS dw_babies,
@@ -141,6 +143,8 @@ def test_mart_05_reconciliation_dw_totals_match_mart(database, tmp_path):
                 sum(total_bookings) AS mart_total_bookings,
                 sum(non_canceled_bookings) AS mart_non_canceled,
                 sum(total_cancellations) AS mart_cancellations,
+                sum(guest_valid_booking_count) AS mart_guest_valid,
+                sum(missing_guest_bookings_count) AS mart_guest_missing,
                 sum(observed_total_adults) AS mart_adults,
                 sum(observed_total_children) AS mart_children,
                 sum(observed_total_babies) AS mart_babies,
@@ -156,6 +160,8 @@ def test_mart_05_reconciliation_dw_totals_match_mart(database, tmp_path):
         assert mart_totals["mart_total_bookings"] == dw_totals["dw_total_bookings"]
         assert mart_totals["mart_non_canceled"] == dw_totals["dw_non_canceled"]
         assert mart_totals["mart_cancellations"] == dw_totals["dw_cancellations"]
+        assert mart_totals["mart_guest_valid"] == dw_totals["dw_guest_valid"]
+        assert mart_totals["mart_guest_missing"] == dw_totals["dw_guest_missing"]
         assert mart_totals["mart_adults"] == dw_totals["dw_adults"]
         assert mart_totals["mart_children"] == dw_totals["dw_children"]
         assert mart_totals["mart_babies"] == dw_totals["dw_babies"]
@@ -181,6 +187,8 @@ def test_mart_05_reconciliation_country_breakdown_matches_daily(database, tmp_pa
                     sum(non_canceled_bookings) AS c_non_canceled,
                     sum(total_cancellations) AS c_cancellations,
                     sum(observed_total_guests) AS c_guests,
+                    sum(guest_valid_booking_count) AS c_guest_valid,
+                    sum(missing_guest_bookings_count) AS c_guest_missing,
                     sum(observed_total_stay_nights) AS c_stay_nights,
                     sum(sum_adr) AS c_sum_adr
                 FROM mart.daily_hotel_operations_by_country
@@ -197,6 +205,10 @@ def test_mart_05_reconciliation_country_breakdown_matches_daily(database, tmp_pa
                 c.c_cancellations,
                 d.observed_total_guests AS d_guests,
                 c.c_guests,
+                d.guest_valid_booking_count AS d_guest_valid,
+                c.c_guest_valid,
+                d.missing_guest_bookings_count AS d_guest_missing,
+                c.c_guest_missing,
                 d.observed_total_stay_nights AS d_stay_nights,
                 c.c_stay_nights,
                 d.sum_adr AS d_sum_adr,
@@ -212,6 +224,8 @@ def test_mart_05_reconciliation_country_breakdown_matches_daily(database, tmp_pa
             assert r["d_non_canceled"] == r["c_non_canceled"], f"Non-canceled mismatch on date_key {r['date_key']}"
             assert r["d_cancellations"] == r["c_cancellations"], f"Cancellations mismatch on date_key {r['date_key']}"
             assert r["d_guests"] == r["c_guests"], f"Guests mismatch on date_key {r['date_key']}"
+            assert r["d_guest_valid"] == r["c_guest_valid"]
+            assert r["d_guest_missing"] == r["c_guest_missing"]
             assert r["d_stay_nights"] == r["c_stay_nights"], f"Stay nights mismatch on date_key {r['date_key']}"
             if r["d_sum_adr"] is not None:
                 assert float(r["d_sum_adr"]) == pytest.approx(float(r["c_sum_adr"]), rel=1e-6)
