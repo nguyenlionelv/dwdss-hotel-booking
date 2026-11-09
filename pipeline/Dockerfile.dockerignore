@@ -1,0 +1,15 @@
+**
+!pipeline/
+!pipeline/**
+!scripts/
+!scripts/**
+!database/
+!database/**
+!docs/
+!docs/data_dictionary/
+!docs/data_dictionary/operations_source_set.json
+
+**/__pycache__/
+**/*.py[cod]
+**/.env
+**/.env.*

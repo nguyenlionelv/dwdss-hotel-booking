@@ -17,6 +17,24 @@ services:
       start_period: 10s
       retries: 5
 
+  etl:
+    profiles: ["etl"]
+    build:
+      context: .
+      dockerfile: pipeline/Dockerfile
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hotel_dwdss}
+      POSTGRES_USER: ${POSTGRES_USER:-hotel_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+    volumes:
+      - ./data/raw:/app/data/raw:ro
+      - ./artifacts:/app/artifacts
+    depends_on:
+      db:
+        condition: service_healthy
+
   backend:
     build:
       context: .
