@@ -197,7 +197,7 @@ class TopCountryImpactItem(BaseModel):
     guests: int
     room_nights: int
     share_pct: float
-    yoy_growth: str
+    yoy_growth: str | None = None
 
 
 class ImpactResponse(BaseModel):

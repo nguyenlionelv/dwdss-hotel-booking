@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import psycopg
 
 from backend.app.api.analytics import router as analytics_router
 from backend.app.api.dss import router as dss_router
@@ -45,6 +47,14 @@ def create_app(dbname: str | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.exception_handler(psycopg.Error)
+    async def handle_database_error(request: Request, exc: psycopg.Error) -> JSONResponse:
+        """Catch any unhandled PostgreSQL error and return a sanitized 503 response."""
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"detail": "Database service is currently unavailable."},
+        )
 
     # Register routers
     app.include_router(metadata_router)

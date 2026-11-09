@@ -73,11 +73,13 @@ def get_weekly_demand_report(
         msg = str(exc)
         if "not published" in msg:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=msg)
+        if "Invalid" in msg:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-    except psycopg.Error as exc:
+    except psycopg.Error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Database error generating Weekly Demand Report: {exc}",
+            detail="Database service is currently unavailable while generating Weekly Demand Report.",
         )
 
 
@@ -95,7 +97,7 @@ def get_capacity_summary_report(
     Vai trò (Role):
         API endpoint kết xuất Báo cáo tóm tắt công suất vận hành và phân bổ ca làm việc (DO-R02),
         so sánh tải công việc giữa nhóm ngày trong tuần (`Weekday`) và cuối tuần (`Weekend`)
-        để đưa ra chỉthị điều phối cho Lễ tân (Front Desk), Buồng phòng (Housekeeping) và Nhà hàng (F&B).
+        để đưa ra chỉ thị điều phối cho Lễ tân (Front Desk), Buồng phòng (Housekeeping) và Nhà hàng (F&B).
 
     Input:
         - week (str | None, mặc định=None): Chuỗi tuần chuẩn ISO (ví dụ: `"2017-W32"`).
@@ -122,11 +124,13 @@ def get_capacity_summary_report(
         msg = str(exc)
         if "not published" in msg:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=msg)
+        if "Invalid" in msg:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-    except psycopg.Error as exc:
+    except psycopg.Error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Database error generating Capacity Summary Report: {exc}",
+            detail="Database service is currently unavailable while generating Capacity Summary Report.",
         )
 
 
@@ -177,9 +181,11 @@ def export_weekly_report_csv(
         msg = str(exc)
         if "not published" in msg:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=msg)
+        if "Invalid" in msg:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-    except psycopg.Error as exc:
+    except psycopg.Error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Database error exporting CSV: {exc}",
+            detail="Database service is currently unavailable while exporting CSV.",
         )

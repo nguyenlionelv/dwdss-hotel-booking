@@ -17,15 +17,16 @@ class ReportPeriodInfo(BaseModel):
     is_complete_week: bool
     overall_guest_status: str
     total_arrivals: int
-    total_departures: int
+    total_departures: int | None = None
     total_room_nights: int
     avg_daily_active_guests: int
     peak_day_date: str
     peak_day_guests: int
     holiday_days_count: int
     weather_Completeness_ratio: float
-    yoy_arrivals_delta: str = "+4.2% YoY"
-    yoy_room_nights_delta: str = "+1.8% YoY"
+    weather_completeness_ratio: float = 1.0
+    yoy_arrivals_delta: str | None = None
+    yoy_room_nights_delta: str | None = None
 
 
 class WeeklyDemandSummary(BaseModel):
@@ -69,6 +70,12 @@ class WeeklyDailyLogRow(BaseModel):
     observed_total_guests: int
     target_guests: int | None = None
     observed_total_stay_nights: int
+    guest_valid_booking_count: int = 0
+    stay_valid_booking_count: int = 0
+    lead_time_valid_count: int = 0
+    adr_valid_count: int = 0
+    sum_lead_time: int = 0
+    sum_adr: float = 0.0
     avg_party_size: float | None = None
     avg_stay_nights: float | None = None
     avg_lead_time: float | None = None
@@ -81,15 +88,15 @@ class WeeklyDailyLogRow(BaseModel):
     day_of_week: str
     day_type: str
     arrivals: int
-    departures: int
+    departures: int | None = None
     active_stays: int
     room_nights: int
     active_guests: int
     adr: float
     is_pt_holiday: bool
     holiday_local_name: str | None = None
-    weather_temp_mean: float
-    weather_precip_sum: float
+    weather_temp_mean: float | None = None
+    weather_precip_sum: float | None = None
     weather_status: str
     is_peak_day: bool = False
 

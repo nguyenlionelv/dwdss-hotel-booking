@@ -40,6 +40,8 @@ def get_db(request: Request):
     Vai trò (Role):
         FastAPI dependency cung cấp kết nối cơ sở dữ liệu nằm trong một transaction chỉ đọc
         (`read_only_tx`) cho các API endpoint. Tự động lấy `dbname` từ `request.app.state.dbname` nếu có.
+        Bắt mọi lỗi `psycopg.Error` (mất kết nối PostgreSQL, lỗi phiên giao dịch) và trả về
+        HTTP 503 Service Unavailable với thông điệp đã loại bỏ thông tin nhạy cảm.
 
     Input:
         - request (Request): Đối tượng HTTP Request của FastAPI dùng để truy xuất `app.state`.
@@ -49,8 +51,14 @@ def get_db(request: Request):
           cho phép thực thi truy vấn an toàn trong phạm vi một request.
     """
     dbname = getattr(request.app.state, "dbname", None)
-    with read_only_tx(dbname) as conn:
-        yield conn
+    try:
+        with read_only_tx(dbname) as conn:
+            yield conn
+    except psycopg.Error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database service is currently unavailable.",
+        )
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -117,13 +125,13 @@ def health_check(request: Request, settings: Settings = Depends(get_settings)) -
                 published_at=row["published_at"],
                 message=None if matches_active else "Mart data_version does not match active DW run.",
             )
-    except psycopg.Error as exc:
+    except psycopg.Error:
         return HealthResponse(
             status="degraded",
             db_connected=db_connected,
             mart_published=False,
             matches_active_dw=False,
-            message=f"Database connection error: {exc}",
+            message="Database connection error: PostgreSQL service is currently unreachable.",
         )
 
 
@@ -159,10 +167,10 @@ def get_metadata(
             WHERE s.singleton_id = 1
         """)
         state = cur.fetchone()
-    except psycopg.Error as exc:
+    except psycopg.Error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Operations Mart schema or state inaccessible: {exc}",
+            detail="Operations Mart schema or state is currently inaccessible.",
         )
 
     if not state or not state["matches_active_dw"]:

@@ -272,13 +272,13 @@ class OperationsRepository:
         Vai trò (Role):
             Truy vấn và tổng hợp dữ liệu đa chiều từ Operations Mart để dựng bảng chéo (Pivot Table).
             Hỗ trợ hai chế độ phân tích chính:
-            - Phân tích theo loại ngày (`col_dim` thuộc `day_type`, `is_weekend`, `is_holiday`): Hàng là Quý, Cột là Weekday/Weekend/Holiday.
+            - Phân tích theo loại ngày (`col_dim` thuộc `day_type`, `is_weekend`, `is_holiday`): Hàng là Quý/Tháng/Năm, Cột là Weekday/Weekend/Holiday.
             - Phân tích theo quốc gia (mặc định): Cột là Top 5 quốc gia có sản lượng cao nhất + nhóm `OTHER`,
-              Hàng là Quý kèm danh sách các Tháng con (`children`) hỗ trợ drill-down mở rộng.
+              Hàng là Quý/Tháng/Năm kèm danh sách hàng con (`children`) hỗ trợ drill-down mở rộng.
 
         Input:
             - conn (psycopg.Connection): Kết nối cơ sở dữ liệu PostgreSQL.
-            - row_dim (str): Chiều hàng (ví dụ: `"quarter"`).
+            - row_dim (str): Chiều hàng (ví dụ: `"quarter"` | `"month"` | `"year"`).
             - col_dim (str): Chiều cột (`"country"` | `"day_type"` | `"is_weekend"` | `"is_holiday"`).
             - measure (str): Tên chỉ số đo lường cần tổng hợp (được ánh xạ qua `MEASURE_COLUMN_MAP`).
             - start_date (str | None): Ngày bắt đầu lọc (`YYYY-MM-DD`).
@@ -617,13 +617,13 @@ class OperationsRepository:
                 "avg_adr": float(d.get("avg_adr")) if d.get("avg_adr") is not None else None,
             })
 
-        # 2. Weather impact bands
+        # 2. Weather impact bands (using COMPLETE status per DW contract)
         cur.execute(
             f"""
             WITH overall AS (
                 SELECT avg(observed_total_stay_nights) AS mean_rn,
                        count(*) AS total_days,
-                       count(*) FILTER (WHERE temperature_status = 'OBSERVED') AS obs_days
+                       count(*) FILTER (WHERE temperature_status = 'COMPLETE') AS obs_days
                 FROM mart.daily_hotel_operations
                 WHERE {where_sql}
             ),
@@ -661,9 +661,9 @@ class OperationsRepository:
             params,
         )
         w_rows = cur.fetchall()
-        total_w_days = int(w_rows[0]["total_days"]) if w_rows else 1
-        obs_w_days = int(w_rows[0]["obs_days"]) if w_rows else 1
-        completeness_ratio = round(obs_w_days / max(1, total_w_days), 4)
+        total_w_days = int(w_rows[0]["total_days"]) if w_rows else 0
+        obs_w_days = int(w_rows[0]["obs_days"]) if w_rows else 0
+        completeness_ratio = round(obs_w_days / max(1, total_w_days), 4) if total_w_days > 0 else 0.0
         missing_days = max(0, total_w_days - obs_w_days)
 
         bands = [
@@ -711,7 +711,7 @@ class OperationsRepository:
                 "guests": int(r["guests"]),
                 "room_nights": int(r["room_nights"]),
                 "share_pct": float(r["share_pct"]),
-                "yoy_growth": "+6.4%",
+                "yoy_growth": None,
             }
             for r in cur.fetchall()
         ]
@@ -754,8 +754,8 @@ class OperationsRepository:
         Vai trò (Role):
             Truy vấn danh sách các bản ghi vận hành hàng ngày từ bảng `mart.daily_hotel_operations`
             phục vụ báo cáo tuần. Ưu tiên lọc theo khoảng `start_date`..`end_date` nếu được cung cấp,
-            tiếp theo là cặp `(iso_year, iso_week)`, và nếu không có tham số nào hoặc không tìm thấy
-            sẽ tự động fallback về tuần ISO mới nhất hiện có trong mart.
+            tiếp theo là cặp `(iso_year, iso_week)`. Chỉ khi cả hai không được truyền (hoặc yêu cầu
+            rõ chế độ `LATEST_4W`), hàm mới fallback về 4 tuần (28 ngày) mới nhất hiện có trong mart.
 
         Input:
             - conn (psycopg.Connection): Kết nối cơ sở dữ liệu PostgreSQL.
@@ -765,8 +765,8 @@ class OperationsRepository:
             - end_date (str | None, mặc định=None): Ngày kết thúc tùy chỉnh (`YYYY-MM-DD`).
 
         Output:
-            - list[dict[str, Any]]: Danh sách các dòng dữ liệu hàng ngày trong tuần báo cáo,
-              được sắp xếp tăng dần theo `full_date`.
+            - list[dict[str, Any]]: Danh sách các dòng dữ liệu hàng ngày trong kỳ báo cáo,
+              được sắp xếp tăng dần theo `full_date`. Trả về danh sách rỗng nếu kỳ đã chỉ định không có dữ liệu.
         """
         cur = conn.cursor()
         if start_date and end_date:
@@ -789,11 +789,10 @@ class OperationsRepository:
                 """,
                 (iso_year, iso_week),
             )
-            rows = cur.fetchall()
-            if rows:
-                return rows
+            return cur.fetchall()
 
-        # Default fallback: return the latest 4 weeks (28 days) ending at max(full_date) in the mart
+        # Default fallback (only when no specific week or date range was requested):
+        # return the latest 4 weeks (28 days) ending at max(full_date) in the mart
         cur.execute("""
             SELECT max(full_date) AS max_date
             FROM mart.daily_hotel_operations
@@ -812,3 +811,34 @@ class OperationsRepository:
             (latest["max_date"], latest["max_date"]),
         )
         return cur.fetchall()
+
+    @classmethod
+    def fetch_prior_year_period_totals(
+        cls,
+        conn: psycopg.Connection,
+        *,
+        start_date: str,
+        end_date: str,
+        expected_days_count: int,
+    ) -> dict[str, int] | None:
+        """Fetch prior-year comparison totals if the exact prior-year window is fully present in the mart."""
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT
+                count(*) AS days_count,
+                coalesce(sum(non_canceled_bookings), 0) AS total_arrivals,
+                coalesce(sum(observed_total_stay_nights), 0) AS total_room_nights
+            FROM mart.daily_hotel_operations
+            WHERE full_date BETWEEN (%s::date - INTERVAL '1 year')::date
+                                AND (%s::date - INTERVAL '1 year')::date
+            """,
+            (start_date, end_date),
+        )
+        row = cur.fetchone()
+        if not row or int(row["days_count"] or 0) < expected_days_count:
+            return None
+        return {
+            "total_arrivals": int(row["total_arrivals"] or 0),
+            "total_room_nights": int(row["total_room_nights"] or 0),
+        }
