@@ -2,10 +2,10 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Accessible Scrollable Table Container following modern-web-guidance (responsive-table):
- * - Focusable container (tabIndex={0}) for keyboard horizontal scrolling
- * - Explicit role="region" and aria-label / aria-labelledby
- * - Sticky thead via .table-scroll-region CSS
+ * Accessible Scrollable Table Container following modern-web-guidance (responsive-table)
+ * and DESIGN.md Section 5.4 & 6.1:
+ * - Focusable container (tabIndex={0}) with role="region" and aria-label / aria-labelledby
+ * - Minimal 1px border (#E5E5E0), no shadows or large rounded corners
  */
 export default function ResponsiveTableContainer({
   ariaLabel,
@@ -16,7 +16,7 @@ export default function ResponsiveTableContainer({
   return (
     <div
       className={cn(
-        'table-scroll-region border rounded-md bg-card shadow-2xs',
+        'table-scroll-region border border-[#E5E5E0] bg-[#FFFFFF]',
         className
       )}
       role="region"

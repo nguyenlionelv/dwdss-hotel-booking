@@ -301,22 +301,36 @@ class OperationsRepository:
             params["end_date"] = end_date
         where_sql = " AND ".join(conditions)
 
+        norm_row_dim = (row_dim or "quarter").lower().strip()
+        if norm_row_dim not in ("year", "quarter", "month"):
+            norm_row_dim = "quarter"
+
         if col_dim in ("day_type", "is_weekend", "is_holiday"):
-            # Row = Quarter, Col = Weekday / Weekend / Holiday
+            if norm_row_dim == "year":
+                row_key_expr = "year::text"
+                group_by_expr = "year"
+                order_by_expr = "year"
+            elif norm_row_dim == "month":
+                row_key_expr = "concat(year, '-', lpad(month::text, 2, '0'))"
+                group_by_expr = "year, month"
+                order_by_expr = "year, month"
+            else:
+                row_key_expr = "concat(year, ' - Q', quarter)"
+                group_by_expr = "year, quarter"
+                order_by_expr = "year, quarter"
+
             cur.execute(
                 f"""
                 SELECT
-                    year,
-                    quarter,
-                    concat(year, ' - Q', quarter) AS row_key,
+                    {row_key_expr} AS row_key,
                     coalesce(sum({sql_measure}) FILTER (WHERE NOT is_weekend AND NOT coalesce(is_holiday, false)), 0) AS "Weekday",
                     coalesce(sum({sql_measure}) FILTER (WHERE is_weekend AND NOT coalesce(is_holiday, false)), 0) AS "Weekend",
                     coalesce(sum({sql_measure}) FILTER (WHERE coalesce(is_holiday, false)), 0) AS "Holiday",
                     coalesce(sum({sql_measure}), 0) AS total
                 FROM mart.daily_hotel_operations
                 WHERE {where_sql}
-                GROUP BY year, quarter
-                ORDER BY year, quarter
+                GROUP BY {group_by_expr}
+                ORDER BY {order_by_expr}
                 """,
                 params,
             )
@@ -358,7 +372,7 @@ class OperationsRepository:
                 "grand_total": grand_total,
             }
 
-        # Default: Col = Country (Top 5 + OTHER), Row = Quarter with expandable Month children
+        # Default: Col = Country (Top 5 + OTHER), Row = dynamic (year | quarter | month)
         cur.execute(
             f"""
             SELECT country_code, coalesce(sum({sql_measure}), 0) AS measure_sum
@@ -394,62 +408,84 @@ class OperationsRepository:
         )
         raw_cells = cur.fetchall()
 
-        quarters_map: dict[tuple[int, int], dict[str, Any]] = {}
+        parent_map: dict[tuple, dict[str, Any]] = {}
         col_totals = {c: 0 for c in cols}
         grand_total = 0
 
         for cell in raw_cells:
-            qk = (cell["year"], cell["quarter"])
-            mk = cell["month"]
+            yr = int(cell["year"])
+            qt = int(cell["quarter"])
+            mn = int(cell["month"])
             code = cell["country_code"] if cell["country_code"] in top_codes else "OTHER"
             val = int(cell["val"] or 0)
 
-            if qk not in quarters_map:
-                quarters_map[qk] = {
-                    "row_key": f"{qk[0]} - Q{qk[1]}",
-                    "values": {c: 0 for c in cols},
-                    "total": 0,
-                    "months": {},
-                }
-            quarters_map[qk]["values"][code] += val
-            quarters_map[qk]["total"] += val
+            if norm_row_dim == "year":
+                pk = (yr,)
+                p_label = f"{yr}"
+                ck: tuple | None = (yr, qt)
+                c_label = f"{yr} - Q{qt}"
+            elif norm_row_dim == "month":
+                pk = (yr, mn)
+                p_label = f"{yr}-{mn:02d}"
+                ck = None
+                c_label = ""
+            else:
+                pk = (yr, qt)
+                p_label = f"{yr} - Q{qt}"
+                ck = (yr, mn)
+                c_label = f"{yr}-{mn:02d}"
 
-            if mk not in quarters_map[qk]["months"]:
-                quarters_map[qk]["months"][mk] = {
-                    "row_key": f"{qk[0]}-{mk:02d}",
+            if pk not in parent_map:
+                parent_map[pk] = {
+                    "row_key": p_label,
                     "values": {c: 0 for c in cols},
                     "total": 0,
+                    "children_map": {},
                 }
-            quarters_map[qk]["months"][mk]["values"][code] += val
-            quarters_map[qk]["months"][mk]["total"] += val
+            parent_map[pk]["values"][code] += val
+            parent_map[pk]["total"] += val
+
+            if ck is not None:
+                if ck not in parent_map[pk]["children_map"]:
+                    parent_map[pk]["children_map"][ck] = {
+                        "row_key": c_label,
+                        "values": {c: 0 for c in cols},
+                        "total": 0,
+                    }
+                parent_map[pk]["children_map"][ck]["values"][code] += val
+                parent_map[pk]["children_map"][ck]["total"] += val
 
             col_totals[code] += val
             grand_total += val
 
-        max_q_total = max((q["total"] for q in quarters_map.values()), default=0)
+        max_p_total = max((p["total"] for p in parent_map.values()), default=0)
         rows_out = []
-        for qk in sorted(quarters_map.keys()):
-            qdata = quarters_map[qk]
-            children = [
-                {
-                    "row_key": mdata["row_key"],
-                    "row_label": mdata["row_key"],
-                    "values": mdata["values"],
-                    "cells": mdata["values"],
-                    "total": mdata["total"],
-                    "row_total": mdata["total"],
-                }
-                for _, mdata in sorted(qdata["months"].items())
-            ]
+        for pk in sorted(parent_map.keys()):
+            pdata = parent_map[pk]
+            children = (
+                [
+                    {
+                        "row_key": cdata["row_key"],
+                        "row_label": cdata["row_key"],
+                        "values": cdata["values"],
+                        "cells": cdata["values"],
+                        "total": cdata["total"],
+                        "row_total": cdata["total"],
+                    }
+                    for _, cdata in sorted(pdata["children_map"].items())
+                ]
+                if pdata["children_map"]
+                else None
+            )
             rows_out.append({
-                "row_key": qdata["row_key"],
-                "row_label": qdata["row_key"],
-                "values": qdata["values"],
-                "cells": qdata["values"],
-                "total": qdata["total"],
-                "row_total": qdata["total"],
-                "is_expandable": len(children) > 0,
-                "is_highlighted": qdata["total"] == max_q_total and max_q_total > 0,
+                "row_key": pdata["row_key"],
+                "row_label": pdata["row_key"],
+                "values": pdata["values"],
+                "cells": pdata["values"],
+                "total": pdata["total"],
+                "row_total": pdata["total"],
+                "is_expandable": bool(children),
+                "is_highlighted": pdata["total"] == max_p_total and max_p_total > 0,
                 "children": children,
             })
 
@@ -757,23 +793,22 @@ class OperationsRepository:
             if rows:
                 return rows
 
-        # Default fallback: return the latest available ISO week in the mart
+        # Default fallback: return the latest 4 weeks (28 days) ending at max(full_date) in the mart
         cur.execute("""
-            SELECT iso_year, iso_week
+            SELECT max(full_date) AS max_date
             FROM mart.daily_hotel_operations
-            ORDER BY full_date DESC
-            LIMIT 1
         """)
         latest = cur.fetchone()
-        if not latest:
+        if not latest or not latest["max_date"]:
             return []
 
         cur.execute(
             """
-            SELECT * FROM mart.daily_hotel_operations
-            WHERE iso_year = %s AND iso_week = %s
+            SELECT *
+            FROM mart.daily_hotel_operations
+            WHERE full_date BETWEEN (%s::date - INTERVAL '27 days')::date AND %s::date
             ORDER BY full_date ASC
             """,
-            (latest["iso_year"], latest["iso_week"]),
+            (latest["max_date"], latest["max_date"]),
         )
         return cur.fetchall()

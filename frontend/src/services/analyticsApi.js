@@ -6,12 +6,12 @@ import {
   MOCK_ANALYTICS_IMPACT,
 } from "../data/mockData";
 
-function resolvePresetDates(presetId) {
+export function resolvePresetDates(presetId) {
   const found = ANALYTICS_PRESETS.find((p) => p.id === presetId);
   if (found) {
     return { start_date: found.start_date, end_date: found.end_date };
   }
-  return { start_date: "2015-07-01", end_date: "2017-08-31" };
+  return { start_date: "2015-08-31", end_date: "2017-08-31" };
 }
 
 export async function fetchOperationsTrend(params = {}) {
@@ -58,7 +58,9 @@ export async function fetchOperationsTrend(params = {}) {
               ? 0.122
               : country === "GBR"
                 ? 0.101
-                : 0.074;
+                : country === "UNK"
+                  ? 0.008
+                  : 0.074;
 
     const dayTypeFactor =
       day_type === "ALL" ? 1.0 : day_type === "Weekday" ? 0.68 : 0.32;
@@ -69,113 +71,364 @@ export async function fetchOperationsTrend(params = {}) {
           return false;
         if (is_holiday === "NON_HOLIDAY" && item.is_holiday_period)
           return false;
+        if (
+          start_date &&
+          end_date &&
+          item.period_start &&
+          item.period_end &&
+          (item.period_end < start_date || item.period_start > end_date)
+        ) {
+          return false;
+        }
         return true;
       })
       .map((item) => {
         const multiplier = countryFactor * dayTypeFactor;
+        const nonCanceled = Math.max(8, Math.round(item.non_canceled_bookings * multiplier));
+        const totalBookings = Math.max(nonCanceled, Math.round(item.total_bookings * multiplier));
+        const totalCancels = totalBookings - nonCanceled;
+        const cancelRate = totalBookings > 0 ? Number((totalCancels / totalBookings).toFixed(4)) : 0;
+        const stayNights = Math.max(24, Math.round(item.observed_total_stay_nights * multiplier));
+        const guests = Math.max(14, Math.round(item.observed_total_guests * multiplier));
+        const calDays = item.calendar_days_count || (grain === "month" ? 30 : grain === "week" ? 7 : 1);
+        const avgGuestsDay = Number((guests / Math.max(1, calDays)).toFixed(2));
+        const adr = Number(
+          (
+            item.avg_adr *
+            (country === "PRT" ? 0.96 : country === "GBR" ? 1.08 : 1.0)
+          ).toFixed(2)
+        );
         return {
           ...item,
-          arrivals: Math.max(12, Math.round(item.arrivals * multiplier)),
-          room_nights: Math.max(36, Math.round(item.room_nights * multiplier)),
-          active_guests: Math.max(
-            64,
-            Math.round(item.active_guests * multiplier),
-          ),
-          adr: Number(
-            (
-              item.adr *
-              (country === "PRT" ? 0.96 : country === "GBR" ? 1.08 : 1.0)
-            ).toFixed(2),
-          ),
+          total_bookings: totalBookings,
+          non_canceled_bookings: nonCanceled,
+          total_cancellations: totalCancels,
+          cancellation_rate: cancelRate,
+          observed_total_guests: guests,
+          target_guests: item.guest_data_status === "COMPLETE" ? guests : null,
+          strict_avg_guests_per_day: item.guest_data_status === "COMPLETE" ? avgGuestsDay : null,
+          observed_avg_guests_per_day: avgGuestsDay,
+          observed_total_stay_nights: stayNights,
+          avg_party_size: nonCanceled > 0 ? Number((guests / nonCanceled).toFixed(2)) : 1.93,
+          avg_stay_nights: nonCanceled > 0 ? Number((stayNights / nonCanceled).toFixed(2)) : 3.05,
+          avg_adr: adr,
+          arrivals: nonCanceled,
+          room_nights: stayNights,
+          active_guests: guests,
+          adr,
         };
       });
 
-    const total_arrivals = filteredSeries.reduce(
-      (acc, r) => acc + r.arrivals,
-      0,
+    const total_bookings = filteredSeries.reduce((acc, r) => acc + r.total_bookings, 0);
+    const non_canceled_bookings = filteredSeries.reduce((acc, r) => acc + r.non_canceled_bookings, 0);
+    const total_cancellations = total_bookings - non_canceled_bookings;
+    const cancellation_rate =
+      total_bookings > 0 ? Number((total_cancellations / total_bookings).toFixed(4)) : 0;
+    const observed_total_guests = filteredSeries.reduce((acc, r) => acc + r.observed_total_guests, 0);
+    const observed_total_stay_nights = filteredSeries.reduce((acc, r) => acc + r.observed_total_stay_nights, 0);
+    const calendar_days_count = filteredSeries.reduce(
+      (acc, r) => acc + (r.calendar_days_count || 30),
+      0
     );
-    const total_room_nights = filteredSeries.reduce(
-      (acc, r) => acc + r.room_nights,
-      0,
+    const guest_partial_days = filteredSeries.reduce(
+      (acc, r) => acc + (r.guest_data_status === "PARTIAL" ? Math.max(1, Math.round((r.calendar_days_count || 30) * 0.14)) : 0),
+      0
     );
-    const total_guests = filteredSeries.reduce(
-      (acc, r) => acc + r.active_guests,
-      0,
-    );
+    const guest_complete_days = Math.max(0, calendar_days_count - guest_partial_days);
+    const overall_guest_status = guest_partial_days > 0 ? "PARTIAL" : "COMPLETE";
+    const observed_avg_guests_per_day =
+      calendar_days_count > 0
+        ? Number((observed_total_guests / calendar_days_count).toFixed(2))
+        : 0;
+
     const avg_adr =
       filteredSeries.length > 0
         ? Number(
             (
-              filteredSeries.reduce((acc, r) => acc + r.adr, 0) /
-              filteredSeries.length
-            ).toFixed(2),
+              filteredSeries.reduce((acc, r) => acc + r.avg_adr * r.non_canceled_bookings, 0) /
+              Math.max(1, non_canceled_bookings)
+            ).toFixed(2)
           )
         : 0;
+
     const peakItem =
       filteredSeries.reduce(
-        (max, r) => (r.room_nights > (max?.room_nights || 0) ? r : max),
-        filteredSeries[0],
+        (max, r) => (r.observed_total_guests > (max?.observed_total_guests || 0) ? r : max),
+        filteredSeries[0]
       ) || {};
 
     return {
+      data_version: "9fe497e2-45e0-4a8a-93cb-b09e25c040d3",
       grain,
-      series: filteredSeries,
-      summary: {
-        total_arrivals,
-        total_room_nights,
-        avg_daily_active_guests: Math.round(
-          total_guests /
-            Math.max(
-              1,
-              filteredSeries.length *
-                (grain === "month" ? 30 : grain === "week" ? 7 : 1),
-            ),
-        ),
-        avg_adr,
-        peak_period: peakItem.period_label || "2016-08",
-        peak_room_nights: peakItem.room_nights || 14120,
+      filters_applied: {
+        start_date,
+        end_date,
+        grain,
+        country_code: country === "ALL" ? null : country,
+        day_type,
       },
+      coverage: {
+        calendar_days_count,
+        booking_complete_days: calendar_days_count,
+        guest_complete_days,
+        guest_partial_days,
+        overall_guest_status,
+        rejected_booking_count: 0,
+        guest_ineligible_booking_count: guest_partial_days > 0 ? 144 : 0,
+      },
+      summary: {
+        total_bookings,
+        non_canceled_bookings,
+        total_cancellations,
+        cancellation_rate,
+        observed_total_adults: Math.round(observed_total_guests * 0.91),
+        observed_total_children: Math.round(observed_total_guests * 0.08),
+        observed_total_babies: Math.max(0, observed_total_guests - Math.round(observed_total_guests * 0.99)),
+        observed_total_guests,
+        target_guests: overall_guest_status === "COMPLETE" ? observed_total_guests : null,
+        strict_avg_guests_per_day: overall_guest_status === "COMPLETE" ? observed_avg_guests_per_day : null,
+        observed_avg_guests_per_day,
+        observed_total_stay_nights,
+        avg_party_size:
+          non_canceled_bookings > 0
+            ? Number((observed_total_guests / non_canceled_bookings).toFixed(2))
+            : 1.93,
+        avg_stay_nights:
+          non_canceled_bookings > 0
+            ? Number((observed_total_stay_nights / non_canceled_bookings).toFixed(2))
+            : 3.05,
+        avg_lead_time: 95.4,
+        avg_adr,
+        peak_demand_days: [
+          {
+            full_date: peakItem.period_label || "2016-08",
+            observed_total_guests: peakItem.observed_total_guests || 5140,
+            observed_total_stay_nights: peakItem.observed_total_stay_nights || 8120,
+            guest_data_status: peakItem.guest_data_status || "COMPLETE",
+          },
+        ],
+        total_arrivals: non_canceled_bookings,
+        total_room_nights: observed_total_stay_nights,
+        avg_daily_active_guests: Math.round(observed_avg_guests_per_day),
+        peak_period: peakItem.period_label || "2016-08",
+        peak_room_nights: peakItem.observed_total_stay_nights || 8120,
+      },
+      series: filteredSeries,
       is_mock: true,
     };
   }
 }
 
 export async function fetchOperationsPivot(params = {}) {
-  const { col_dim = "country", measure = "room_nights" } = params;
+  const {
+    row_dim = "quarter",
+    col_dim = "country",
+    measure = "observed_total_guests",
+    start_date,
+    end_date,
+  } = params;
   try {
-    const query = new URLSearchParams({ col_dim, measure }).toString();
+    const queryObj = { row_dim, col_dim, measure };
+    if (start_date) queryObj.start_date = start_date;
+    if (end_date) queryObj.end_date = end_date;
+    const query = new URLSearchParams(queryObj).toString();
     const res = await apiRequest(`/api/analytics/operations/pivot?${query}`);
     return { ...res, is_mock: false };
   } catch {
-    const matrix =
-      col_dim === "day_type"
-        ? MOCK_ANALYTICS_PIVOT.day_type_by_quarter
-        : MOCK_ANALYTICS_PIVOT.country_by_quarter;
+    const effStart = start_date || "2015-08-31";
+    const effEnd = end_date || "2017-08-31";
+    const normRowDim = (row_dim || "quarter").toLowerCase();
+    const isDayTypeCol = col_dim === "day_type" || col_dim === "is_weekend";
 
-    const factor =
-      measure === "arrivals" ? 0.31 : measure === "active_guests" ? 1.96 : 1.0;
+    const columns = isDayTypeCol
+      ? MOCK_ANALYTICS_PIVOT.day_type_by_quarter.columns
+      : MOCK_ANALYTICS_PIVOT.country_by_quarter.columns;
+    const column_defs = isDayTypeCol
+      ? MOCK_ANALYTICS_PIVOT.day_type_by_quarter.column_defs
+      : MOCK_ANALYTICS_PIVOT.country_by_quarter.column_defs;
 
-    const scaleValues = (vals) =>
-      Object.fromEntries(
-        Object.entries(vals).map(([k, v]) => [k, Math.round(v * factor)]),
-      );
+    const colShares = isDayTypeCol
+      ? { Weekday: 0.655, Weekend: 0.298, Holiday: 0.047 }
+      : { PRT: 0.365, FRA: 0.212, DEU: 0.161, GBR: 0.129, ESP: 0.095, UNK: 0.038 };
+
+    const getMonthMeasureVal = (mRow) => {
+      if (measure === "non_canceled_bookings" || measure === "arrivals") {
+        return mRow.non_canceled_bookings ?? mRow.arrivals ?? 0;
+      }
+      if (measure === "total_bookings") {
+        return mRow.total_bookings ?? 0;
+      }
+      if (measure === "observed_total_stay_nights" || measure === "room_nights") {
+        return mRow.observed_total_stay_nights ?? mRow.room_nights ?? 0;
+      }
+      return mRow.observed_total_guests ?? mRow.active_guests ?? 0;
+    };
+
+    const splitIntoCols = (totalVal) => {
+      const vals = {};
+      let allocated = 0;
+      columns.forEach((col, idx) => {
+        if (idx === columns.length - 1) {
+          vals[col] = Math.max(0, totalVal - allocated);
+        } else {
+          const v = Math.round(totalVal * (colShares[col] || 0));
+          vals[col] = v;
+          allocated += v;
+        }
+      });
+      return vals;
+    };
+
+    const sumCellMaps = (items) => {
+      const acc = Object.fromEntries(columns.map((c) => [c, 0]));
+      items.forEach((it) => {
+        columns.forEach((c) => {
+          acc[c] += it.values[c] || 0;
+        });
+      });
+      return acc;
+    };
+
+    const filteredMonths = (MOCK_ANALYTICS_TREND_BY_GRAIN.month || []).filter(
+      (m) => !(m.period_end < effStart || m.period_start > effEnd)
+    );
+
+    const monthItems = filteredMonths.map((m) => {
+      const [yStr, mStr] = m.period_label.split("-");
+      const yr = Number(yStr);
+      const mn = Number(mStr);
+      const qt = Math.ceil(mn / 3);
+      const totalVal = getMonthMeasureVal(m);
+      const values = splitIntoCols(totalVal);
+      return {
+        year: yr,
+        quarter: qt,
+        month: mn,
+        quarter_key: `${yr}-Q${qt}`,
+        row_key: m.period_label,
+        row_label: m.period_label,
+        values,
+        cells: values,
+        total: totalVal,
+        row_total: totalVal,
+      };
+    });
+
+    let rows = [];
+    if (normRowDim === "month") {
+      const maxTot = Math.max(...monthItems.map((m) => m.total), 0);
+      rows = monthItems.map((m) => ({
+        row_key: m.row_key,
+        row_label: m.row_label,
+        values: m.values,
+        cells: m.values,
+        total: m.total,
+        row_total: m.total,
+        is_expandable: false,
+        is_highlighted: m.total === maxTot && maxTot > 0,
+        children: undefined,
+      }));
+    } else if (normRowDim === "year") {
+      const yearsMap = new Map();
+      monthItems.forEach((m) => {
+        const yKey = String(m.year);
+        if (!yearsMap.has(yKey)) {
+          yearsMap.set(yKey, []);
+        }
+        yearsMap.get(yKey).push(m);
+      });
+
+      const yearRows = Array.from(yearsMap.entries()).map(([yKey, mList]) => {
+        const qMap = new Map();
+        mList.forEach((m) => {
+          if (!qMap.has(m.quarter_key)) qMap.set(m.quarter_key, []);
+          qMap.get(m.quarter_key).push(m);
+        });
+        const qChildren = Array.from(qMap.entries()).map(([qKey, qMonths]) => {
+          const qVals = sumCellMaps(qMonths);
+          const qTot = Object.values(qVals).reduce((a, b) => a + b, 0);
+          return {
+            row_key: qKey,
+            row_label: qKey,
+            values: qVals,
+            cells: qVals,
+            total: qTot,
+            row_total: qTot,
+          };
+        });
+        const yVals = sumCellMaps(qChildren);
+        const yTot = Object.values(yVals).reduce((a, b) => a + b, 0);
+        return {
+          row_key: yKey,
+          row_label: yKey,
+          values: yVals,
+          cells: yVals,
+          total: yTot,
+          row_total: yTot,
+          is_expandable: qChildren.length > 0,
+          children: qChildren,
+        };
+      });
+
+      const maxTot = Math.max(...yearRows.map((r) => r.total), 0);
+      rows = yearRows.map((r) => ({
+        ...r,
+        is_highlighted: r.total === maxTot && maxTot > 0,
+      }));
+    } else {
+      // Default: quarter rows with month children
+      const qMap = new Map();
+      monthItems.forEach((m) => {
+        if (!qMap.has(m.quarter_key)) qMap.set(m.quarter_key, []);
+        qMap.get(m.quarter_key).push(m);
+      });
+
+      const qRows = Array.from(qMap.entries()).map(([qKey, qMonths]) => {
+        const qVals = sumCellMaps(qMonths);
+        const qTot = Object.values(qVals).reduce((a, b) => a + b, 0);
+        const children = qMonths.map((m) => ({
+          row_key: m.row_key,
+          row_label: m.row_label,
+          values: m.values,
+          cells: m.values,
+          total: m.total,
+          row_total: m.total,
+        }));
+        return {
+          row_key: qKey,
+          row_label: qKey,
+          values: qVals,
+          cells: qVals,
+          total: qTot,
+          row_total: qTot,
+          is_expandable: children.length > 0,
+          children,
+        };
+      });
+
+      const maxTot = Math.max(...qRows.map((r) => r.total), 0);
+      rows = qRows.map((r) => ({
+        ...r,
+        is_highlighted: r.total === maxTot && maxTot > 0,
+      }));
+    }
+
+    const column_totals = {};
+    columns.forEach((col) => {
+      column_totals[col] = rows.reduce((acc, r) => acc + (r.values[col] || 0), 0);
+    });
+    const grand_total = rows.reduce((acc, r) => acc + r.total, 0);
 
     return {
+      data_version: "9fe497e2-45e0-4a8a-93cb-b09e25c040d3",
+      row_dim: normRowDim,
       col_dim,
       measure,
-      columns: matrix.columns,
-      rows: matrix.rows.map((r) => ({
-        ...r,
-        values: scaleValues(r.values),
-        total: Math.round(r.total * factor),
-        children: r.children
-          ? r.children.map((c) => ({
-              ...c,
-              values: scaleValues(c.values),
-              total: Math.round(c.total * factor),
-            }))
-          : undefined,
-      })),
+      columns,
+      column_defs,
+      rows,
+      column_totals,
+      grand_total,
       is_mock: true,
     };
   }

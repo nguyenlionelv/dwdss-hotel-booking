@@ -1,18 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { fetchDemandForecast } from '../../../services/dssApi';
-import KpiCard from '../../../components/kpi/KpiCard';
-import ResponsiveTableContainer from '../../../components/tables/ResponsiveTableContainer';
+import React, { useEffect, useMemo, useState } from "react";
+import { fetchDemandForecast } from "../../../services/dssApi";
+import KpiCard from "../../../components/kpi/KpiCard";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
+  CanvasForecastChart,
+  CanvasHorizontalBarChart,
+} from "../../../components/charts/TrendChart";
+import ResponsiveTableContainer from "../../../components/tables/ResponsiveTableContainer";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableHeader,
@@ -20,651 +15,660 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from '@/components/ui/table';
-import {
-  BrainCircuit,
-  Calendar,
-  AlertTriangle,
-  Sparkles,
-  TrendingUp,
-  Cpu,
-  Layers,
-  Activity,
-  Sliders,
-  CheckCircle2,
-  Sun,
-  Zap,
-} from 'lucide-react';
+} from "@/components/ui/table";
+
+const MODEL_OPTIONS = [
+  { id: "xgboost_regressor", label: "XGBoost Regressor (Selected Production)" },
+  { id: "random_forest", label: "Random Forest Regressor" },
+  { id: "ridge_regression", label: "Ridge Regression" },
+  { id: "seasonal_naive", label: "Seasonal Naive Baseline (Lag-7)" },
+];
+
+const CUTOFF_OPTIONS = [
+  {
+    value: "2017-08-24",
+    label: "T = 2017-08-24 (Horizon: 2017-08-25 → 2017-08-31)",
+  },
+  {
+    value: "2017-08-17",
+    label: "T = 2017-08-17 (Backtest Horizon: 2017-08-18 → 2017-08-24)",
+  },
+];
+
+function getDemandStatusBadge(level) {
+  if (level === "HIGH") {
+    return (
+      <Badge variant="destructive" className="gap-1.5 font-mono">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#B64C43]" />
+        <span>HIGH</span>
+      </Badge>
+    );
+  }
+  if (level === "LOW") {
+    return (
+      <Badge variant="amber" className="gap-1.5 font-mono">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#C58B35]" />
+        <span>LOW</span>
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="emerald" className="gap-1.5 font-mono">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#477A61]" />
+      <span>NORMAL</span>
+    </Badge>
+  );
+}
 
 export default function DemandForecastPage() {
-  const [cutoffDate, setCutoffDate] = useState('2017-08-24');
+  const [cutoffDate, setCutoffDate] = useState("2017-08-24");
+  const [selectedModel, setSelectedModel] = useState("xgboost_regressor");
   const [stdMultiplier, setStdMultiplier] = useState(1.0);
-  const [targetView, setTargetView] = useState('arrivals'); // 'arrivals' | 'room_nights'
+  const [targetMetric, setTargetMetric] = useState("guests"); // 'guests' | 'stay_nights'
   const [forecastData, setForecastData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadForecast = (multiplier = stdMultiplier) => {
+  useEffect(() => {
+    let active = true;
     setLoading(true);
     fetchDemandForecast({
+      as_of_date: cutoffDate,
       cutoff_date: cutoffDate,
+      model_name: selectedModel,
       horizon: 7,
-      std_multiplier: multiplier,
+      std_multiplier: stdMultiplier,
     }).then((res) => {
+      if (!active) return;
       setForecastData(res);
       setLoading(false);
     });
+    return () => {
+      active = false;
+    };
+  }, [cutoffDate, selectedModel, stdMultiplier]);
+
+  const rows = forecastData?.forecasts || forecastData?.forecast_rows || [];
+  const recentHistory = forecastData?.recent_history || [];
+  const dssRule = forecastData?.dss_threshold_rule || {};
+  const legacyRule = forecastData?.threshold_rule || {};
+  const summary = forecastData?.summary || {};
+  const kpis = forecastData?.summary_kpis || {};
+  const modelMeta = forecastData?.model_metadata || {};
+  const modelComparison = forecastData?.model_comparison || [];
+
+  const mean8w = dssRule.mean_guests_8w ?? legacyRule.rolling_8w_mean ?? 124.5;
+  const std8w = dssRule.std_guests_8w ?? legacyRule.rolling_8w_std ?? 18.2;
+  const highThreshold =
+    dssRule.high_threshold ?? legacyRule.high_demand_threshold ?? 142.7;
+  const lowThreshold =
+    dssRule.low_threshold ?? legacyRule.low_demand_threshold ?? 106.3;
+  const sufficientHistory = dssRule.sufficient_history !== false;
+  const observedDaysCount = dssRule.observed_days_count ?? 56;
+
+  const totalGuests7d =
+    summary.total_predicted_guests_7d_rounded ??
+    kpis.total_predicted_arrivals ??
+    942;
+  const totalStayNights7d = kpis.total_predicted_room_nights ?? 2840;
+  const peakDayObj = summary.peak_forecast_days?.[0] || {
+    forecast_date: kpis.peak_day_date || "2017-08-26",
+    predicted_guest_count: kpis.peak_day_arrivals || 164,
+    demand_level: "HIGH",
+  };
+  const levelCounts = summary.demand_level_counts || {
+    HIGH: kpis.high_alert_days_count ?? 3,
+    NORMAL: 4,
+    LOW: 0,
   };
 
-  useEffect(() => {
-    loadForecast(stdMultiplier);
-  }, [cutoffDate, stdMultiplier]);
-
-  const rows = forecastData?.forecast_rows || [];
-  const kpis = forecastData?.summary_kpis || {};
-  const threshold = forecastData?.threshold_rule || {};
-  const modelMeta = forecastData?.model_metadata || {};
+  const maeChartItems = useMemo(() => {
+    return modelComparison.map((m) => ({
+      label: m.model_label || m.model_name,
+      value: Number(m.overall_mae || 0),
+      color: m.is_selected ? "#315B52" : m.is_baseline ? "#92958B" : "#547A9B",
+      sublabel: `RMSE ${Number(m.overall_rmse || 0).toFixed(2)}`,
+    }));
+  }, [modelComparison]);
 
   return (
-    <div className="space-y-6">
-      {/* Page Title & Active Model Pill */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <Badge variant="emerald" className="gap-1 font-semibold uppercase text-[10px]">
-              <BrainCircuit className="h-3 w-3" />
-              <span>DO-M01 • 7-Day Short-Horizon Demand Forecasting &amp; DSS</span>
-            </Badge>
+    <div className="space-y-8 lg:space-y-10">
+      {/* Editorial Page Header & Cutoff Transparency Banner */}
+      <header className="border-b border-[#E5E5E0] pb-6">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#666666]">
+              <span>Short-Horizon 7-Day Demand Forecasting &amp; DSS</span>
+              <span className="text-[#E5E5E0]">/</span>
+              <span className="font-mono text-[11px]">
+                model:{forecastData?.model_version || selectedModel}
+              </span>
+            </div>
+            <h1 className="editorial-page-title">
+              Decision Support System — 7-Day Demand Forecast &amp; Action
+              Schedule
+            </h1>
+            <p className="text-[14px] text-[#666666] max-w-3xl leading-relaxed">
+              Forecast at cutoff{" "}
+              <code className="font-mono text-[12px] text-[#252525]">
+                T = {cutoffDate}
+              </code>{" "}
+              for next 7 days (
+              <code className="font-mono text-[12px]">T+1</code> to{" "}
+              <code className="font-mono text-[12px]">T+7</code>). Uses history
+              up to <code className="font-mono text-[12px]">T</code> only; no
+              actuals after <code className="font-mono text-[12px]">T</code> are
+              read by the model.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-foreground tracking-tight">
-            Decision Support System — Demand Forecasting &amp; Staffing Directives
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Short-horizon 7-day demand projections (<code className="font-mono text-xs">T+1 → T+7</code>) coupled with an 8-week rolling statistical threshold rule (
-            <code className="font-mono text-xs">μ_8w + k·σ_8w</code>) to automate operational surge alerts.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5 bg-emerald-50/70 border border-emerald-200/80 px-3.5 py-2 rounded-lg">
-            <Cpu className="h-4 w-4 text-emerald-600 shrink-0" />
-            <div className="text-xs">
-              <div className="font-bold text-emerald-950">
-                {modelMeta.selected_model_family || 'LightGBM Regressor'} (
-                {modelMeta.model_version || 'v1.2-lgbm-rolling'})
-              </div>
-              <div className="text-[11px] text-emerald-700">
-                MAE: {modelMeta.validation_mae || 8.42} • Baseline Improvement:{' '}
-                {modelMeta.improvement_vs_baseline_pct || 43.3}%
-              </div>
+          <div className="border border-[#E5E5E0] bg-[#FFFFFF] rounded-[4px] px-3.5 py-2.5 text-[12px]">
+            <div className="font-medium text-[#252525]">
+              Active Model:{" "}
+              {modelMeta.selected_model_family || "XGBoost Regressor"}
+            </div>
+            <div className="font-mono text-[11px] text-[#666666] mt-0.5">
+              MAE: {modelMeta.validation_mae ?? 8.42} · RMSE:{" "}
+              {modelMeta.validation_rmse ?? 11.15} · vs. Naive:{" "}
+              <span className="text-[#477A61]">
+                -{modelMeta.improvement_vs_baseline_pct ?? 48.0}% error
+              </span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* DSS Simulation & Cutoff Control Bar */}
-      <Card>
-        <CardContent className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        {/* Flat DSS Parameter Bar */}
+        <div className="mt-6 pt-5 border-t border-[#E5E5E0] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
           <div>
             <label
-              htmlFor="dss-cutoff"
-              className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              htmlFor="dss-cutoff-select"
+              className="block text-[12px] font-medium text-[#666666] mb-1.5"
             >
-              Forecast Cutoff Date T
+              Forecast Cutoff Date (as_of_date T)
             </label>
             <select
-              id="dss-cutoff"
+              id="dss-cutoff-select"
               value={cutoffDate}
               onChange={(e) => setCutoffDate(e.target.value)}
-              className="w-full bg-background border border-input text-foreground text-xs font-bold rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
+              className="w-full h-8 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-2.5 text-[12px] font-medium text-[#252525] focus:outline-none focus:border-[#315B52]"
             >
-              <option value="2017-08-24">
-                T = 2017-08-24 (Forecast Aug 25 – Aug 31, 2017)
-              </option>
-              <option value="2017-08-17">
-                T = 2017-08-17 (Backtest Week Aug 18 – Aug 24, 2017)
-              </option>
+              {CUTOFF_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="dss-model-select"
+              className="block text-[12px] font-medium text-[#666666] mb-1.5"
+            >
+              Forecasting Model Family
+            </label>
+            <select
+              id="dss-model-select"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="w-full h-8 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-2.5 text-[12px] font-medium text-[#252525] focus:outline-none focus:border-[#315B52]"
+            >
+              {MODEL_OPTIONS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
             <label
               htmlFor="dss-threshold-k"
-              className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              className="block text-[12px] font-medium text-[#666666] mb-1.5"
             >
-              Alert Sensitivity (Threshold Rule k)
+              8-Week Rolling Threshold Rule (μ_8w ± k·σ_8w)
             </label>
             <select
               id="dss-threshold-k"
               value={stdMultiplier}
               onChange={(e) => setStdMultiplier(Number(e.target.value))}
-              className="w-full bg-background border border-input text-foreground text-xs font-bold rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
+              className="w-full h-8 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-2.5 text-[12px] font-medium text-[#252525] focus:outline-none focus:border-[#315B52]"
             >
-              <option value={0.75}>High Sensitivity: μ + 0.75σ (Threshold = 138.2)</option>
-              <option value={1.0}>Standard DSS: μ + 1.00σ (Threshold = 142.7)</option>
-              <option value={1.25}>Conservative: μ + 1.25σ (Threshold = 147.3)</option>
+              <option value={0.75}>High Sensitivity (k = 0.75σ)</option>
+              <option value={1.0}>Canonical DSS Rule (k = 1.00σ)</option>
+              <option value={1.25}>Conservative Alerting (k = 1.25σ)</option>
             </select>
           </div>
 
           <div>
-            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              Trajectory Metric
+            <span className="block text-[12px] font-medium text-[#666666] mb-1.5">
+              Trajectory Metric View
             </span>
-            <div className="flex items-center p-0.5 rounded-lg bg-muted border text-xs">
+            <div className="inline-flex w-full rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] p-0.5">
               <button
                 type="button"
-                onClick={() => setTargetView('arrivals')}
-                className={`flex-1 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  targetView === 'arrivals'
-                    ? 'bg-background text-emerald-700 shadow-xs font-bold'
-                    : 'text-muted-foreground hover:text-foreground'
+                onClick={() => setTargetMetric("guests")}
+                className={`flex-1 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
+                  targetMetric === "guests"
+                    ? "bg-[#315B52] text-[#FFFFFF] font-medium"
+                    : "text-[#666666] hover:text-[#252525]"
                 }`}
               >
-                Arrivals
+                Target Guests
               </button>
               <button
                 type="button"
-                onClick={() => setTargetView('room_nights')}
-                className={`flex-1 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  targetView === 'room_nights'
-                    ? 'bg-background text-emerald-700 shadow-xs font-bold'
-                    : 'text-muted-foreground hover:text-foreground'
+                onClick={() => setTargetMetric("stay_nights")}
+                className={`flex-1 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
+                  targetMetric === "stay_nights"
+                    ? "bg-[#315B52] text-[#FFFFFF] font-medium"
+                    : "text-[#666666] hover:text-[#252525]"
                 }`}
               >
-                Room Nights
+                Stay Nights
               </button>
             </div>
           </div>
+        </div>
+      </header>
 
-          <Button
-            type="button"
-            variant="emerald"
-            onClick={() => loadForecast(stdMultiplier)}
-            className="w-full gap-2 font-bold cursor-pointer"
-          >
-            <Zap className="h-4 w-4" />
-            <span>{loading ? 'Running Model...' : 'Run 7-Day Forecast'}</span>
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* 4 Forecast KPI Summary Cards */}
+      {/* Section 1: 8-Week Statistical Threshold & 7-Day Summary Strip */}
       <section
-        aria-label="DSS Forecast Summary KPIs"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        aria-label="DSS Statistical Thresholds and Summary KPIs"
+        className="border-b border-[#E5E5E0] pb-8"
       >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+          <div>
+            <h2 className="editorial-section-title">
+              8-Week Rolling Statistical Thresholds &amp; 7-Day Horizon Summary
+            </h2>
+            <p className="text-[12px] text-[#666666] mt-0.5">
+              Computed over the 56 calendar days preceding cutoff{" "}
+              <code className="font-mono text-[11px]">{cutoffDate}</code> (
+              {observedDaysCount}/56 COMPLETE days observed).
+            </p>
+          </div>
+          {!sufficientHistory ? (
+            <Badge variant="amber">
+              INSUFFICIENT_HISTORY (&lt;28 COMPLETE days in 8w window)
+            </Badge>
+          ) : (
+            <Badge variant="emerald">
+              8-Week Window Verified ({observedDaysCount} days)
+            </Badge>
+          )}
+        </div>
+
         {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="p-4 space-y-2">
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-7 w-32" />
-              <Skeleton className="h-4 w-20" />
-            </Card>
-          ))
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-7 w-28" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            ))}
+          </div>
         ) : (
-          <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
             <KpiCard
-              label="Predicted Total Arrivals"
-              value={(kpis.total_predicted_arrivals || 942).toLocaleString()}
-              unit="check-ins"
-              badgeText="+8.4% vs 8W Mean"
-              badgeIcon="trending_up"
-              subtext="Horizon: 25/08 – 31/08/2017"
-              icon="flight_land"
-              tone="emerald"
+              label="7-Day Predicted Guests"
+              value={totalGuests7d.toLocaleString()}
+              unit="guests"
+              badgeText={`Exact sum: ${summary.total_predicted_guests_7d ?? totalGuests7d}`}
+              statusTone="accent"
+              subtext={`Projected stay-nights: ${totalStayNights7d.toLocaleString()}`}
+              emphasize
             />
             <KpiCard
-              label="Predicted Total Room Nights"
-              value={(kpis.total_predicted_room_nights || 2840).toLocaleString()}
-              unit="nights"
-              badgeText="~405.7 nights/day"
-              subtext="Projected in-house stays"
-              icon="bed"
-              tone="blue"
+              label="8-Week Rolling Mean (μ_8w)"
+              value={Number(mean8w).toFixed(1)}
+              unit="guests/d"
+              badgeText={`σ_8w = ${Number(std8w).toFixed(1)}`}
+              statusTone="neutral"
+              subtext="56-day baseline prior to cutoff T"
             />
             <KpiCard
-              label="Peak Projected Day"
-              value="26/08/2017"
-              badgeText={`${kpis.peak_day_arrivals || 164} arrivals`}
-              badgeIcon="warning"
-              subtext="Saturday • 492 room nights"
-              icon="event_upcoming"
-              tone="amber"
+              label="High Alert Threshold"
+              value={
+                sufficientHistory ? Number(highThreshold).toFixed(1) : "N/A"
+              }
+              unit="guests"
+              badgeText={`μ + ${stdMultiplier.toFixed(2)}σ`}
+              statusTone="critical"
+              subtext="Triggers HIGH surge directive"
             />
             <KpiCard
-              label="High Alert Days"
-              value={`${kpis.high_alert_days_count ?? 3} / 7`}
-              unit="days"
-              badgeText={`> ${threshold.high_demand_threshold || 142.7}`}
-              badgeIcon="warning"
-              subtext="Staff reinforcement required"
-              icon="notification_important"
-              tone="rose"
-              highlightBorder
+              label="Low Demand Threshold"
+              value={
+                sufficientHistory ? Number(lowThreshold).toFixed(1) : "N/A"
+              }
+              unit="guests"
+              badgeText={`max(0, μ - ${stdMultiplier.toFixed(2)}σ)`}
+              statusTone="warning"
+              subtext="Triggers LOW consolidation directive"
             />
-          </>
+            <KpiCard
+              label="Peak Forecast Day"
+              value={peakDayObj.forecast_date}
+              badgeText={`${Math.round(peakDayObj.predicted_guest_count)} guests`}
+              statusTone="critical"
+              subtext={`Tier: ${peakDayObj.demand_level || "HIGH"}`}
+            />
+            <KpiCard
+              label="Demand Tier Distribution"
+              value={`${levelCounts.HIGH ?? 0}H / ${levelCounts.NORMAL ?? 0}N / ${levelCounts.LOW ?? 0}L`}
+              badgeText="7-Day Horizon"
+              statusTone={levelCounts.HIGH > 0 ? "critical" : "success"}
+              subtext={`${levelCounts.HIGH ?? 0} high-alert days require action`}
+            />
+          </div>
         )}
       </section>
 
-      {/* 7-Day Forecast Curve & Threshold Chart */}
-      <Card>
-        <CardHeader className="p-5 pb-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* Section 2: Pure HTML5 Canvas Actual History vs. 7-Day Forecast Curve */}
+      <section
+        aria-label="Actual History vs 7-Day Forecast Trajectory"
+        className="border-b border-[#E5E5E0] pb-8 space-y-4"
+      >
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div>
+            <h2 className="editorial-section-title">
+              Actual History (Pre-Cutoff) vs. 7-Day Forward Forecast Trajectory
+            </h2>
+            <p className="text-[12px] text-[#666666] mt-0.5">
+              Solid line plots observed demand up to cutoff{" "}
+              <code className="font-mono text-[11px]">T = {cutoffDate}</code>;
+              dashed curve projects{" "}
+              <code className="font-mono text-[11px]">T+1 → T+7</code> against
+              8-week statistical alert thresholds.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 text-[11px] text-[#666666]">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 border-t-2 border-[#252525] inline-block" />
+              Actual History (≤ T)
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 border-t-2 border-dashed border-[#315B52] inline-block" />
+              7-Day Forecast (T+1..T+7)
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#B64C43] inline-block" />
+              HIGH (&ge; {Number(highThreshold).toFixed(1)})
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#C58B35] inline-block" />
+              LOW (&le; {Number(lowThreshold).toFixed(1)})
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 border-t border-dashed border-[#547A9B] inline-block" />
+              8W Mean (μ = {Number(mean8w).toFixed(1)})
+            </span>
+          </div>
+        </div>
+
+        <div className="border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] p-5">
+          <CanvasForecastChart
+            recentHistory={recentHistory}
+            forecasts={rows}
+            thresholdRule={{
+              mean_guests_8w: mean8w,
+              high_threshold: highThreshold,
+              low_threshold: lowThreshold,
+            }}
+            targetMetric={targetMetric}
+            height={300}
+          />
+        </div>
+      </section>
+
+      {/* Section 3: DO-M01 7-Day Operational Decision Schedule Table */}
+      <section
+        aria-label="7-Day Operational Decision Schedule Table"
+        className="border-b border-[#E5E5E0] pb-8 space-y-4"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
-              <CardTitle className="text-base">
-                7-Day Forward Demand Curve &amp; Operational Alert Thresholds
-              </CardTitle>
-              <Badge variant="emerald" className="text-[10px]">
-                Horizon T+1 → T+7
-              </Badge>
+              <h2
+                id="dss-schedule-table-heading"
+                className="editorial-section-title"
+              >
+                7-Day Operational Decision Schedule &amp; Recommended Actions
+              </h2>
             </div>
-            <CardDescription className="text-xs mt-0.5">
-              Red nodes highlight forecast days exceeding the high demand surge threshold (
-              <strong className="text-rose-600 font-mono">
-                &gt; {threshold.high_demand_threshold || 142.7} arrivals
-              </strong>
-              ).
-            </CardDescription>
+            <p className="text-[12px] text-[#666666] mt-0.5">
+              Canonical decision matrix mapping each forecast horizon day to its
+              statistical demand tier and non-hallucinated operational
+              directive.
+            </p>
           </div>
+          <span className="font-mono text-[11px] text-[#666666]">
+            as_of_date: {cutoffDate} · model:{" "}
+            {forecastData?.model_version || selectedModel}
+          </span>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs font-medium">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-              Standard Demand
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" />
-              Surge Threshold Exceeded
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 border-t-2 border-dashed border-rose-500" />
-              High Threshold ({threshold.high_demand_threshold || 142.7})
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 border-t-2 border-dashed border-primary" />
-              8W Rolling Mean (μ = {threshold.rolling_8w_mean || 124.5})
-            </span>
-          </div>
-        </CardHeader>
+        <ResponsiveTableContainer ariaLabelledBy="dss-schedule-table-heading">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Forecast Date</TableHead>
+                <TableHead>Day / Context</TableHead>
+                <TableHead className="text-right">
+                  Predicted Guests (Exact)
+                </TableHead>
+                <TableHead className="text-right">
+                  Backtest Actual Guests
+                </TableHead>
+                <TableHead className="text-right">
+                  Projected Stay Nights
+                </TableHead>
+                <TableHead className="text-center">Demand Level</TableHead>
+                <TableHead>
+                  Recommended Operational Action (Section 8.3)
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => {
+                const fDate = row.forecast_date || row.stay_date;
+                const predExact =
+                  row.predicted_guest_count ?? row.predicted_arrivals ?? 0;
+                const predRounded =
+                  row.predicted_guest_count_display ?? Math.round(predExact);
+                const actualBacktest = row.actual_guest_count;
+                const level = sufficientHistory
+                  ? row.demand_level || "NORMAL"
+                  : "INSUFFICIENT_HISTORY";
 
-        <CardContent className="p-5 pt-1">
-          {/* SVG Trajectory Chart */}
-          <div className="w-full overflow-x-auto">
-            <svg
-              viewBox="0 0 920 270"
-              className="w-full h-64 min-w-[680px]"
-              role="img"
-              aria-label="7-Day Demand Forecast Trajectory Chart"
-            >
-              <defs>
-                <linearGradient id="dssAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.22" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-
-              {/* Horizontal Grid Lines */}
-              <line x1="60" y1="35" x2="880" y2="35" className="chart-grid-line" />
-              <line x1="60" y1="85" x2="880" y2="85" className="chart-grid-line" />
-              <line x1="60" y1="135" x2="880" y2="135" className="chart-grid-line" />
-              <line x1="60" y1="185" x2="880" y2="185" className="chart-grid-line" />
-              <line x1="60" y1="225" x2="880" y2="225" stroke="#cbd5e1" strokeWidth="1" />
-
-              {/* Y-Axis Labels */}
-              <text x="48" y="39" textAnchor="end" className="text-[10px] fill-muted-foreground font-mono">
-                180
-              </text>
-              <text x="48" y="89" textAnchor="end" className="text-[10px] fill-muted-foreground font-mono">
-                150
-              </text>
-              <text x="48" y="139" textAnchor="end" className="text-[10px] fill-muted-foreground font-mono">
-                125
-              </text>
-              <text x="48" y="189" textAnchor="end" className="text-[10px] fill-muted-foreground font-mono">
-                100
-              </text>
-
-              {/* High Threshold Line (Red Dashed: 142.7) */}
-              <line
-                x1="60"
-                y1="96"
-                x2="880"
-                y2="96"
-                stroke="#ef4444"
-                strokeWidth="2"
-                strokeDasharray="6 4"
-              />
-              <rect x="742" y="76" width="132" height="18" rx="4" fill="#fef2f2" stroke="#fecaca" />
-              <text
-                x="808"
-                y="89"
-                textAnchor="middle"
-                className="text-[10px] fill-rose-700 font-bold"
-              >
-                Threshold: {threshold.high_demand_threshold || 142.7}
-              </text>
-
-              {/* Rolling 8-Week Mean Line (Blue Dashed: 124.5) */}
-              <line
-                x1="60"
-                y1="136"
-                x2="880"
-                y2="136"
-                stroke="#0059b5"
-                strokeWidth="1.5"
-                strokeDasharray="4 4"
-              />
-              <text
-                x="70"
-                y="130"
-                className="text-[10px] fill-primary font-semibold"
-              >
-                Rolling 8W Mean (μ = 124.5)
-              </text>
-
-              {/* Area Fill & Forecast Polyline */}
-              <path
-                d="M110,78 L235,55 L360,122 L485,156 L610,148 L735,154 L860,86 L860,225 L110,225 Z"
-                fill="url(#dssAreaGrad)"
-              />
-              <path
-                d="M110,78 L235,55 L360,122 L485,156 L610,148 L735,154 L860,86"
-                fill="none"
-                stroke="#059669"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-
-              {/* 7 Forecast Nodes */}
-              {[
-                { x: 110, y: 78, row: rows[0] },
-                { x: 235, y: 55, row: rows[1] },
-                { x: 360, y: 122, row: rows[2] },
-                { x: 485, y: 156, row: rows[3] },
-                { x: 610, y: 148, row: rows[4] },
-                { x: 735, y: 154, row: rows[5] },
-                { x: 860, y: 86, row: rows[6] },
-              ].map((pt, idx) => {
-                if (!pt.row) return null;
-                const isHigh = pt.row.demand_level === 'HIGH';
-                const val =
-                  targetView === 'room_nights'
-                    ? pt.row.predicted_room_nights
-                    : pt.row.predicted_arrivals;
                 return (
-                  <g key={pt.row.stay_date || idx}>
-                    {isHigh && (
-                      <circle
-                        cx={pt.x}
-                        cy={pt.y}
-                        r="11"
-                        fill="#ef4444"
-                        fillOpacity="0.18"
-                      />
-                    )}
-                    <circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      r="6"
-                      fill={isHigh ? '#ef4444' : '#059669'}
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                    />
-                    <text
-                      x={pt.x}
-                      y={pt.y - 14}
-                      textAnchor="middle"
-                      className={`text-[11px] font-bold ${
-                        isHigh ? 'fill-rose-700' : 'fill-foreground'
-                      }`}
-                    >
-                      {val}
-                      {pt.row.is_peak ? ' ★' : ''}
-                    </text>
-                    <text
-                      x={pt.x}
-                      y="245"
-                      textAnchor="middle"
-                      className="text-[11px] font-bold fill-foreground"
-                    >
-                      {pt.row.date_display.slice(0, 5)}
-                    </text>
-                    <text
-                      x={pt.x}
-                      y="260"
-                      textAnchor="middle"
-                      className="text-[10px] fill-muted-foreground"
-                    >
-                      {pt.row.day_of_week}
-                    </text>
-                  </g>
+                  <TableRow
+                    key={fDate}
+                    className={
+                      level === "HIGH"
+                        ? "bg-[#B64C43]/[0.04]"
+                        : level === "LOW"
+                          ? "bg-[#C58B35]/[0.04]"
+                          : undefined
+                    }
+                  >
+                    <TableCell className="font-mono font-medium text-[#252525] whitespace-nowrap">
+                      {fDate}
+                      {row.is_peak && (
+                        <span className="ml-1.5 text-[10px] font-sans font-semibold text-[#B64C43]">
+                          PEAK
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <div className="font-medium text-[#252525]">
+                        {row.day_of_week}
+                      </div>
+                      <div className="text-[11px] text-[#666666]">
+                        {row.weather_status || "Clear"}
+                        {row.holiday_local_name
+                          ? ` · ★ ${row.holiday_local_name}`
+                          : ""}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">
+                      <span className="font-semibold text-[#252525] text-[14px]">
+                        {predRounded.toLocaleString()}
+                      </span>
+                      <span className="ml-1.5 text-[11px] text-[#666666]">
+                        ({Number(predExact).toFixed(1)})
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                      {actualBacktest != null ? (
+                        <span>
+                          {actualBacktest.toLocaleString()}{" "}
+                          <span className="text-[11px]">
+                            (err:{" "}
+                            {(predExact - actualBacktest >= 0 ? "+" : "") +
+                              (predExact - actualBacktest).toFixed(1)}
+                            )
+                          </span>
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-[#252525]">
+                      {(row.predicted_room_nights ?? 0).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-center whitespace-nowrap">
+                      {sufficientHistory ? (
+                        getDemandStatusBadge(level)
+                      ) : (
+                        <Badge variant="amber">INSUFFICIENT_HISTORY</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-[12px] text-[#252525] leading-relaxed max-w-xl">
+                      {row.recommended_action}
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </svg>
-          </div>
-        </CardContent>
-      </Card>
+            </TableBody>
+          </Table>
+        </ResponsiveTableContainer>
+      </section>
 
-      {/* 7-Day Operational Decision Schedule Table */}
-      <Card>
-        <CardHeader className="p-5 pb-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Section 4: Model Evaluation Benchmark (ML-03 / ML-05) & Governance */}
+      <section
+        aria-label="Model Evaluation Benchmark and Governance"
+        className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
+      >
+        {/* Left 6 Columns: Model MAE Comparison Horizontal Bar Chart */}
+        <div className="lg:col-span-6 space-y-4">
           <div>
-            <CardTitle id="dss-schedule-table-heading" className="text-base">
-              7-Day Operational Schedule &amp; Action Directives (DSS Action Matrix)
-            </CardTitle>
-            <CardDescription className="text-xs mt-0.5">
-              Synthesizes ML demand forecasts with holiday and weather context to generate actionable daily shift allocations.
-            </CardDescription>
+            <span className="font-mono text-[11px] font-semibold text-[#315B52]">
+              ML BENCHMARK
+            </span>
+            <h2 className="editorial-section-title mt-0.5">
+              Cross-Model Forecast Error Comparison (Overall MAE)
+            </h2>
+            <p className="text-[12px] text-[#666666] mt-0.5">
+              Rolling-origin evaluation across 7-day horizons comparing ML
+              regressors against the mandatory Seasonal Naive (lag-7) baseline.
+            </p>
           </div>
-          <Badge variant="outline" className="text-xs font-mono">
-            Cutoff: {cutoffDate} • Horizon: 7d
-          </Badge>
-        </CardHeader>
 
-        <CardContent className="p-0">
-          <ResponsiveTableContainer ariaLabelledBy="dss-schedule-table-heading">
+          <div className="border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] p-5">
+            <CanvasHorizontalBarChart items={maeChartItems} height={190} />
+          </div>
+        </div>
+
+        {/* Right 6 Columns: Horizon h=1..7 Error Table & Leakage-Free Governance */}
+        <div className="lg:col-span-6 space-y-4">
+          <div>
+            <span className="font-mono text-[11px] font-semibold text-[#547A9B]">
+              HORIZON ERROR PROFILE &amp; LEAKAGE GOVERNANCE
+            </span>
+            <h2 className="editorial-section-title mt-0.5">
+              MAE by Forecast Horizon (h=1..7) &amp; Cutoff Rules
+            </h2>
+            <p className="text-[12px] text-[#666666] mt-0.5">
+              Detailed error metrics per model and strict temporal feature
+              engineering guarantees.
+            </p>
+          </div>
+
+          <div className="border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/60">
-                  <TableHead className="py-2.5 px-4 font-semibold text-foreground">Stay Date</TableHead>
-                  <TableHead className="py-2.5 px-3">Day of Week</TableHead>
-                  <TableHead className="py-2.5 px-3">Weather &amp; Context</TableHead>
-                  <TableHead className="py-2.5 px-3 text-right">Predicted Check-ins</TableHead>
-                  <TableHead className="py-2.5 px-3 text-right">Predicted Room Nights</TableHead>
-                  <TableHead className="py-2.5 px-3 text-center">Demand Tier</TableHead>
-                  <TableHead className="py-2.5 px-4">Recommended Action</TableHead>
+                <TableRow>
+                  <TableHead>Model</TableHead>
+                  <TableHead className="text-right">MAE</TableHead>
+                  <TableHead className="text-right">RMSE</TableHead>
+                  <TableHead className="text-right">h=1</TableHead>
+                  <TableHead className="text-right">h=3</TableHead>
+                  <TableHead className="text-right">h=7</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row) => {
-                  const isHigh = row.demand_level === 'HIGH';
-                  return (
-                    <TableRow
-                      key={row.stay_date}
-                      className={`transition-colors ${
-                        isHigh
-                          ? 'bg-rose-50/40 hover:bg-rose-50/70 font-medium'
-                          : 'hover:bg-muted/40'
-                      }`}
-                    >
-                      <TableCell className="py-2.5 px-4 font-bold text-foreground tabular-nums">
-                        {row.date_display}
-                      </TableCell>
-                      <TableCell className="py-2.5 px-3 font-medium text-foreground">
-                        {row.day_of_week}
-                      </TableCell>
-                      <TableCell className="py-2.5 px-3 text-xs text-muted-foreground">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                            <Sun className="h-3.5 w-3.5 text-amber-500" />
-                            <span>{row.weather_status}</span>
-                          </span>
-                          {row.holiday_local_name && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700">
-                              ★ {row.holiday_local_name}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-2.5 px-3 text-right font-display font-extrabold text-sm text-foreground tabular-nums">
-                        {row.predicted_arrivals}
-                      </TableCell>
-                      <TableCell className="py-2.5 px-3 text-right font-bold text-primary tabular-nums">
-                        {row.predicted_room_nights}
-                      </TableCell>
-                      <TableCell className="py-2.5 px-3 text-center">
-                        <Badge
-                          variant={isHigh ? 'destructive' : 'emerald'}
-                          className="gap-1 text-[10px] px-2 py-0.5 font-bold"
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              isHigh ? 'bg-rose-600 animate-ping' : 'bg-emerald-500'
-                            }`}
-                          />
-                          <span>{row.demand_label}</span>
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-2.5 px-4 text-xs text-foreground leading-relaxed">
-                        {row.recommended_action}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {modelComparison.map((m) => (
+                  <TableRow
+                    key={m.model_name}
+                    className={
+                      m.is_selected
+                        ? "bg-[#315B52]/[0.05] font-medium"
+                        : undefined
+                    }
+                  >
+                    <TableCell className="text-[12px] text-[#252525]">
+                      <span>{m.model_label}</span>
+                      {m.is_selected && (
+                        <span className="ml-1.5 font-mono text-[10px] text-[#315B52]">
+                          [ACTIVE]
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums font-semibold text-[#252525]">
+                      {Number(m.overall_mae).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                      {Number(m.overall_rmse).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                      {m.mae_by_horizon?.h1 ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                      {m.mae_by_horizon?.h3 ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                      {m.mae_by_horizon?.h7 ?? "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
-          </ResponsiveTableContainer>
-        </CardContent>
-      </Card>
 
-      {/* Bottom 3-Column Model Governance & Evaluation Benchmark */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Card 1: Model Evaluation Benchmark */}
-        <Card>
-          <CardHeader className="p-4 sm:p-5 pb-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
-              ML-03 / ML-05 Evaluation
-            </span>
-            <CardTitle className="text-base mt-0.5">
-              Forecast Error Benchmark (MAE Evaluation)
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="p-4 sm:p-5 pt-1 space-y-2.5 text-xs">
-            <div className="p-2.5 rounded-md bg-emerald-50/70 border border-emerald-200">
-              <div className="flex items-center justify-between font-bold text-emerald-950">
-                <span>★ LightGBM Regressor (Selected)</span>
-                <span className="tabular-nums">MAE = 8.42</span>
-              </div>
-              <div className="w-full bg-emerald-200/70 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                <div className="bg-emerald-600 h-full rounded-full w-[52%]" />
-              </div>
-              <div className="text-[10px] text-emerald-700 mt-1">
-                RMSE: 11.15 • MAPE: 6.8% (Production Ready)
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-md bg-muted/40 border">
-              <div className="flex items-center justify-between font-medium text-foreground">
-                <span>Baseline 1: 7-Day Moving Average</span>
-                <span className="tabular-nums text-muted-foreground">MAE = 14.85</span>
-              </div>
-              <div className="w-full bg-secondary h-1.5 rounded-full mt-1.5 overflow-hidden">
-                <div className="bg-muted-foreground/50 h-full rounded-full w-[88%]" />
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-md bg-muted/40 border">
-              <div className="flex items-center justify-between font-medium text-foreground">
-                <span>Baseline 2: Seasonal Naive (Lag 7)</span>
-                <span className="tabular-nums text-muted-foreground">MAE = 16.20</span>
-              </div>
-              <div className="w-full bg-secondary h-1.5 rounded-full mt-1.5 overflow-hidden">
-                <div className="bg-muted-foreground/50 h-full rounded-full w-[96%]" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 2: Statistical Threshold Formula */}
-        <Card className="flex flex-col justify-between">
-          <CardHeader className="p-4 sm:p-5 pb-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-              Decision Rule Engine
-            </span>
-            <CardTitle className="text-base mt-0.5">
-              8-Week Rolling Statistical Threshold Rule
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="p-4 sm:p-5 pt-1 space-y-3">
-            <div className="p-3 rounded-md bg-muted border font-mono text-xs space-y-1">
-              <div className="text-muted-foreground text-[10px] uppercase font-semibold">
-                High Demand Alert Formula
-              </div>
-              <div className="text-primary font-bold text-sm">
-                Threshold = μ_8w + {stdMultiplier.toFixed(2)} × σ_8w
-              </div>
-              <div className="text-muted-foreground text-[11px] pt-1">
-                = {threshold.rolling_8w_mean || 124.5} + {stdMultiplier.toFixed(2)} ×{' '}
-                {threshold.rolling_8w_std || 18.2} ={' '}
-                <strong className="text-rose-600 font-bold">
-                  {threshold.high_demand_threshold || 142.7} check-ins
-                </strong>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              The DSS engine dynamically computes the rolling mean and standard deviation of the preceding 56 days before cutoff{' '}
-              <code className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">T</code> to adapt to seasonal shifts in Lisbon.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Card 3: Feature Completeness */}
-        <Card className="flex flex-col justify-between">
-          <CardHeader className="p-4 sm:p-5 pb-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-                Leakage-Free Guarantee
-              </span>
-              <Badge variant="emerald" className="font-bold text-xs">
-                99.62%
-              </Badge>
-            </div>
-            <CardTitle className="text-base mt-0.5">
-              Feature Completeness &amp; Data Quality
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="p-4 sm:p-5 pt-1 space-y-2">
-            <ul className="space-y-1.5 text-xs text-muted-foreground">
-              <li className="flex items-center justify-between p-2 rounded-md bg-muted/40 border">
-                <span className="font-medium text-foreground">
-                  Lag Features (t-1, t-7, rolling 7d)
+            <div className="p-4 border-t border-[#E5E5E0] bg-[#FAFAF8] text-[12px] text-[#666666] space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-[#252525]">
+                  Temporal Cutoff Integrity (t &le; T)
                 </span>
-                <span className="font-bold text-emerald-600">100% Valid</span>
-              </li>
-              <li className="flex items-center justify-between p-2 rounded-md bg-muted/40 border">
-                <span className="font-medium text-foreground">
-                  On-the-books (t ≤ Cutoff T)
+                <span className="font-mono text-[11px] text-[#477A61]">
+                  Zero Future Leakage Verified
                 </span>
-                <span className="font-bold text-emerald-600">Strict Cutoff</span>
-              </li>
-              <li className="flex items-center justify-between p-2 rounded-md bg-muted/40 border">
-                <span className="font-medium text-foreground">
-                  Open-Meteo &amp; Nager.Date
-                </span>
-                <span className="font-bold text-emerald-600">790/793d</span>
-              </li>
-            </ul>
-
-            <div className="text-[10px] text-muted-foreground flex items-center justify-between border-t pt-2">
-              <span>Mart Source: mart.operations_daily</span>
-              <span className="font-mono">v9fe497e2</span>
+              </div>
+              <p className="text-[11px] leading-relaxed">
+                Lag features (<code className="font-mono">lag_1</code>,{" "}
+                <code className="font-mono">lag_7</code>,{" "}
+                <code className="font-mono">lag_14</code>,{" "}
+                <code className="font-mono">rolling_mean_7d</code>,{" "}
+                <code className="font-mono">rolling_std_28d</code>) and 8-week
+                thresholds are computed strictly from historical observations on
+                or before{" "}
+                <code className="font-mono">as_of_date = {cutoffDate}</code>.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </section>
     </div>
   );

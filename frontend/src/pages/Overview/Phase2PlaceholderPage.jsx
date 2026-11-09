@@ -1,25 +1,24 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Lock, BarChart3, FileSpreadsheet, BrainCircuit, ArrowLeft } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight } from 'lucide-react';
 
 const DOMAIN_INFO = {
   '/analytics/guest-customer': {
     title: 'Guest & Customer Composition Analytics',
     code: 'MART-02 / BI-02',
-    desc: 'Analysis of guest composition (Single / Couple / Family), party size, and room type selection.',
+    desc: 'Analysis of guest composition (Single, Couple, Family), party size distribution, repeat guest behavior, and room type selection.',
   },
   '/analytics/revenue-cancellation': {
     title: 'Revenue & Cancellation Risk Analytics',
     code: 'MART-03 / BI-03',
-    desc: 'Analysis of booking cancellation rates across Lead-time, Deposit Type, and market segments.',
+    desc: 'Analysis of booking cancellation rates across lead-time brackets, deposit types, ADR tiers, and market segments.',
   },
   '/analytics/booking-performance': {
     title: 'Booking Channel & Segment Performance',
     code: 'MART-04 / BI-04',
-    desc: 'Evaluation of distribution channels (OTA, Direct, Corporate) and travel agency performance.',
+    desc: 'Evaluation of distribution channels (OTA, Direct, Corporate) and travel agency booking velocity.',
   },
 };
 
@@ -28,58 +27,78 @@ export default function Phase2PlaceholderPage() {
   const info = DOMAIN_INFO[location.pathname] || {
     title: 'Phase 2 Extended Hospitality Domain',
     code: 'PHASE-2',
-    desc: 'Extended analytics domain planned beyond the current MVP scope.',
+    desc: 'Extended analytics domain planned beyond the current MVP operational scope.',
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-12">
-      <Card className="text-center p-6 sm:p-8 space-y-4">
-        <div className="w-12 h-12 rounded-lg bg-muted text-muted-foreground flex items-center justify-center mx-auto border">
-          <Lock className="h-6 w-6 text-muted-foreground" />
+    <div className="max-w-3xl py-8 space-y-8">
+      <header className="border-b border-[#E5E5E0] pb-6 space-y-3">
+        <div className="flex items-center gap-2.5">
+          <Badge variant="amber" className="font-mono">
+            {info.code} • Phase 2 Roadmap (Out of MVP Scope)
+          </Badge>
+          <span className="font-mono text-[11px] text-[#666666]">
+            route: {location.pathname}
+          </span>
         </div>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold uppercase tracking-wider">
-          <span>{info.code} • Phase 2 Roadmap (Out of MVP Scope)</span>
-        </div>
+        <h1 className="editorial-page-title">{info.title}</h1>
 
-        <CardTitle className="text-xl sm:text-2xl font-display font-extrabold text-foreground">
-          {info.title}
-        </CardTitle>
+        <p className="text-[14px] text-[#666666] leading-relaxed">
+          {info.desc}
+        </p>
+      </header>
 
-        <CardDescription className="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-          {info.desc} In accordance with{' '}
-          <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded border">
+      <section className="border-b border-[#E5E5E0] pb-6 space-y-3 text-[13px] text-[#666666] leading-relaxed">
+        <h2 className="editorial-section-title">
+          MVP Architectural Scope Boundary
+        </h2>
+        <p>
+          In accordance with{' '}
+          <code className="font-mono text-[12px] text-[#252525]">
             docs/scope_assessment.md
           </code>{' '}
           and{' '}
-          <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded border">
+          <code className="font-mono text-[12px] text-[#252525]">
             docs/detailed_plan.md
           </code>
-          , the official MVP scope strictly focuses on{' '}
-          <strong className="text-foreground">Daily Hotel Operations (City Hotel — Lisbon, Portugal)</strong>.
-        </CardDescription>
+          , the active MVP release focuses exclusively on{' '}
+          <strong className="text-[#252525] font-medium">
+            Daily Hotel Operations (City Hotel — Lisbon, Portugal)
+          </strong>{' '}
+          powered by the unified{' '}
+          <code className="font-mono text-[12px] text-[#315B52]">
+            mart.daily_hotel_ops
+          </code>{' '}
+          table (732 continuous days, 2015-08-31 → 2017-08-31).
+        </p>
+      </section>
 
-        <div className="pt-4 flex flex-wrap items-center justify-center gap-2.5">
+      <section className="space-y-3">
+        <h2 className="text-[12px] font-semibold text-[#666666]">
+          Active MVP Operational Views
+        </h2>
+        <div className="flex flex-wrap items-center gap-3">
           <Button variant="default" size="sm" asChild className="gap-1.5">
             <Link to="/analytics/operations">
-              <BarChart3 className="h-4 w-4" />
-              <span>Back to Operations Analytics (BI-01)</span>
+              <span>Operations Analytics (BI-01 to BI-04)</span>
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild className="gap-1.5">
             <Link to="/reports/operations">
-              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-              <span>Open Operations Reports (DO-R01)</span>
+              <span>Operations Reports (DO-R01 &amp; DO-R02)</span>
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
-          <Button variant="emerald" size="sm" asChild className="gap-1.5">
+          <Button variant="outline" size="sm" asChild className="gap-1.5">
             <Link to="/dss/demand-forecast">
-              <BrainCircuit className="h-4 w-4" />
-              <span>Open DSS Demand Forecast (DO-M01)</span>
+              <span>DSS 7-Day Demand Forecast (DO-M01)</span>
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
         </div>
-      </Card>
+      </section>
     </div>
   );
 }
