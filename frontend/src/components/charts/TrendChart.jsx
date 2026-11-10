@@ -452,10 +452,12 @@ export function CanvasHorizontalBarChart({
  * 3. Canvas Weekly Workload Profile Chart for OperationsReportsPage (DO-R01 / DO-R02)
  * Renders 7-day grouped bars (Observed Guests & Non-Canceled Bookings) + Stay Nights line on HTML5 Canvas.
  */
-export function CanvasWeeklyWorkloadChart({ dailyRows = [] }) {
+export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight = 240 }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
-  const { width, height } = useCanvasSize(containerRef, 240);
+  const hitBoxesRef = useRef([]);
+  const [hovered, setHovered] = useState(null);
+  const { width, height } = useCanvasSize(containerRef, customHeight);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -467,9 +469,10 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [] }) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
+    hitBoxesRef.current = [];
     if (!dailyRows.length) return;
 
-    const pad = { top: 24, right: 20, bottom: 42, left: 48 };
+    const pad = { top: 24, right: 20, bottom: 16, left: 48 };
     const plotW = Math.max(100, width - pad.left - pad.right);
     const plotH = Math.max(80, height - pad.top - pad.bottom);
 
@@ -496,41 +499,55 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [] }) {
     }
 
     const stepX = plotW / dailyRows.length;
-    const barW = Math.min(22, Math.max(8, stepX * 0.26));
+    const barW = Math.min(22, Math.max(4, stepX * 0.28));
+    const barGap = stepX < 18 ? 1 : 2;
 
     // Grouped bars: Observed Guests (Series 1 #315B52) & Non-canceled bookings (Series 3 #547A9B)
     dailyRows.forEach((row, idx) => {
       const cx = pad.left + idx * stepX + stepX / 2;
       const gVal = guestsArr[idx];
       const bVal = bookingsArr[idx];
+      const snVal = stayNightsArr[idx];
       const gH = Math.max(2, (gVal / maxVal) * plotH);
       const bH = Math.max(2, (bVal / maxVal) * plotH);
+      const topY = pad.top + plotH - Math.max(gH, bH, (snVal / maxVal) * plotH);
 
       const isPeakOrHoliday = row.is_peak_day || row.is_holiday || row.is_pt_holiday;
+      const isHovered = hovered?.idx === idx;
+
+      if (isHovered) {
+        ctx.fillStyle = "rgba(49, 91, 82, 0.06)";
+        ctx.fillRect(pad.left + idx * stepX, pad.top, stepX, plotH);
+      }
 
       // Bar 1: Observed Guests
       ctx.fillStyle = isPeakOrHoliday ? PALETTE.series2 : PALETTE.series1;
-      ctx.fillRect(cx - barW - 2, pad.top + plotH - gH, barW, gH);
+      ctx.globalAlpha = isHovered ? 0.85 : 1.0;
+      ctx.fillRect(cx - barW - barGap, pad.top + plotH - gH, barW, gH);
 
       // Bar 2: Non-Canceled Bookings
       ctx.fillStyle = PALETTE.series3;
-      ctx.fillRect(cx + 2, pad.top + plotH - bH, barW, bH);
+      ctx.fillRect(cx + barGap, pad.top + plotH - bH, barW, bH);
+      ctx.globalAlpha = 1.0;
 
-      // Value label above guest bar
-      ctx.fillStyle = PALETTE.inkPrimary;
-      ctx.font = "600 10px 'JetBrains Mono', monospace";
-      ctx.textAlign = "center";
-      ctx.fillText(gVal.toString(), cx - barW / 2 - 2, pad.top + plotH - gH - 8);
+      // Value label above guest bar (only when sparse or hovered to prevent crowding)
+      if (dailyRows.length <= 10 || isHovered) {
+        ctx.fillStyle = PALETTE.inkPrimary;
+        ctx.font = "600 10px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(gVal.toString(), cx - barW / 2 - barGap, pad.top + plotH - gH - 8);
+      }
 
-      // X-axis Date & Day
-      const dateStr = (row.full_date || row.stay_date || "").slice(5);
-      const dayLabel = String(row.day_of_week || "").slice(0, 3);
-      ctx.fillStyle = PALETTE.inkPrimary;
-      ctx.font = "500 11px 'JetBrains Mono', monospace";
-      ctx.fillText(dateStr, cx, pad.top + plotH + 12);
-      ctx.fillStyle = PALETTE.inkSecondary;
-      ctx.font = "400 11px Inter, sans-serif";
-      ctx.fillText(dayLabel, cx, pad.top + plotH + 26);
+      hitBoxesRef.current.push({
+        x: pad.left + idx * stepX,
+        y: pad.top,
+        w: stepX,
+        h: plotH,
+        row,
+        idx,
+        cx,
+        cy: topY,
+      });
     });
 
     // Overlay line for Stay Nights (Series 4 #9B7185)
@@ -550,21 +567,101 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [] }) {
       const cx = pad.left + idx * stepX + stepX / 2;
       const snVal = stayNightsArr[idx];
       const y = pad.top + plotH - (snVal / maxVal) * plotH;
+      const isHovered = hovered?.idx === idx;
       ctx.beginPath();
-      ctx.arc(cx, y, 3, 0, Math.PI * 2);
+      ctx.arc(cx, y, isHovered ? 4.5 : 3, 0, Math.PI * 2);
       ctx.fillStyle = PALETTE.series4;
       ctx.fill();
     });
-  }, [dailyRows, width, height]);
+  }, [dailyRows, width, height, hovered]);
+
+  const handleMouseMove = (e) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const found = hitBoxesRef.current.find(
+      (b) => mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h
+    );
+    setHovered(found || null);
+  };
+
+  const hoveredHolidayName =
+    (Array.isArray(hovered?.row?.holiday_names) && hovered.row.holiday_names[0]) ||
+    hovered?.row?.holiday_local_name ||
+    null;
 
   return (
-    <div ref={containerRef} className="w-full select-none">
+    <div ref={containerRef} className="relative w-full select-none">
       <canvas
         ref={canvasRef}
         style={{ width: `${width}px`, height: `${height}px` }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setHovered(null)}
         role="img"
-        aria-label="Weekly daily guest arrivals and stay nights balance chart"
+        aria-label="Daily observed guests, non-canceled bookings, and stay-nights trajectory chart"
       />
+
+      {hovered?.row && (
+        <div
+          className="pointer-events-none absolute z-20 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-3 py-2 text-[12px] text-[#252525] shadow-sm space-y-1 min-w-[215px]"
+          style={{
+            left: `${Math.min(Math.max(12, hovered.cx - 105), Math.max(12, width - 225))}px`,
+            top: `${Math.max(8, hovered.cy - 96)}px`,
+          }}
+        >
+          <div className="flex items-center justify-between gap-4 border-b border-[#E5E5E0] pb-1 font-semibold">
+            <span>
+              {hovered.row.full_date || hovered.row.stay_date}
+              {hovered.row.day_of_week ? ` (${String(hovered.row.day_of_week).slice(0, 3)})` : ""}
+            </span>
+            <span className="font-mono text-[11px] text-[#666666]">
+              {hovered.row.guest_data_status || "COMPLETE"}
+            </span>
+          </div>
+          {(hovered.row.is_peak_day || hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName) && (
+            <div className="text-[11px] font-medium text-[#C58B55]">
+              {hovered.row.is_peak_day ? "★ Peak Demand Day" : ""}
+              {hovered.row.is_peak_day && (hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName) ? " · " : ""}
+              {hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName
+                ? hoveredHolidayName || "PT National Holiday"
+                : ""}
+            </div>
+          )}
+          <div className="flex justify-between gap-4">
+            <span className="text-[#666666]">Observed guests</span>
+            <span className="font-mono font-semibold tabular-nums">
+              {fmtNum(hovered.row.observed_total_guests ?? hovered.row.active_guests)}
+            </span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-[#666666]">Non-canceled bookings</span>
+            <span className="font-mono font-semibold tabular-nums">
+              {fmtNum(hovered.row.non_canceled_bookings ?? hovered.row.arrivals)}
+            </span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-[#666666]">Stay nights</span>
+            <span className="font-mono tabular-nums">
+              {fmtNum(hovered.row.observed_total_stay_nights ?? hovered.row.room_nights)}
+            </span>
+          </div>
+          {hovered.row.cancellation_rate != null && (
+            <div className="flex justify-between gap-4">
+              <span className="text-[#666666]">Cancellation rate</span>
+              <span className="font-mono tabular-nums">
+                {(Number(hovered.row.cancellation_rate) * 100).toFixed(1)}%
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between gap-4">
+            <span className="text-[#666666]">Avg ADR</span>
+            <span className="font-mono tabular-nums">
+              €{fmtNum(hovered.row.avg_adr ?? hovered.row.adr, 2)}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

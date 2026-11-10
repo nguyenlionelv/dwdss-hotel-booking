@@ -5,6 +5,7 @@ import {
   fetchCapacitySummaryReport,
   exportWeeklyReportToCsv,
 } from "../../../services/reportingApi";
+import { useSystemContext } from "../../../hooks/useSystemContext";
 import KpiCard from "../../../components/kpi/KpiCard";
 import {
   CanvasWeeklyWorkloadChart,
@@ -59,6 +60,7 @@ const AVAILABLE_WEEKS = [
 ];
 
 export default function OperationsReportsPage() {
+  const { demoMode } = useSystemContext();
   const [reportMode, setReportMode] = useState("ALL"); // 'ALL' | 'DO-R01' | 'DO-R02'
   const [periodMode, setPeriodMode] = useState("ISO_WEEK"); // 'ISO_WEEK' | 'CUSTOM_RANGE'
   const [selectedWeek, setSelectedWeek] = useState("LATEST_4W");
@@ -83,15 +85,27 @@ export default function OperationsReportsPage() {
             start_date: customStartDate,
             end_date: customEndDate,
           }
-        : {
-            week: selectedWeek,
-            start_date: selectedWeekObj.start_date,
-            end_date: selectedWeekObj.end_date,
-          };
+        : selectedWeek === "LATEST_4W"
+          ? {
+              week: "LATEST_4W",
+              start_date: selectedWeekObj.start_date,
+              end_date: selectedWeekObj.end_date,
+            }
+          : {
+              week: selectedWeek,
+            };
 
     Promise.all([
       fetchWeeklyOperationsReport(queryParams),
-      fetchCapacitySummaryReport(queryParams),
+      fetchCapacitySummaryReport(
+        periodMode === "CUSTOM_RANGE"
+          ? queryParams
+          : {
+              week: selectedWeek,
+              start_date: selectedWeekObj.start_date,
+              end_date: selectedWeekObj.end_date,
+            },
+      ),
     ]).then(([weeklyRes, capacityRes]) => {
       if (!active) return;
       setReportData(weeklyRes);
@@ -102,7 +116,7 @@ export default function OperationsReportsPage() {
     return () => {
       active = false;
     };
-  }, [periodMode, selectedWeek, customStartDate, customEndDate]);
+  }, [periodMode, selectedWeek, customStartDate, customEndDate, demoMode]);
 
   const handleWeekChange = (weekId) => {
     setSelectedWeek(weekId);
@@ -121,7 +135,7 @@ export default function OperationsReportsPage() {
     });
   }, [reportData, dayTypeFilter]);
 
-  // BI-05 Reconciled KPIs computed from displayed rows: Same Filter => Same KPI
+  // BI-05 Reconciled KPIs computed from displayed rows using exact Mart numerators and valid counts
   const reconciled = useMemo(() => {
     const totals = dailyRows.reduce(
       (acc, r) => {
@@ -138,6 +152,13 @@ export default function OperationsReportsPage() {
         const leadTime = r.avg_lead_time ?? 0;
         const departures = r.departures ?? 0;
 
+        const adrValidCount = r.adr_valid_count ?? nonCanceled;
+        const leadValidCount = r.lead_time_valid_count ?? totalBookings;
+        const guestValidCount = r.guest_valid_booking_count ?? nonCanceled;
+        const stayValidCount = r.stay_valid_booking_count ?? nonCanceled;
+        const sumAdr = r.sum_adr ?? adr * adrValidCount;
+        const sumLead = r.sum_lead_time ?? leadTime * leadValidCount;
+
         return {
           total_bookings: acc.total_bookings + totalBookings,
           non_canceled_bookings: acc.non_canceled_bookings + nonCanceled,
@@ -149,8 +170,14 @@ export default function OperationsReportsPage() {
           observed_total_stay_nights:
             acc.observed_total_stay_nights + stayNights,
           departures: acc.departures + departures,
-          weighted_adr_sum: acc.weighted_adr_sum + adr * nonCanceled,
-          weighted_lead_sum: acc.weighted_lead_sum + leadTime * totalBookings,
+          sum_adr: acc.sum_adr + sumAdr,
+          adr_valid_count: acc.adr_valid_count + adrValidCount,
+          sum_lead_time: acc.sum_lead_time + sumLead,
+          lead_time_valid_count: acc.lead_time_valid_count + leadValidCount,
+          guest_valid_booking_count:
+            acc.guest_valid_booking_count + guestValidCount,
+          stay_valid_booking_count:
+            acc.stay_valid_booking_count + stayValidCount,
         };
       },
       {
@@ -163,8 +190,12 @@ export default function OperationsReportsPage() {
         observed_total_babies: 0,
         observed_total_stay_nights: 0,
         departures: 0,
-        weighted_adr_sum: 0,
-        weighted_lead_sum: 0,
+        sum_adr: 0,
+        adr_valid_count: 0,
+        sum_lead_time: 0,
+        lead_time_valid_count: 0,
+        guest_valid_booking_count: 0,
+        stay_valid_booking_count: 0,
       },
     );
 
@@ -176,30 +207,31 @@ export default function OperationsReportsPage() {
         ? totals.total_cancellations / totals.total_bookings
         : 0;
     const avgAdr =
-      totals.non_canceled_bookings > 0
-        ? Number(
-            (totals.weighted_adr_sum / totals.non_canceled_bookings).toFixed(2),
-          )
+      totals.adr_valid_count > 0
+        ? Number((totals.sum_adr / totals.adr_valid_count).toFixed(2))
         : 0;
     const avgPartySize =
-      totals.non_canceled_bookings > 0
+      totals.guest_valid_booking_count > 0
         ? Number(
             (
-              totals.observed_total_guests / totals.non_canceled_bookings
+              totals.observed_total_guests / totals.guest_valid_booking_count
             ).toFixed(2),
           )
         : 0;
     const avgStayNights =
-      totals.non_canceled_bookings > 0
+      totals.stay_valid_booking_count > 0
         ? Number(
             (
-              totals.observed_total_stay_nights / totals.non_canceled_bookings
+              totals.observed_total_stay_nights /
+              totals.stay_valid_booking_count
             ).toFixed(2),
           )
         : 0;
     const avgLeadTime =
-      totals.total_bookings > 0
-        ? Number((totals.weighted_lead_sum / totals.total_bookings).toFixed(1))
+      totals.lead_time_valid_count > 0
+        ? Number(
+            (totals.sum_lead_time / totals.lead_time_valid_count).toFixed(1),
+          )
         : 0;
 
     const peakRow =
@@ -501,6 +533,19 @@ export default function OperationsReportsPage() {
         </div>
       </header>
 
+      {reportData?.api_error && (
+        <div
+          role="alert"
+          className="rounded-[4px] border border-[#B64C43]/30 bg-[#B64C43]/[0.05] px-4 py-3 text-[12px] text-[#252525]"
+        >
+          <span className="font-semibold text-[#B64C43]">
+            Report Data Unavailable ({reportData.status_code || "Error"}):
+          </span>{" "}
+          {reportData.error_message ||
+            "Unable to load the requested reporting period from mart.daily_hotel_ops."}
+        </div>
+      )}
+
       {/* Section 1: BI-05 Reconciled Typographic KPI Strip */}
       <section
         aria-label="Weekly Report Reconciled KPIs"
@@ -619,29 +664,29 @@ export default function OperationsReportsPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                   <div>
                     <h3 className="text-[14px] font-semibold text-[#252525]">
-                      Daily Check-in, Check-out &amp; Stay-Night Trajectory
+                      Daily Observed Guests, Non-Canceled Arrivals &amp; Stay-Night Trajectory
                     </h3>
                     <p className="text-[12px] text-[#666666]">
-                      Bars compare daily non-canceled arrivals vs. departures;
-                      line tracks total stay-nights.
+                      Grouped bars compare daily observed guests vs. non-canceled bookings;
+                      overlay line tracks observed stay-nights.
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 text-[11px] text-[#666666]">
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#666666]">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 bg-[#315B52] inline-block" />
-                      Arrivals
+                      Observed Guests (guests)
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 bg-[#B64C43] inline-block" />
-                      Peak Day
+                      <span className="w-2.5 h-2.5 bg-[#C58B55] inline-block" />
+                      Peak / Holiday Guests
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 bg-[#D5D5CE] inline-block" />
-                      Departures
+                      <span className="w-2.5 h-2.5 bg-[#547A9B] inline-block" />
+                      Non-Canceled Bookings (check-ins)
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="w-3 border-t-2 border-[#C58B55] inline-block" />
-                      Stay Nights
+                      <span className="w-3 border-t-2 border-[#9B7185] inline-block" />
+                      Stay Nights (nights)
                     </span>
                   </div>
                 </div>
@@ -661,7 +706,7 @@ export default function OperationsReportsPage() {
                     </h3>
                   </div>
                   <span className="font-mono text-[12px] text-[#252525]">
-                    Weekend surge: {capacity.weekend_surge_pct || "+20.0%"}
+                    Weekend surge: {capacity.weekend_surge_pct || "0.0%"}
                   </span>
                 </div>
 
@@ -694,13 +739,13 @@ export default function OperationsReportsPage() {
                     Weekday Avg (Mon–Fri)
                   </div>
                   <div className="font-mono text-[20px] font-semibold text-[#252525] tabular-nums mt-0.5">
-                    {capacity.weekday_avg_arrivals || 135}{" "}
+                    {capacity.weekday_avg_arrivals ?? "—"}{" "}
                     <span className="text-[12px] font-normal text-[#666666]">
                       check-ins
                     </span>
                   </div>
                   <div className="font-mono text-[11px] text-[#666666] mt-0.5">
-                    ~{capacity.weekday_avg_guests || 652} guests/day
+                    ~{capacity.weekday_avg_guests ?? "—"} guests/day
                   </div>
                 </div>
 
@@ -709,13 +754,13 @@ export default function OperationsReportsPage() {
                     Weekend Avg (Sat–Sun)
                   </div>
                   <div className="font-mono text-[20px] font-semibold text-[#315B52] tabular-nums mt-0.5">
-                    {capacity.weekend_avg_arrivals || 162}{" "}
+                    {capacity.weekend_avg_arrivals ?? "—"}{" "}
                     <span className="text-[12px] font-normal text-[#666666]">
                       check-ins
                     </span>
                   </div>
                   <div className="font-mono text-[11px] text-[#666666] mt-0.5">
-                    ~{capacity.weekend_avg_guests || 732} guests/day
+                    ~{capacity.weekend_avg_guests ?? "—"} guests/day
                   </div>
                 </div>
               </div>
@@ -879,8 +924,7 @@ export default function OperationsReportsPage() {
                   const avgLead = row.avg_lead_time ?? 98;
                   const adr = row.avg_adr ?? row.adr ?? 0;
                   const temp = row.temperature_mean ?? row.weather_temp_mean;
-                  const precip =
-                    row.precipitation ?? row.weather_precip_sum ?? 0;
+                  const precip = row.precipitation ?? row.weather_precip_sum;
                   const guestStatus = row.guest_data_status || "COMPLETE";
 
                   return (
@@ -943,7 +987,8 @@ export default function OperationsReportsPage() {
                           </span>
                         ) : null}
                         <span className="font-mono text-[11px]">
-                          {temp != null ? `${temp}°C` : "—"} · {precip}mm (
+                          {temp != null ? `${temp}°C` : "—"} ·{" "}
+                          {precip != null ? `${precip}mm` : "—"} (
                           {row.weather_status || "Clear"})
                         </span>
                       </TableCell>

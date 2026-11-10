@@ -97,7 +97,10 @@ def test_analytics_pivot_and_impact_endpoints(database, tmp_path):
     assert "weather_impact" in impact
     assert "top_countries" in impact
     assert len(impact["weather_impact"]["bands"]) >= 1
+    assert impact["weather_impact"]["completeness_ratio"] == 1.0
+    assert impact["weather_impact"]["missing_days"] == 0
     assert len(impact["top_countries"]) >= 1
+    assert all(c["yoy_growth"] is None for c in impact["top_countries"])
 
 
 def test_reports_weekly_demand_capacity_and_csv_export(database, tmp_path):
@@ -120,6 +123,31 @@ def test_reports_weekly_demand_capacity_and_csv_export(database, tmp_path):
     assert w_data["summary"]["observed_total_stay_nights"] == sum(
         r["room_nights"] for r in w_data["daily_rows"]
     )
+    assert w_data["period_summary"]["weather_completeness_ratio"] == 1.0
+    assert w_data["period_summary"]["total_departures"] is None
+    assert all(r["departures"] is None for r in w_data["daily_rows"])
+    assert w_data["period"]["yoy_arrivals_delta"] is None
+    assert w_data["period"]["yoy_room_nights_delta"] is None
+
+    # Verify daily valid counts and numerators roll up to summary KPIs
+    total_sum_lead = sum(r["sum_lead_time"] for r in w_data["daily_rows"])
+    total_lead_valid = sum(r["lead_time_valid_count"] for r in w_data["daily_rows"])
+    assert round(total_sum_lead / total_lead_valid, 1) == pytest.approx(
+        w_data["summary"]["avg_lead_time"], abs=0.1
+    )
+    total_sum_adr = sum(r["sum_adr"] for r in w_data["daily_rows"])
+    total_adr_valid = sum(r["adr_valid_count"] for r in w_data["daily_rows"])
+    assert round(total_sum_adr / total_adr_valid, 2) == pytest.approx(
+        w_data["summary"]["avg_adr"], abs=0.01
+    )
+
+    # Non-existent ISO week must return 404 (not fallback to latest 4 weeks)
+    res_missing_week = client.get("/api/reports/operations/weekly-demand?week=2000-W01")
+    assert res_missing_week.status_code == 404
+
+    # Invalid ISO week format must return 422
+    res_bad_week = client.get("/api/reports/operations/weekly-demand?week=NOT_A_WEEK")
+    assert res_bad_week.status_code == 422
 
     # 2. Capacity summary (DO-R02)
     res_cap = client.get("/api/reports/operations/capacity-summary?week=2017-W31")

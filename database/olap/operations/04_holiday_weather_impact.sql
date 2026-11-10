@@ -88,7 +88,7 @@ ORDER BY weather_band;
 -- 2B: Độ hoàn thiện dữ liệu thời tiết (Weather Data Completeness Ratio)
 SELECT 
     count(*) AS total_mart_days,
-    count(*) FILTER (WHERE temperature_status = 'OBSERVED') AS valid_temp_days,
-    count(*) FILTER (WHERE precipitation_status = 'OBSERVED') AS valid_precip_days,
-    round(count(*) FILTER (WHERE temperature_status = 'OBSERVED')::numeric / count(*), 4) AS temp_completeness_ratio
+    count(*) FILTER (WHERE temperature_status = 'COMPLETE') AS valid_temp_days,
+    count(*) FILTER (WHERE precipitation_status = 'COMPLETE') AS valid_precip_days,
+    round(count(*) FILTER (WHERE temperature_status = 'COMPLETE')::numeric / count(*), 4) AS temp_completeness_ratio
 FROM mart.daily_hotel_operations;

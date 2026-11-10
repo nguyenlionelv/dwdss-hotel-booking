@@ -82,10 +82,10 @@ def get_operations_trend(
         if "not published" in msg:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=msg)
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
-    except psycopg.Error as exc:
+    except psycopg.Error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Database error querying Operations Mart trend: {exc}",
+            detail="Database service is currently unavailable while querying Operations Mart trend.",
         )
 
 
@@ -132,10 +132,10 @@ def get_operations_pivot(
         if "not published" in msg:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=msg)
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
-    except psycopg.Error as exc:
+    except psycopg.Error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Database error querying Operations Mart pivot: {exc}",
+            detail="Database service is currently unavailable while querying Operations Mart pivot.",
         )
 
 
@@ -169,8 +169,8 @@ def get_operations_impact(
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
-    except psycopg.Error as exc:
+    except psycopg.Error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Database error querying Operations Mart impact: {exc}",
+            detail="Database service is currently unavailable while querying Operations Mart impact.",
         )

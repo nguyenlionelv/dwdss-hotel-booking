@@ -42,11 +42,11 @@ def disposable_db():
 
 
 def test_health_when_database_connection_fails(monkeypatch):
-    """When DB is unreachable, health endpoint reports degraded with db_connected=False."""
+    """When DB is unreachable, health endpoint reports degraded with db_connected=False and other endpoints return 503."""
     monkeypatch.setenv("POSTGRES_PORT", "59999")
     monkeypatch.setenv("POSTGRES_HOST", "127.0.0.1")
     app = create_app()
-    client = TestClient(app)
+    client = TestClient(app, raise_server_exceptions=False)
 
     response = client.get("/health")
     assert response.status_code == 200
@@ -55,6 +55,17 @@ def test_health_when_database_connection_fails(monkeypatch):
     assert data["db_connected"] is False
     assert data["mart_published"] is False
     assert "Database connection error" in data["message"]
+    assert "59999" not in data["message"]
+
+    for path in (
+        "/api/metadata",
+        "/api/analytics/operations/trend",
+        "/api/reports/operations/weekly-demand",
+    ):
+        err_resp = client.get(path)
+        assert err_resp.status_code == 503, f"Expected 503 on {path}, got {err_resp.status_code}"
+        detail = err_resp.json()["detail"]
+        assert "59999" not in detail
 
 
 def test_health_and_metadata_when_mart_not_initialized(disposable_db):

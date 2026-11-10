@@ -33,9 +33,10 @@ class ReportingService:
         Vai trò (Role):
             Phân tích và chuẩn hóa tham số tuần đầu vào từ chuỗi định dạng ISO (ví dụ: `"2017-W32"`
             hoặc `"2017W32"`) hoặc từ cặp số nguyên `(iso_year, iso_week)` thành bộ `(năm, tuần)`.
+            Nếu truyền `"LATEST_4W"` thì trả về `(None, None)`. Nếu chuỗi tuần không hợp lệ thì ném `ValueError`.
 
         Input:
-            - week (str | None): Chuỗi mã tuần chuẩn ISO (ví dụ: `"2017-W32"`).
+            - week (str | None): Chuỗi mã tuần chuẩn ISO (ví dụ: `"2017-W32"` hoặc `"LATEST_4W"`).
             - iso_year (int | None): Năm ISO dạng số nguyên.
             - iso_week (int | None): Tuần ISO dạng số nguyên (`1..53`).
 
@@ -43,11 +44,20 @@ class ReportingService:
             - tuple[int | None, int | None]: Bộ 2 phần tử `(parsed_iso_year, parsed_iso_week)`.
         """
         if iso_year is not None and iso_week is not None:
+            if not (1 <= iso_week <= 53):
+                raise ValueError(f"Invalid iso_week={iso_week}. Expected 1..53.")
             return iso_year, iso_week
         if week:
-            match = re.match(r"^(\d{4})-?W(\d{1,2})$", week.strip(), re.IGNORECASE)
+            cleaned = week.strip()
+            if cleaned.upper() == "LATEST_4W":
+                return None, None
+            match = re.match(r"^(\d{4})-?W(\d{1,2})$", cleaned, re.IGNORECASE)
             if match:
-                return int(match.group(1)), int(match.group(2))
+                yr, wk = int(match.group(1)), int(match.group(2))
+                if not (1 <= wk <= 53):
+                    raise ValueError(f"Invalid ISO week number in '{week}'. Expected 1..53.")
+                return yr, wk
+            raise ValueError(f"Invalid ISO week parameter '{week}'. Expected YYYY-Www or LATEST_4W.")
         return iso_year, iso_week
 
     @staticmethod
@@ -56,7 +66,7 @@ class ReportingService:
 
         Vai trò (Role):
             Phân loại trạng thái thời tiết trong ngày thành nhãn mô tả ngắn gọn (`"Rainy"`, `"Clear"`,
-            `"Hot Sunny"`, `"Sunny"`, `"Partly Cloudy"`, `"Cool"`) dựa trên lượng mưa và nhiệt độ trung bình.
+            `"Hot Sunny"`, `"Sunny"`, `"Partly Cloudy"`, `"Cool"`, `"Unknown"`) dựa trên lượng mưa và nhiệt độ trung bình.
 
         Input:
             - temp (float | None): Nhiệt độ trung bình trong ngày (°C).
@@ -65,6 +75,8 @@ class ReportingService:
         Output:
             - str: Chuỗi nhãn trạng thái thời tiết phục vụ hiển thị trên báo cáo và xuất CSV.
         """
+        if temp is None and precip is None:
+            return "Unknown"
         if precip is not None and precip >= 2.0:
             return "Rainy"
         if temp is None:
@@ -182,9 +194,17 @@ class ReportingService:
             babies = int(r["observed_total_babies"] or 0)
             guests = int(r["observed_total_guests"] or 0)
             rn = int(r["observed_total_stay_nights"] or 0)
+
+            row_sum_adr = float(r["sum_adr"] or 0.0)
+            row_adr_cnt = int(r["adr_valid_count"] or 0)
+            row_sum_lt = int(r["sum_lead_time"] or 0)
+            row_lt_cnt = int(r["lead_time_valid_count"] or 0)
+            row_guest_cnt = int(r["guest_valid_booking_count"] or 0)
+            row_stay_cnt = int(r["stay_valid_booking_count"] or 0)
+
             adr_val = float(r["avg_adr"]) if r["avg_adr"] is not None else 0.0
-            temp_val = float(r["temperature_mean"]) if r["temperature_mean"] is not None else 22.0
-            precip_val = float(r["precipitation"]) if r["precipitation"] is not None else 0.0
+            temp_val = float(r["temperature_mean"]) if r["temperature_mean"] is not None else None
+            precip_val = float(r["precipitation"]) if r["precipitation"] is not None else None
 
             tot_bookings += tb
             tot_arrivals += arr
@@ -194,16 +214,16 @@ class ReportingService:
             tot_babies += babies
             tot_guests += guests
             tot_room_nights += rn
-            sum_adr_num += float(r["sum_adr"] or 0.0)
-            sum_adr_den += int(r["adr_valid_count"] or 0)
-            sum_lt_num += int(r["sum_lead_time"] or 0)
-            sum_lt_den += int(r["lead_time_valid_count"] or 0)
-            guest_valid_cnt += int(r["guest_valid_booking_count"] or 0)
-            stay_valid_cnt += int(r["stay_valid_booking_count"] or 0)
+            sum_adr_num += row_sum_adr
+            sum_adr_den += row_adr_cnt
+            sum_lt_num += row_sum_lt
+            sum_lt_den += row_lt_cnt
+            guest_valid_cnt += row_guest_cnt
+            stay_valid_cnt += row_stay_cnt
 
             if is_hol:
                 holiday_days += 1
-            if r["temperature_status"] == "OBSERVED":
+            if r["temperature_status"] == "COMPLETE":
                 weather_obs_days += 1
 
             if is_wknd:
@@ -221,8 +241,8 @@ class ReportingService:
                     is_weekend=is_wknd,
                     is_holiday=is_hol,
                     holiday_names=hol_names,
-                    temperature_mean=float(r["temperature_mean"]) if r["temperature_mean"] is not None else None,
-                    precipitation=float(r["precipitation"]) if r["precipitation"] is not None else None,
+                    temperature_mean=temp_val,
+                    precipitation=precip_val,
                     total_bookings=tb,
                     non_canceled_bookings=arr,
                     total_cancellations=canc,
@@ -233,6 +253,12 @@ class ReportingService:
                     observed_total_guests=guests,
                     target_guests=int(r["target_guests"]) if r["target_guests"] is not None else None,
                     observed_total_stay_nights=rn,
+                    guest_valid_booking_count=row_guest_cnt,
+                    stay_valid_booking_count=row_stay_cnt,
+                    lead_time_valid_count=row_lt_cnt,
+                    adr_valid_count=row_adr_cnt,
+                    sum_lead_time=row_sum_lt,
+                    sum_adr=row_sum_adr,
                     avg_party_size=float(r["avg_party_size"]) if r["avg_party_size"] is not None else None,
                     avg_stay_nights=float(r["avg_stay_nights"]) if r["avg_stay_nights"] is not None else None,
                     avg_lead_time=float(r["avg_lead_time"]) if r["avg_lead_time"] is not None else None,
@@ -243,16 +269,16 @@ class ReportingService:
                     day_of_week=dow_name,
                     day_type=day_type_str,
                     arrivals=arr,
-                    departures=max(1, round(arr * 0.92)),
+                    departures=None,
                     active_stays=rn,
                     room_nights=rn,
                     active_guests=guests,
                     adr=adr_val,
                     is_pt_holiday=is_hol,
                     holiday_local_name=hol_names[0] if hol_names else None,
-                    weather_temp_mean=round(temp_val, 1),
-                    weather_precip_sum=round(precip_val, 1),
-                    weather_status=cls._weather_status_label(r["temperature_mean"], r["precipitation"]),
+                    weather_temp_mean=round(temp_val, 1) if temp_val is not None else None,
+                    weather_precip_sum=round(precip_val, 1) if precip_val is not None else None,
+                    weather_status=cls._weather_status_label(temp_val, precip_val),
                     is_peak_day=(fdate_iso == peak_date_str),
                 )
             )
@@ -289,6 +315,25 @@ class ReportingService:
             else f"{eff_iso_year} - Week {eff_iso_week:02d} ({start_short} - {end_short})"
         )
 
+        # Compute actual YoY deltas from prior year if covered in Mart, otherwise None
+        prior_totals = OperationsRepository.fetch_prior_year_period_totals(
+            conn,
+            start_date=period_start,
+            end_date=period_end,
+            expected_days_count=days_count,
+        )
+        yoy_arr_str: str | None = None
+        yoy_rn_str: str | None = None
+        if prior_totals:
+            p_arr = prior_totals["total_arrivals"]
+            p_rn = prior_totals["total_room_nights"]
+            if p_arr > 0:
+                arr_delta = round(((tot_arrivals - p_arr) / p_arr) * 100.0, 1)
+                yoy_arr_str = f"{'+' if arr_delta >= 0 else ''}{arr_delta}% YoY"
+            if p_rn > 0:
+                rn_delta = round(((tot_room_nights - p_rn) / p_rn) * 100.0, 1)
+                yoy_rn_str = f"{'+' if rn_delta >= 0 else ''}{rn_delta}% YoY"
+
         period_info = ReportPeriodInfo(
             iso_year=eff_iso_year,
             iso_week=eff_iso_week,
@@ -300,13 +345,16 @@ class ReportingService:
             is_complete_week=(days_count == 7),
             overall_guest_status=overall_status,
             total_arrivals=tot_arrivals,
-            total_departures=sum(d.departures for d in daily_items),
+            total_departures=None,
             total_room_nights=tot_room_nights,
             avg_daily_active_guests=avg_daily_guests_int,
             peak_day_date=peak_date_str,
             peak_day_guests=peak_guests_val,
             holiday_days_count=holiday_days,
             weather_Completeness_ratio=weather_comp,
+            weather_completeness_ratio=weather_comp,
+            yoy_arrivals_delta=yoy_arr_str,
+            yoy_room_nights_delta=yoy_rn_str,
         )
 
         capacity_summary = CapacityShiftSummary(
@@ -367,7 +415,7 @@ class ReportingService:
         Vai trò (Role):
             Tạo Báo cáo tóm tắt công suất vận hành (DO-R02) bằng cách tái sử dụng kết quả đã đối soát
             từ `get_weekly_demand_report()`, sau đó phân nhóm các ngày theo `Weekday` và `Weekend`
-            để tính tổng và trung bình lượt khách đến, đêm phòng, khách lưu trú và ADR cho từng nhóm.
+            để tính tổng tử số và tổng mẫu số hợp lệ riêng cho từng nhóm (ADR, party size, stay nights).
 
         Input:
             - conn (psycopg.Connection): Kết nối cơ sở dữ liệu PostgreSQL.
@@ -398,7 +446,16 @@ class ReportingService:
             t_arr = sum(r.arrivals for r in sub)
             t_rn = sum(r.room_nights for r in sub)
             t_g = sum(r.active_guests for r in sub)
-            avg_adr = round(sum(r.adr for r in sub) / cnt, 2)
+
+            grp_sum_adr = sum(r.sum_adr for r in sub)
+            grp_adr_cnt = sum(r.adr_valid_count for r in sub)
+            grp_guest_cnt = sum(r.guest_valid_booking_count for r in sub)
+            grp_stay_cnt = sum(r.stay_valid_booking_count for r in sub)
+
+            avg_adr = round(grp_sum_adr / grp_adr_cnt, 2) if grp_adr_cnt > 0 else None
+            avg_party_size = round(t_g / grp_guest_cnt, 4) if grp_guest_cnt > 0 else None
+            avg_stay_nights = round(t_rn / grp_stay_cnt, 4) if grp_stay_cnt > 0 else None
+
             groups.append(
                 CapacityGroupBreakdown(
                     day_type=dtype,
@@ -410,8 +467,8 @@ class ReportingService:
                     total_active_guests=t_g,
                     avg_daily_active_guests=round(t_g / cnt, 1),
                     avg_adr=avg_adr,
-                    avg_party_size=weekly.summary.avg_party_size,
-                    avg_stay_nights=weekly.summary.avg_stay_nights,
+                    avg_party_size=avg_party_size,
+                    avg_stay_nights=avg_stay_nights,
                 )
             )
 
@@ -490,9 +547,9 @@ class ReportingService:
                 row.total_cancellations,
                 row.room_nights,
                 row.active_guests,
-                f"{row.adr:.2f}",
+                f"{row.adr:.2f}" if row.adr is not None else "",
                 row.holiday_local_name or ("Holiday" if row.is_pt_holiday else "Normal"),
-                row.weather_temp_mean,
+                row.weather_temp_mean if row.weather_temp_mean is not None else "",
                 row.weather_status,
             ])
 

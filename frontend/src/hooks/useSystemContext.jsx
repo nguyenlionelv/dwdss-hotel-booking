@@ -1,23 +1,64 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { fetchHealthStatus, fetchSystemMetadata } from '../services/apiClient';
-import { MOCK_HEALTH, MOCK_METADATA } from '../data/mockData';
+import {
+  fetchHealthStatus,
+  fetchSystemMetadata,
+  isDemoModeEnabled,
+  setDemoModeEnabled,
+} from '../services/apiClient';
+
+const INITIAL_HEALTH = {
+  status: 'loading',
+  db_connected: false,
+  mart_published: false,
+  matches_active_dw: false,
+  data_version: null,
+  dataset_release_id: null,
+  is_mock: false,
+  demo_mode: false,
+  api_error: false,
+};
+
+const INITIAL_METADATA = {
+  hotel_name: 'City Hotel',
+  location: 'Lisbon, Portugal',
+  timezone: 'Europe/Lisbon',
+  data_version: null,
+  dataset_release_id: null,
+  date_range: {
+    actual_start: null,
+    actual_end: null,
+    min_date: null,
+    max_date: null,
+    total_days: 0,
+  },
+  countries: [{ code: 'ALL', name: 'All Markets (Worldwide)', booking_count: null }],
+  is_mock: false,
+  demo_mode: false,
+  api_error: false,
+};
 
 const SystemContext = createContext({
-  health: MOCK_HEALTH,
-  metadata: MOCK_METADATA,
-  loading: false,
+  health: INITIAL_HEALTH,
+  metadata: INITIAL_METADATA,
+  loading: true,
+  demoMode: false,
+  toggleDemoMode: () => {},
   refreshSystemStatus: () => {},
 });
 
 export function SystemProvider({ children }) {
-  const [health, setHealth] = useState({ ...MOCK_HEALTH, is_mock: true });
-  const [metadata, setMetadata] = useState({ ...MOCK_METADATA, is_mock: true });
+  const [health, setHealth] = useState(INITIAL_HEALTH);
+  const [metadata, setMetadata] = useState(INITIAL_METADATA);
   const [loading, setLoading] = useState(true);
+  const [demoMode, setDemoModeState] = useState(() => isDemoModeEnabled());
 
-  const loadStatus = async () => {
+  const loadStatus = async (overrideDemo = demoMode) => {
     setLoading(true);
     try {
-      const [h, m] = await Promise.all([fetchHealthStatus(), fetchSystemMetadata()]);
+      const [h, m] = await Promise.all([
+        fetchHealthStatus({ demo: overrideDemo }),
+        fetchSystemMetadata({ demo: overrideDemo }),
+      ]);
       setHealth(h);
       setMetadata(m);
     } finally {
@@ -25,8 +66,15 @@ export function SystemProvider({ children }) {
     }
   };
 
+  const toggleDemoMode = (nextVal) => {
+    const target = typeof nextVal === 'boolean' ? nextVal : !demoMode;
+    setDemoModeEnabled(target);
+    setDemoModeState(target);
+    loadStatus(target);
+  };
+
   useEffect(() => {
-    loadStatus();
+    loadStatus(demoMode);
   }, []);
 
   return (
@@ -35,7 +83,9 @@ export function SystemProvider({ children }) {
         health,
         metadata,
         loading,
-        refreshSystemStatus: loadStatus,
+        demoMode,
+        toggleDemoMode,
+        refreshSystemStatus: () => loadStatus(demoMode),
       }}
     >
       {children}

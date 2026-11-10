@@ -25,28 +25,59 @@ export default function Header() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const isDemo = Boolean(
+    health?.is_mock || health?.demo_mode || metadata?.is_mock || metadata?.demo_mode
+  );
+  const isOffline = Boolean(
+    health?.api_error ||
+      metadata?.api_error ||
+      health?.status === "offline" ||
+      health?.db_connected === false
+  );
+  const isHealthy =
+    !isDemo &&
+    !isOffline &&
+    (health?.status === "healthy" || health?.status === "ok") &&
+    Boolean(health?.db_connected) &&
+    Boolean(health?.mart_published);
+
   const actualStart =
     metadata?.date_range?.actual_start ||
     metadata?.date_range?.min_date ||
-    "2015-08-31";
+    "—";
   const actualEnd =
     metadata?.date_range?.actual_end ||
     metadata?.date_range?.max_date ||
-    "2017-08-31";
-  const totalDays = metadata?.date_range?.total_days || 732;
+    "—";
+  const totalDays = metadata?.date_range?.total_days || 0;
 
   const rawVersion =
     metadata?.data_version ||
     health?.data_version ||
     metadata?.dataset_release_id ||
     health?.dataset_release_id ||
-    "9fe497e2";
-  const shortVersion = String(rawVersion).replace(/^v/, "").slice(0, 8);
+    null;
+  const shortVersion = rawVersion
+    ? String(rawVersion).replace(/^v/, "").slice(0, 8)
+    : isDemo
+      ? "demo"
+      : "offline";
 
-  const isHealthy =
-    health?.status === "healthy" ||
-    health?.status === "ok" ||
-    Boolean(health?.mart_published);
+  const statusLabel = isDemo
+    ? "Demo Mode (Mock)"
+    : isHealthy
+      ? "Healthy"
+      : isOffline
+        ? "Offline / Error"
+        : "Degraded";
+
+  const statusColorClass = isHealthy
+    ? "bg-[#477A61]"
+    : isDemo
+      ? "bg-[#C58B35]"
+      : isOffline
+        ? "bg-[#B64C43]"
+        : "bg-[#C58B35]";
 
   const getActiveView = () => {
     if (location.pathname.startsWith("/reports")) {
@@ -134,7 +165,9 @@ export default function Header() {
         <span className="hidden xl:inline text-[#E5E5E0]">|</span>
         <span className="hidden md:inline font-mono text-[#252525]">
           {actualStart} → {actualEnd}{" "}
-          <span className="font-sans text-[#666666]">({totalDays} days)</span>
+          {totalDays > 0 && (
+            <span className="font-sans text-[#666666]">({totalDays} days)</span>
+          )}
         </span>
         <span className="hidden md:inline text-[#E5E5E0]">|</span>
         <span
@@ -152,24 +185,13 @@ export default function Header() {
           }
         >
           <span
-            className={`relative inline-flex w-2 h-2 rounded-full ${
-              isHealthy ? "bg-[#477A61]" : "bg-[#C58B35]"
-            }`}
+            className={`relative inline-flex w-2 h-2 rounded-full ${statusColorClass}`}
           >
             <span
-              className={`absolute inset-0 rounded-full animate-ping opacity-75 ${
-                isHealthy ? "bg-[#477A61]" : "bg-[#C58B35]"
-              }`}
-            />
-            <span
-              className={`absolute inset-0 rounded-full ${
-                isHealthy
-                  ? "shadow-[0_0_6px_2px_rgba(71,122,97,0.65)]"
-                  : "shadow-[0_0_6px_2px_rgba(197,139,53,0.65)]"
-              }`}
+              className={`absolute inset-0 rounded-full animate-ping opacity-75 ${statusColorClass}`}
             />
           </span>
-          <span>{isHealthy ? "Healthy" : "Degraded"}</span>
+          <span>{statusLabel}</span>
         </span>
       </div>
     </header>
