@@ -1,0 +1,40 @@
+{
+  "retrieved_at_utc": "2026-11-10T12:52:32.917433+00:00",
+  "documentation": "https://open-meteo.com/en/docs/historical-weather-api",
+  "geocoding_request": "https://geocoding-api.open-meteo.com/v1/search?name=Lisbon&count=10&language=en&format=json&countryCode=PT",
+  "weather_request": "https://archive-api.open-meteo.com/v1/archive?latitude=38.72509&longitude=-9.1498&start_date=2015-07-01&end_date=2017-08-31&daily=temperature_2m_mean%2Cprecipitation_sum&timezone=Europe%2FLisbon&models=era5",
+  "selected_city_result": {
+    "id": 2267057,
+    "name": "Lisbon",
+    "latitude": 38.72509,
+    "longitude": -9.1498,
+    "elevation": 68.0,
+    "feature_code": "PPLC",
+    "country_code": "PT",
+    "admin1_id": 2267056,
+    "admin2_id": 6458923,
+    "timezone": "Europe/Lisbon",
+    "population": 517802,
+    "country_id": 2264397,
+    "country": "Portugal",
+    "admin1": "Lisbon District",
+    "admin2": "Lisbon Municipality"
+  },
+  "coordinate_semantics": "Representative Lisbon city coordinate, not the anonymized hotel's exact location.",
+  "model": "ERA5",
+  "timezone": "Europe/Lisbon",
+  "daily_variables": [
+    "temperature_2m_mean",
+    "precipitation_sum"
+  ],
+  "units": {
+    "time": "iso8601",
+    "temperature_2m_mean": "°C",
+    "precipitation_sum": "mm"
+  },
+  "weather_file": "data\\raw\\weather\\open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261110.json",
+  "weather_sha256": "fccc24f4ba84849005154e31aee6ff7b307ce0d2a8f6556ae44c1e1f28f3339a",
+  "geocoding_file": "data\\raw\\weather\\open_meteo_lisbon_geocoding_20261110.json",
+  "geocoding_sha256": "68af0111ffb827b4e817863dd6aa38d118ba821ccffb6860b4d2e08d0e07f7ee",
+  "returned_days": 793
+}

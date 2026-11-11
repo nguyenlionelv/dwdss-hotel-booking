@@ -29,6 +29,12 @@ data/raw/**/*.jsonl
 data/raw/**/*.parquet
 data/raw/**/*.xlsx
 data/raw/**/*.zip
+!data/raw/booking/mathsian_hotel-bookings_20261110/hotel_bookings.csv
+!data/raw/booking/booking_acquisition_manifest_20261110.json
+!data/raw/holiday/pt_lisboa_holidays_2015_2017_20261110.csv
+!data/raw/holiday/pt_lisboa_holidays_2015_2017_20261110.metadata.json
+!data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261110.json
+!data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261110.metadata.json
 ml/artifacts/*.joblib
 ml/artifacts/*.pkl
 artifacts/forecasts/*
