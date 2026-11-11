@@ -59,12 +59,12 @@ The pre-implementation map is [api_contract_mapping.md](api_contract_mapping.md)
 | Endpoint | Parameters / response |
 |---|---|
 | `GET /api/dss/models` | Lists verified saved artifacts, IDs, labels, kind, default, versions, protocol and delay. The UI filters `kind=daily`. |
-| `GET /api/dss/demand-forecast` | `as_of_date=2017-08-24`, optional registry `model_name`, `horizon=1..7` (default 7). Typed hotel/version/time, model metadata, thresholds, summary, forecast rows, canonical history and within-protocol benchmark comparisons. |
+| `GET /api/dss/demand-forecast` | `as_of_date=2017-08-31` (default; forecasts 1-7 September), optional registry `model_name`, `horizon=1..7` (default 7). Typed hotel/version/time, model metadata, thresholds, summary, forecast rows, canonical history and within-protocol benchmark comparisons. |
 | `GET /api/dss/monthly-demand-forecast` | Month-end `as_of_date` (default `2017-08-31`), optional monthly registry `model_name`. Typed `kind=monthly`, next `forecast_month`, `horizon_months=1`, `units=guests/month`, prediction and metadata. |
 
 The legacy summary field `total_predicted_guests_7d` sums the requested horizon; `horizon` explicitly identifies shorter requests. Predictions retain real precision; display rounding is separate. Actuals after T are canonical values for explicit backtest display only and never enter prediction features. Room-night predictions remain NULL.
 
-DSS classification is separate from forecasting. Its 56-calendar-day window ends at the latest label available under the chosen delay. It requires all 56 dates to be COMPLETE and uses population standard deviation (`ddof=0`), HIGH at μ+σ, LOW at max(0, μ−σ), with HIGH tested first at an equal boundary. Otherwise thresholds are NULL and every row is INSUFFICIENT_HISTORY. Actions use only the documented fixed text. At the default causal request there are **53 COMPLETE days**, so classification is correctly unavailable.
+DSS classification is separate from forecasting. Its 56-calendar-day window ends at the latest label available under the chosen delay. It requires all 56 dates to be COMPLETE and uses population standard deviation (`ddof=0`), HIGH at μ+σ, LOW at max(0, μ−σ), with HIGH tested first at an equal boundary. Otherwise thresholds are NULL and every row is INSUFFICIENT_HISTORY. Actions use only the documented fixed text. At the backtest causal cutoff `2017-08-24` there are **53 COMPLETE days**, so classification is correctly unavailable.
 
 The UI now loads registry choices, removes untrained legacy model claims, and displays errors instead of silently returning fabricated forecasts. Mock data is restricted to explicit labeled Demo Mode. Stay-night controls are disabled, unsupported values remain unavailable, and canonical NULLs render as gaps. The fixed μ±σ rule and strict 56-day requirement replace the previous adjustable/28-day behavior. Benchmark rows include availability flags; evaluated algorithms without serving artifacts are not selectable. The existing visual layout is retained.
 
@@ -78,7 +78,7 @@ python scripts/train_models.py --export --tree-jobs 6
 # After an interrupted training protocol, retain and verify completed artifacts:
 python scripts/train_models.py --resume --tree-jobs 6
 
-python -m ml.demand_forecast.predict --data-version 9963548d-c0fc-44b4-92dc-55f139447ea7 --cutoff 2017-08-24
+python -m ml.demand_forecast.predict --data-version 9963548d-c0fc-44b4-92dc-55f139447ea7 --cutoff 2017-08-31
 python -m ml.demand_forecast.predict --data-version 9963548d-c0fc-44b4-92dc-55f139447ea7 --cutoff 2017-08-31 --kind monthly
 python -m ml.demand_forecast.evaluate
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000

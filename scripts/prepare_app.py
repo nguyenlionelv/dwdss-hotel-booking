@@ -52,7 +52,7 @@ def compatible_models(models, snapshot, version, fingerprint):
     for kind in ('daily', 'monthly'):
         if sum(m['kind'] == kind and m.get('default') is True for m, _ in candidates) != 1:
             raise ValueError('Each forecasting kind requires exactly one default')
-    cutoff = daily.full_date.max() - pd.Timedelta(days=7)
+    cutoff = daily.full_date.max()
     for metadata, state in candidates:
         if sha256(snapshot / 'input_manifest.json') != metadata['input_manifest_sha256']:
             raise ValueError('Artifact input manifest differs from snapshot')

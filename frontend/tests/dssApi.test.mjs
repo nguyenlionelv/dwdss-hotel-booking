@@ -49,11 +49,23 @@ test('live FastAPI response reaches the real frontend client', { skip: !process.
     const result = await fetchDemandForecast({ model_name: model.id });
     assert.equal(result.is_mock, false);
     assert.equal(result.forecasts.length, 7);
-    assert.equal(result.forecasts[0].forecast_date, '2017-08-25');
+    assert.equal(result.forecasts[0].forecast_date, '2017-09-01');
     assert.equal(result.summary.total_predicted_guests_7d, result.forecasts.reduce((s, r) => s + r.predicted_guest_count, 0));
     assert.ok(result.forecasts.every((r) => r.predicted_room_nights === null));
     assert.equal(result.decision_support.policy_version, 'dss-v2');
-    assert.equal(result.decision_support.metadata.available_case_56.sample_count, 53);
+    assert.equal(result.forecasts[6].forecast_date, '2017-09-07');
+    assert.ok(result.forecasts.every((r) => r.actual_guest_count === null));
     await assert.rejects(fetchDemandForecast({ model_name: 'xgboost_regressor' }), /Unsupported/);
   } finally { globalThis.fetch = original; }
+});
+
+test('default request forecasts from the last published date', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async (path) => {
+    const url = new URL(path, 'http://localhost');
+    assert.equal(url.searchParams.get('as_of_date'), '2017-08-31');
+    assert.equal(url.searchParams.get('horizon'), '7');
+    return new Response(JSON.stringify({ forecasts: [] }));
+  };
+  try { await fetchDemandForecast(); } finally { globalThis.fetch = original; }
 });

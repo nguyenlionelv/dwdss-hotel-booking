@@ -20,8 +20,12 @@ import {
 
 const CUTOFF_OPTIONS = [
   {
+    value: "2017-08-31",
+    label: "T = 31 Aug 2017 (1-7 Sep forecast)",
+  },
+  {
     value: "2017-08-24",
-    label: "T = 24 Aug 2017 (25–31 Aug forecast)",
+    label: "T = 24 Aug 2017 (25–31 Aug backtest)",
   },
   {
     value: "2017-08-17",
@@ -55,7 +59,7 @@ function getDemandStatusBadge(level) {
 }
 
 export default function DemandForecastPage() {
-  const [cutoffDate, setCutoffDate] = useState("2017-08-24");
+  const [cutoffDate, setCutoffDate] = useState("2017-08-31");
   const [selectedModel, setSelectedModel] = useState("");
   const [budgetUnits, setBudgetUnits] = useState(100);
 

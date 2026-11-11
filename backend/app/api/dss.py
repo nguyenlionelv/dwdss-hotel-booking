@@ -32,7 +32,7 @@ def models(conn=Depends(get_db)):
         'label_delay_days':m['availability_assumptions']['label_delay_days']} for m,_ in available]}
 
 @router.get('/demand-forecast',response_model=DailyForecastResponse)
-def daily(as_of_date:date=date(2017,8,24),model_name:str|None=None,horizon:int=Query(7,ge=1,le=7),
+def daily(as_of_date:date=date(2017,8,31),model_name:str|None=None,horizon:int=Query(7,ge=1,le=7),
           budget_units:Decimal=Query(Decimal('100'),gt=0,le=10000,decimal_places=2),conn=Depends(get_db)):
     return invoke(lambda: service.daily_forecast(conn,as_of_date,model_name,horizon,budget_units))
 

@@ -215,3 +215,22 @@ def test_api_missing_artifacts_returns_error_not_forecast(tmp_path,monkeypatch):
     monkeypatch.setenv('DWDSS_MODEL_DIR',str(tmp_path))
     response=TestClient(app).get('/api/dss/demand-forecast')
     assert response.status_code==503 and 'forecasts' not in response.json()
+
+
+@pytest.mark.parametrize('policy,delay',[('canonical_history',0),('causal_history',1)])
+def test_last_published_day_forecasts_beyond_history_without_future_labels(frames,policy,delay):
+    daily,bookings=frames
+    cutoff=daily.full_date.max()
+    meta={'training_cutoff':'2015-09-01','imputation_policy':policy,
+          'availability_assumptions':{'label_delay_days':delay}}
+    state={'correction':np.zeros((7,7)).tolist(),'params':{'reference':None,'correction':None}}
+    if policy=='canonical_history':
+        engine=imputed.Experiment(daily,bookings)
+        series=daily.set_index("full_date").target_guests
+        state['params'],_=engine.fit_baseline(series,engine.history_stats(series),'2015-09-01')
+    dates,values,latest=daily_prediction(meta,state,daily,bookings,cutoff)
+    assert dates==list(pd.date_range(cutoff+pd.Timedelta(days=1),periods=7))
+    assert len(values)==7 and all(np.isfinite(v) and v>=0 for v in values)
+    assert latest==cutoff-pd.Timedelta(days=delay)
+    with pytest.raises(ForecastInputError):
+        daily_prediction(meta,state,daily,bookings,cutoff+pd.Timedelta(days=1))

@@ -51,3 +51,26 @@ def test_advisories_preserve_saved_predictions_and_strict_tiers():
     assert sum(round(day['allocation_units'] * 100) for day in units) == 12345
     invalid_budget = client.get('/api/dss/demand-forecast', params={'budget_units': '123.456'})
     assert invalid_budget.status_code == 422
+
+
+@pytest.mark.skipif(os.getenv('DWDSS_INTEGRATION')!='1',reason='Requires local published Mart and saved artifacts')
+def test_default_forecast_is_september_first_week_for_every_daily_model():
+    client = TestClient(create_app())
+    models_response = client.get('/api/dss/models')
+    assert models_response.status_code == 200, models_response.text
+    models = [m for m in models_response.json()['models'] if m['kind'] == 'daily']
+    assert models
+    expected = [str(day.date()) for day in pd.date_range('2017-09-01', '2017-09-07')]
+    for params in [{}] + [{'model_name': m['id']} for m in models]:
+        response = client.get('/api/dss/demand-forecast', params=params)
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        DailyForecastResponse.model_validate(payload)
+        assert payload['as_of_date'] == '2017-08-31'
+        assert [r['forecast_date'] for r in payload['forecasts']] == expected
+        assert all(r['actual_guest_count'] is None for r in payload['forecasts'])
+        assert all(r['is_holiday'] is None for r in payload['forecasts'])
+        assert payload['resource_allocation']['status'] == 'ready'
+        assert [r['date'] for r in payload['resource_allocation']['daily_allocation']] == expected
+        assert max(r['full_date'] for r in payload['recent_history']) <= '2017-08-31'
+    assert client.get('/api/dss/demand-forecast', params={'as_of_date': '2017-09-01'}).status_code == 422

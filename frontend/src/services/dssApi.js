@@ -11,7 +11,7 @@ export async function fetchDemandForecast(params = {}, options = {}) {
     return { ...MOCK_DSS_FORECAST, forecasts: MOCK_DSS_FORECAST.forecasts || MOCK_DSS_FORECAST.forecast_rows,
       is_mock: true, demo_mode: true };
   }
-  const { as_of_date = '2017-08-24', model_name, horizon = 7, budget_units = 100 } = params;
+  const { as_of_date = '2017-08-31', model_name, horizon = 7, budget_units = 100 } = params;
   const query = new URLSearchParams({ as_of_date, horizon });
   if (model_name) query.set('model_name', model_name);
   query.set('budget_units', String(budget_units));
