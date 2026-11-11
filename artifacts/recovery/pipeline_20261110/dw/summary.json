@@ -1,0 +1,52 @@
+{
+  "status": "completed",
+  "output_dir": "C:\\Users\\ACER\\TwoDrive\\Documents\\BachKhoa\\HK261\\Data Warehouse\\dwdss-hotel-booking\\artifacts\\recovery\\pipeline_20261110\\dw",
+  "steps": [
+    {
+      "name": "preflight",
+      "report": "inputs/preflight.json",
+      "exit_code": 0
+    },
+    {
+      "name": "migration",
+      "report": "migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "mart_migration",
+      "report": "mart_migration.json",
+      "exit_code": 0
+    },
+    {
+      "name": "load",
+      "report": "first_load.json",
+      "exit_code": 0
+    },
+    {
+      "name": "quality",
+      "report": "quality_report.json",
+      "exit_code": 0
+    },
+    {
+      "name": "rerun",
+      "report": "rerun.json",
+      "exit_code": 0
+    },
+    {
+      "name": "tests",
+      "report": "pytest.xml",
+      "exit_code": 0
+    }
+  ],
+  "tests_run": true,
+  "run_id": "3ab8540b-3874-4162-b775-bbc2ad01b2b3",
+  "data_version": "9963548d-c0fc-44b4-92dc-55f139447ea7",
+  "load_status": "published",
+  "verified": true,
+  "mart_verified": true,
+  "mart_counts": {
+    "daily_hotel_operations": 793,
+    "daily_hotel_operations_by_country": 131638
+  },
+  "mart_build_fingerprint": "444f39b83b73019be53be7762c7bbda55121b2ef8667ad7226fba32f5f23499e"
+}

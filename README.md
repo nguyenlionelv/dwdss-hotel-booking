@@ -14,6 +14,21 @@ React + Vite · FastAPI · PostgreSQL 17 · Python ETL/ML · Docker Compose.
 
 `Raw → Staging → Data Warehouse → Operations Mart → OLAP / Reporting / Mining-DSS`
 
+## Chạy toàn bộ hệ thống
+
+Mở Docker Desktop, từ root repository chạy:
+
+```powershell
+python scripts/start_app.py
+```
+
+Lệnh tự kiểm tra raw sources, chạy lại Staging → DW → Mart cùng quality gates, chuẩn bị model đúng data version, build Docker images và khởi động app. Model còn hợp lệ được tái sử dụng; model thiếu hoặc khác version được train vào release mới. Giữ nguyên database/volume và `.env` đang có.
+
+- App: [localhost:5173](http://localhost:5173/dss/demand-forecast)
+- API: [localhost:8000/docs](http://localhost:8000/docs)
+
+Cần Python 3.12+ và Docker Compose v2; dependency ETL/ML được cài trong Docker. Raw files đã xác minh phải có sẵn vì không được lưu trong Git. Xem [hướng dẫn chạy](docs/app_runbook.md) cho lần thiết lập đầu và xử lý lỗi.
+
 ## Tài liệu hiện hành
 
 | Tài liệu | Nội dung |

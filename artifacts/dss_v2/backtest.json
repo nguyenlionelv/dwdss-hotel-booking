@@ -1,0 +1,109 @@
+{
+  "policy_sha256": "00242267237a026f0f43c9078c551cdb42b3ae5e24df382606ca5b040e71a30b",
+  "selection_uses_holdout": false,
+  "models": [
+    {
+      "model_id": "imputed_canonical_history",
+      "counts": {
+        "origins": 85,
+        "origins_with_insights": 0,
+        "insights": 0,
+        "missingness_changed_origins": 0,
+        "scorable_insights": 0,
+        "unscorable_insights": 0,
+        "direction_unconfirmed_proxy": 0,
+        "tail_unconfirmed_proxy": 0
+      },
+      "suppressions": {
+        "REFERENCE_UNSUPPORTED": 12,
+        "WITHIN_TYPICAL_RANGE": 595,
+        "STABLE_DEMAND": 498
+      },
+      "selected_origins": [
+        {
+          "cutoff": "2017-08-24",
+          "history": {
+            "calendar_days": 56,
+            "sample_count": 53,
+            "coverage": 0.9464285714285714,
+            "mean": 146.9433962264151,
+            "std": 30.979158685464913,
+            "supported": true
+          },
+          "insights": []
+        }
+      ]
+    },
+    {
+      "model_id": "imputed_imputed_history",
+      "counts": {
+        "origins": 85,
+        "origins_with_insights": 0,
+        "insights": 0,
+        "missingness_changed_origins": 0,
+        "scorable_insights": 0,
+        "unscorable_insights": 0,
+        "direction_unconfirmed_proxy": 0,
+        "tail_unconfirmed_proxy": 0
+      },
+      "suppressions": {
+        "REFERENCE_UNSUPPORTED": 12,
+        "WITHIN_TYPICAL_RANGE": 595,
+        "STABLE_DEMAND": 498
+      },
+      "selected_origins": [
+        {
+          "cutoff": "2017-08-24",
+          "history": {
+            "calendar_days": 56,
+            "sample_count": 53,
+            "coverage": 0.9464285714285714,
+            "mean": 146.9433962264151,
+            "std": 30.979158685464913,
+            "supported": true
+          },
+          "insights": []
+        }
+      ]
+    },
+    {
+      "model_id": "causal_causal_history",
+      "counts": {
+        "origins": 85,
+        "origins_with_insights": 0,
+        "insights": 0,
+        "missingness_changed_origins": 0,
+        "scorable_insights": 0,
+        "unscorable_insights": 0,
+        "direction_unconfirmed_proxy": 0,
+        "tail_unconfirmed_proxy": 0
+      },
+      "suppressions": {
+        "REFERENCE_UNSUPPORTED": 14,
+        "WITHIN_TYPICAL_RANGE": 595,
+        "STABLE_DEMAND": 496
+      },
+      "selected_origins": [
+        {
+          "cutoff": "2017-08-24",
+          "history": {
+            "calendar_days": 56,
+            "sample_count": 53,
+            "coverage": 0.9464285714285714,
+            "mean": 147.11320754716982,
+            "std": 30.920282351033507,
+            "supported": true
+          },
+          "insights": []
+        }
+      ]
+    }
+  ],
+  "protected_files_unchanged": true,
+  "limitations": [
+    "Overlapping seven-day origins are dependent.",
+    "Unconfirmed direction/tail proxies are not operational false alarms or business impact.",
+    "Partial actuals are unscorable; missingness stress removes only the latest known day.",
+    "No saved validation residual distribution exists; MAE gates are not uncertainty intervals."
+  ]
+}

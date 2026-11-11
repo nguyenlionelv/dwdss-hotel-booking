@@ -1,0 +1,24 @@
+{
+  "policy_version": "dss-v2",
+  "rule_version": "weekday-insight-advisory-v2",
+  "min_group_56": 6,
+  "min_group_112": 10,
+  "min_error_samples": 30,
+  "calibration_end": "2016-06-30",
+  "validation_end": "2017-05-31",
+  "data_version": "9963548d-c0fc-44b4-92dc-55f139447ea7",
+  "min_complete_56": 42,
+  "thresholds": {
+    "weekday": 3.829081204614483,
+    "transition": 3.4552788240291954
+  },
+  "snapshot_sha256": "4f11d9b719de51e60d3ca96d6e724c8104fdbe3387578182211543e82bf0e3c7",
+  "selection": "highest support with >=85% retention, <=5% missingness flips, <=5% validation tails",
+  "insight_thresholds": {
+    "weekday": 0.6498651321054775
+  },
+  "operational_advisories_validated": false,
+  "insight_calibration": "causal-level-probe-v1; not saved-model development forecasts",
+  "insight_validation_end": "2017-05-31",
+  "holdout_already_inspected": true
+}

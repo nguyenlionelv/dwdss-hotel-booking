@@ -1,0 +1,99 @@
+{
+  "counts": [
+    {
+      "staging_booking": 79330,
+      "staging_holiday": 38,
+      "staging_weather": 793,
+      "fact_booking": 79250,
+      "booking_rejection": 80,
+      "mart_daily": 793,
+      "mart_country": 131638
+    }
+  ],
+  "guest_day_status": [
+    {
+      "guest_data_status": "COMPLETE",
+      "days": 713
+    },
+    {
+      "guest_data_status": "PARTIAL",
+      "days": 80
+    }
+  ],
+  "context": [
+    {
+      "days": 793,
+      "first_date": "2015-07-01",
+      "last_date": "2017-08-31",
+      "holiday_complete": 793,
+      "weather_complete": 793,
+      "holiday_days": 26,
+      "valid_zero_precipitation_days": 566,
+      "null_target_days": 80,
+      "valid_zero_target_days": 5,
+      "target_rule_violations": 0
+    }
+  ],
+  "lineage": [
+    {
+      "facts_after_source_and_context_join": 79250,
+      "distinct_source_keys": 79250,
+      "missing_source_rows": 0,
+      "first_batch_mismatch": 0,
+      "imputed_children": 0,
+      "valid_zero_children": 74140,
+      "null_children": 4
+    }
+  ],
+  "otb_attributes": [
+    {
+      "rows_with_raw_booking_fields": 79330
+    }
+  ],
+  "published_sources": [
+    {
+      "source_id": "booking",
+      "source_file_sha256": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+      "raw_count": 119390,
+      "staged_count": 79330,
+      "reject_count": 0
+    },
+    {
+      "source_id": "holiday",
+      "source_file_sha256": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+      "raw_count": 38,
+      "staged_count": 38,
+      "reject_count": 0
+    },
+    {
+      "source_id": "weather",
+      "source_file_sha256": "fccc24f4ba84849005154e31aee6ff7b307ce0d2a8f6556ae44c1e1f28f3339a",
+      "raw_count": 793,
+      "staged_count": 793,
+      "reject_count": 0
+    }
+  ],
+  "mart_state": [
+    {
+      "dw_run_id": "3ab8540b-3874-4162-b775-bbc2ad01b2b3",
+      "data_version": "9963548d-c0fc-44b4-92dc-55f139447ea7",
+      "row_counts": {
+        "daily_hotel_operations": 793,
+        "daily_hotel_operations_by_country": 131638
+      }
+    }
+  ],
+  "checks": {
+    "staging_counts": true,
+    "booking_reconciles": true,
+    "mart_calendar": true,
+    "complete_context": true,
+    "target_rule": true,
+    "partial_targets_remain_null": true,
+    "join_does_not_duplicate": true,
+    "lineage": true,
+    "no_children_imputation": true,
+    "booking_attributes_retained": true
+  },
+  "passed": true
+}

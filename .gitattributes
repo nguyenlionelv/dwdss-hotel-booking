@@ -1,3 +1,12 @@
 # Preserve the original bytes of DW migrations recorded in PostgreSQL's ledger.
 database/dw/*.sql text eol=lf
 database/marts/002_guest_components.sql text eol=lf
+
+# Preserve checksum-bound configuration and recovery evidence byte-for-byte.
+pipeline/config/coverage_selected_source_set.json -text whitespace=cr-at-eol
+pipeline/config/dw_operations.json -text whitespace=cr-at-eol
+artifacts/recovery/pipeline_20261110/source_verification.json -text whitespace=cr-at-eol
+artifacts/recovery/pipeline_20261110/database_before.json -text whitespace=-trailing-space,cr-at-eol
+
+# ML artifact metadata and snapshot manifests are checksummed at publication.
+artifacts/ml_serving/** -text whitespace=cr-at-eol

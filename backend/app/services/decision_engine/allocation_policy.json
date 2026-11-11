@@ -1,0 +1,165 @@
+{
+  "policy_version": "allocation-v1",
+  "data_version": "9963548d-c0fc-44b4-92dc-55f139447ea7",
+  "selected_policy": "historical_weekday",
+  "lambda": null,
+  "selected_policy_reason": "Best simpler validation policy; blend did not improve mean MRR by more than 0.002",
+  "validation_results": {
+    "status": "available",
+    "eligible_origins": 58,
+    "first_origin": "2017-01-01",
+    "last_origin": "2017-05-24",
+    "selected": "historical_weekday",
+    "policies": {
+      "uniform": {
+        "mean_mrr": 0.11084728246507314,
+        "median_mrr": 0.1092526285982548,
+        "std_mrr_across_origins": 0.03164157239629196,
+        "p10_mrr": 0.07232228791420321,
+        "p90_mrr": 0.1549714285714286
+      },
+      "historical_weekday": {
+        "mean_mrr": 0.10222271843806299,
+        "median_mrr": 0.0985324514215305,
+        "std_mrr_across_origins": 0.03522587529841127,
+        "p10_mrr": 0.05937446663253117,
+        "p90_mrr": 0.14971370683579982,
+        "mean_improvement_vs_uniform": 0.008624564027010145,
+        "win_rate_vs_uniform": 0.6551724137931034,
+        "mean_improvement_vs_historical_weekday": 0.0,
+        "win_rate_vs_historical_weekday": 0.0
+      },
+      "forecast_proportional": {
+        "mean_mrr": 0.10286799656494346,
+        "median_mrr": 0.0947492283877062,
+        "std_mrr_across_origins": 0.03474552366175125,
+        "p10_mrr": 0.06651902518390099,
+        "p90_mrr": 0.15029629948593984
+      },
+      "blended_0": {
+        "mean_mrr": 0.10222271843806299,
+        "median_mrr": 0.0985324514215305,
+        "std_mrr_across_origins": 0.03522587529841127,
+        "p10_mrr": 0.05937446663253117,
+        "p90_mrr": 0.14971370683579982
+      },
+      "blended_0.25": {
+        "mean_mrr": 0.10235139951880136,
+        "median_mrr": 0.09756899407799348,
+        "std_mrr_across_origins": 0.03508922249696301,
+        "p10_mrr": 0.0628634365423085,
+        "p90_mrr": 0.14985935499833483
+      },
+      "blended_0.5": {
+        "mean_mrr": 0.10250195458710662,
+        "median_mrr": 0.09660553673445646,
+        "std_mrr_across_origins": 0.034967183959460864,
+        "p10_mrr": 0.06591626793487543,
+        "p90_mrr": 0.15000500316086984
+      },
+      "blended_0.75": {
+        "mean_mrr": 0.10267077019303285,
+        "median_mrr": 0.09564207939091945,
+        "std_mrr_across_origins": 0.034852058816292254,
+        "p10_mrr": 0.06707355228801393,
+        "p90_mrr": 0.15015065132340483
+      },
+      "blended_1": {
+        "mean_mrr": 0.10286799656494346,
+        "median_mrr": 0.0947492283877062,
+        "std_mrr_across_origins": 0.03474552366175125,
+        "p10_mrr": 0.06651902518390099,
+        "p90_mrr": 0.15029629948593984
+      }
+    },
+    "overlapping_origins_independent": false,
+    "mean_proxy_forecast_mae": 23.667349467794693
+  },
+  "calibration_results": {
+    "status": "available",
+    "eligible_origins": 64,
+    "first_origin": "2016-07-06",
+    "last_origin": "2016-12-19",
+    "selected": "historical_weekday",
+    "policies": {
+      "uniform": {
+        "mean_mrr": 0.1056416419286793,
+        "median_mrr": 0.10267316070492663,
+        "std_mrr_across_origins": 0.04499872253868401,
+        "p10_mrr": 0.04916246765627128,
+        "p90_mrr": 0.14848143982002251
+      },
+      "historical_weekday": {
+        "mean_mrr": 0.11744227718041407,
+        "median_mrr": 0.11671768791275777,
+        "std_mrr_across_origins": 0.04464341566400896,
+        "p10_mrr": 0.06393377148094129,
+        "p90_mrr": 0.15890095141915594,
+        "mean_improvement_vs_uniform": -0.011800635251734776,
+        "win_rate_vs_uniform": 0.421875,
+        "mean_improvement_vs_historical_weekday": 0.0,
+        "win_rate_vs_historical_weekday": 0.0
+      },
+      "forecast_proportional": {
+        "mean_mrr": 0.1214118518019547,
+        "median_mrr": 0.11563573442087227,
+        "std_mrr_across_origins": 0.04728042629630303,
+        "p10_mrr": 0.06833061228156162,
+        "p90_mrr": 0.17081787281199884
+      },
+      "blended_0": {
+        "mean_mrr": 0.11744227718041407,
+        "median_mrr": 0.11671768791275777,
+        "std_mrr_across_origins": 0.04464341566400896,
+        "p10_mrr": 0.06393377148094129,
+        "p90_mrr": 0.15890095141915594
+      },
+      "blended_0.25": {
+        "mean_mrr": 0.11832618928282963,
+        "median_mrr": 0.11625052673340944,
+        "std_mrr_across_origins": 0.045179228573784,
+        "p10_mrr": 0.06369284188499108,
+        "p90_mrr": 0.16101545405462125
+      },
+      "blended_0.5": {
+        "mean_mrr": 0.11930021844083766,
+        "median_mrr": 0.11546433563002689,
+        "std_mrr_across_origins": 0.04576390392724958,
+        "p10_mrr": 0.06805443039539591,
+        "p90_mrr": 0.16415317783343425
+      },
+      "blended_0.75": {
+        "mean_mrr": 0.12034283069447288,
+        "median_mrr": 0.11560987064327448,
+        "std_mrr_across_origins": 0.04646447038192522,
+        "p10_mrr": 0.06819252133847875,
+        "p90_mrr": 0.16800535438735353
+      },
+      "blended_1": {
+        "mean_mrr": 0.1214118518019547,
+        "median_mrr": 0.11563573442087227,
+        "std_mrr_across_origins": 0.04728042629630303,
+        "p10_mrr": 0.06833061228156162,
+        "p90_mrr": 0.17081787281199884
+      }
+    },
+    "overlapping_origins_independent": false
+  },
+  "candidate_lambdas": [
+    0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "selection_tolerance_mean_mrr": 0.002,
+  "development_forecast_source": "causal recent-level proxy, not saved-model validation forecasts",
+  "development_label_delay_days": 1,
+  "selection_uses_holdout": false,
+  "holdout_already_inspected": true,
+  "limitations": [
+    "Saved final models have no archived per-origin pre-selection validation predictions.",
+    "Proxy selection does not establish model-specific validation superiority.",
+    "Overlapping seven-day origins are dependent."
+  ]
+}

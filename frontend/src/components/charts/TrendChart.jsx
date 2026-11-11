@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import { forecastDomain, forecastLabelPosition, forecastNumber } from './forecastGeometry.js';
+import { formatChartAxis, formatDate, formatGuests, formatReference } from '../../lib/dssFormat.mjs';
 
 /**
  * Lumina Analytics Color System (DESIGN.md Section 2.2 & 5.3)
@@ -699,50 +701,36 @@ export function CanvasForecastChart({
     const plotW = Math.max(120, width - pad.left - pad.right);
     const plotH = Math.max(90, height - pad.top - pad.bottom);
 
-    const getHistVal = (h) =>
-      targetMetric === "stay_nights"
-        ? Number(h.observed_total_stay_nights ?? (h.observed_total_guests || 120) * 3.1)
-        : Number(h.target_guests ?? h.observed_total_guests ?? 0);
+    const getHistVal = (h) => forecastNumber(h.target_guests);
+    const getForecastVal = (f) => forecastNumber(f.predicted_guest_count);
+    const getActualAfterT = (f) => forecastNumber(f.actual_guest_count);
+    const highThresh = forecastNumber(thresholdRule.high_threshold);
+    const meanVal = forecastNumber(thresholdRule.mean_guests_8w);
+    const lowThresh = forecastNumber(thresholdRule.low_threshold);
 
-    const getForecastVal = (f) =>
-      targetMetric === "stay_nights"
-        ? Number(f.predicted_room_nights ?? Math.round((f.predicted_guest_count || 130) * 3.1))
-        : Number(f.predicted_guest_count ?? f.predicted_arrivals ?? 0);
-
-    const getActualAfterT = (f) =>
-      targetMetric === "stay_nights"
-        ? f.actual_room_nights != null
-          ? Number(f.actual_room_nights)
-          : null
-        : f.actual_guest_count != null
-          ? Number(f.actual_guest_count)
-          : null;
-
-    const scaleFactor = targetMetric === "stay_nights" ? 3.1 : 1.0;
-    const highThresh =
-      Number(thresholdRule.high_threshold ?? thresholdRule.high_demand_threshold ?? 142.7) *
-      scaleFactor;
-    const meanVal =
-      Number(thresholdRule.mean_guests_8w ?? thresholdRule.rolling_8w_mean ?? 124.5) *
-      scaleFactor;
-    const lowThresh =
-      Number(thresholdRule.low_threshold ?? thresholdRule.low_demand_threshold ?? 106.3) *
-      scaleFactor;
-
-    const allVals = [
-      ...historySlice.map(getHistVal),
-      ...forecasts.map(getForecastVal),
-      highThresh,
-      lowThresh,
-    ].filter((v) => v != null && !Number.isNaN(v));
-
-    const minVal = Math.max(0, Math.min(...allVals) * 0.82);
-    const maxVal = Math.max(...allVals, 10) * 1.12;
-    const range = Math.max(1, maxVal - minVal);
+    const domain = forecastDomain(historySlice, forecasts, thresholdRule);
+    if (!domain) return;
+    const minVal = domain.min;
+    const maxVal = domain.max;
+    const range = maxVal - minVal;
 
     const toY = (v) => pad.top + plotH - ((v - minVal) / range) * plotH;
-    const stepX = plotW / Math.max(1, totalPoints - 1);
-    const toX = (idx) => pad.left + idx * stepX;
+    const markerInset = 6;
+    const stepX = (plotW - markerInset * 2) / Math.max(1, totalPoints - 1);
+    const toX = (idx) => pad.left + markerInset + idx * stepX;
+    const plot = { left: pad.left, right: pad.left + plotW, top: pad.top, bottom: pad.top + plotH };
+
+    const drawDataLabel = (text, x, y) => {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      const maxWidth = plotW - 4;
+      const measured = ctx.measureText(text);
+      const position = forecastLabelPosition(x, y, Math.min(measured.width, maxWidth),
+        measured.actualBoundingBoxAscent || 9, measured.actualBoundingBoxDescent || 2, plot);
+      ctx.fillText(text, position.x, position.y, maxWidth);
+      ctx.restore();
+    };
 
     // Grid lines & Y-axis labels
     ctx.font = "11px 'JetBrains Mono', monospace";
@@ -761,7 +749,7 @@ export function CanvasForecastChart({
       ctx.stroke();
 
       ctx.fillStyle = PALETTE.inkSecondary;
-      ctx.fillText(Math.round(val).toString(), pad.left - 8, y);
+      ctx.fillText(formatChartAxis(val), pad.left - 8, y);
     }
 
     // Vertical Cutoff T divider line
@@ -799,28 +787,31 @@ export function CanvasForecastChart({
 
       ctx.fillStyle = color;
       ctx.font = "500 10px 'JetBrains Mono', monospace";
-      ctx.textAlign = "right";
-      ctx.fillText(label, pad.left + plotW - 4, y - 7);
+      drawDataLabel(label, pad.left + plotW - ctx.measureText(label).width / 2 - 4, y);
     };
 
-    drawThreshold(highThresh, PALETTE.critical, `HIGH (${highThresh.toFixed(1)})`);
-    drawThreshold(meanVal, PALETTE.series3, `μ_8w (${meanVal.toFixed(1)})`);
-    drawThreshold(lowThresh, PALETTE.series5, `LOW (${lowThresh.toFixed(1)})`);
+    if (highThresh != null) drawThreshold(highThresh, PALETTE.critical, `HIGH (${formatReference(highThresh)})`);
+    if (meanVal != null) drawThreshold(meanVal, PALETTE.series3, `μ_8w (${formatReference(meanVal)})`);
+    if (lowThresh != null) drawThreshold(lowThresh, PALETTE.series5, `LOW (${formatReference(lowThresh)})`);
 
     // 1. Solid historical line (T-9 .. T)
     if (historySlice.length > 0) {
       ctx.beginPath();
+      let connected = false;
       historySlice.forEach((h, idx) => {
+        if (getHistVal(h) == null) { connected = false; return; }
         const x = toX(idx);
         const y = toY(getHistVal(h));
-        if (idx === 0) ctx.moveTo(x, y);
+        if (!connected) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
+        connected = true;
       });
       ctx.strokeStyle = PALETTE.series3;
       ctx.lineWidth = 2;
       ctx.stroke();
 
       historySlice.forEach((h, idx) => {
+        if (getHistVal(h) == null) return;
         const x = toX(idx);
         const y = toY(getHistVal(h));
         ctx.beginPath();
@@ -835,19 +826,23 @@ export function CanvasForecastChart({
       .map((f, i) => {
         const v = getActualAfterT(f);
         if (v == null) return null;
-        return { x: toX(historySlice.length + i), y: toY(v), val: v };
+        return { x: toX(historySlice.length + i), y: toY(v), val: v, index: i };
       })
       .filter(Boolean);
 
     if (actualPts.length > 0) {
       ctx.beginPath();
-      if (historySlice.length > 0) {
+      let previousIndex = -2;
+      if (historySlice.length > 0 && getHistVal(historySlice[historySlice.length - 1]) != null) {
         const lastH = historySlice[historySlice.length - 1];
         ctx.moveTo(toX(historySlice.length - 1), toY(getHistVal(lastH)));
-        actualPts.forEach((p) => ctx.lineTo(p.x, p.y));
-      } else {
-        actualPts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+        previousIndex = -1;
       }
+      actualPts.forEach((p) => {
+        if (p.index === previousIndex + 1) ctx.lineTo(p.x, p.y);
+        else ctx.moveTo(p.x, p.y);
+        previousIndex = p.index;
+      });
       ctx.strokeStyle = PALETTE.series5;
       ctx.lineWidth = 1.5;
       ctx.stroke();
@@ -857,15 +852,20 @@ export function CanvasForecastChart({
     if (forecasts.length > 0) {
       ctx.save();
       ctx.beginPath();
-      if (historySlice.length > 0) {
+      let connected = false;
+      if (historySlice.length > 0 && getHistVal(historySlice[historySlice.length - 1]) != null) {
         const lastH = historySlice[historySlice.length - 1];
         ctx.moveTo(toX(historySlice.length - 1), toY(getHistVal(lastH)));
+        connected = true;
       }
       forecasts.forEach((f, i) => {
+        const value = getForecastVal(f);
+        if (value == null) { connected = false; return; }
         const x = toX(historySlice.length + i);
-        const y = toY(getForecastVal(f));
-        if (historySlice.length === 0 && i === 0) ctx.moveTo(x, y);
+        const y = toY(value);
+        if (!connected) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
+        connected = true;
       });
       ctx.strokeStyle = PALETTE.series1;
       ctx.lineWidth = 2.25;
@@ -878,6 +878,7 @@ export function CanvasForecastChart({
         const idx = historySlice.length + i;
         const x = toX(idx);
         const val = getForecastVal(f);
+        if (val == null) return;
         const y = toY(val);
         const isHigh = f.demand_level === "HIGH";
         const isLow = f.demand_level === "LOW";
@@ -896,19 +897,18 @@ export function CanvasForecastChart({
 
         ctx.fillStyle = isHigh ? PALETTE.critical : PALETTE.inkPrimary;
         ctx.font = "600 11px 'JetBrains Mono', monospace";
-        ctx.textAlign = "center";
-        ctx.fillText(Math.round(val).toString(), x, y - 12);
+        drawDataLabel(formatGuests(val), x, y);
       });
     }
 
     // X-axis labels
     const allDates = [
       ...historySlice.map((h) => ({
-        date: (h.full_date || "").slice(5),
+        date: formatDate(h.full_date, true),
         sub: "Actual",
       })),
       ...forecasts.map((f, i) => ({
-        date: (f.forecast_date || f.stay_date || "").slice(5),
+        date: formatDate(f.forecast_date || f.stay_date, true),
         sub: `T+${i + 1}`,
       })),
     ];

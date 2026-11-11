@@ -1,49 +1,52 @@
-# Chạy development bằng Docker
+# Run the complete local application
 
-Mở Docker Desktop, chạy lệnh tại thư mục gốc repository. Chuẩn bị `.env` theo [.env.example](../.env.example). Giữ nguyên nếu đã có.
-
-## 1. Chạy app
+Open Docker Desktop and run this from the repository root:
 
 ```powershell
-docker compose up -d --build
+python scripts/start_app.py
 ```
 
-- Frontend: [localhost:5173](http://localhost:5173)
-- Swagger: [localhost:8000/docs](http://localhost:8000/docs)
+The command checks the pinned raw files, starts PostgreSQL, runs Staging migrations/load/quality, executes the verified DW/Mart workflow with reconciliation and idempotency checks, prepares compatible ML artifacts, builds the backend/frontend images, starts both services and verifies live inference through the API and frontend proxy.
 
-Những lần sau, chỉ cần:
+- App: http://localhost:5173/dss/demand-forecast
+- API explorer: http://localhost:8000/docs
+
+It prints these links only after readiness checks pass. First-time image builds and ML training can take several minutes. Later runs reuse Docker layers and verified models for the same published data version; the pipeline still reruns its quality gates.
+
+## Prerequisites
+
+- Python 3.12+ on the host; only its standard library is needed for the launcher.
+- Running Docker Desktop/Engine with Compose v2 (including `up --wait`). Python ETL/ML dependencies are installed inside the tools image; no host pip/venv setup is required.
+- The verified raw files and acquisition metadata selected by `docs/data_dictionary/operations_source_set.json`. This checkout already has them. They are ignored by Git, so transfer/restore them when using a fresh clone. The launcher deliberately stops on missing files or checksum differences rather than downloading a different Weather version or changing the source contract. See [the current source manifest](data_dictionary/source_manifest_20261110.md).
+
+Existing `.env` settings are preserved. If `.env` is absent, the launcher creates local defaults with a generated password without printing it. With an existing PostgreSQL volume, use that volume's existing credentials; a newly generated password cannot change an existing database login. Connection failures stop preparation; the launcher does not reset the database, alter existing passwords or remove volumes.
+
+## Optional full pipeline test suite
 
 ```powershell
-docker compose up -d
+python scripts/start_app.py --with-tests
 ```
 
-## 2. Khi code
+This also runs the existing Staging/DW/Mart tests against fixture-owned databases. The configured PostgreSQL user needs CREATEDB. Quality/reconciliation checks run even without this option.
 
-Source đã được mount vào container. Frontend và backend hỗ trợ tự reload khi sửa code.
+`--tree-jobs 6` is the default for offline training; use `--tree-jobs 1` if a smaller worker count is preferable.
 
-Khi đổi Dockerfile hoặc dependency, build lại:
+## Models and reports
 
-```powershell
-docker compose up -d --build -V
-```
+Models are reused only after checking their data version, source fingerprint, snapshot/metadata/state checksums, source notebooks and recorded dependency versions. Missing or incompatible models trigger a fresh immutable release under `artifacts/ml_serving/releases/`; previous artifacts are retained. Training still follows validation selection and stops if no supported selected model can be published.
 
-`-V` làm mới volume dependency frontend, giữ nguyên volume PostgreSQL.
+Each startup writes a new directory under `artifacts/startup/`. Inspect `summary.json`, `preparation/failed.json` or the pipeline step reports if startup fails. The generated `compose.json` selects the verified model/snapshot paths for the backend image; it contains no credentials. The command returns a nonzero exit code when a required stage fails.
 
-## 3. Xem trạng thái và log
+The backend image packages the selected release at its normal container paths. Keep using `python scripts/start_app.py` for future rebuilds so that the newest compatible release is selected. Plain `docker compose up --build` uses the Dockerfile's original default artifact paths and does not rerun the pipeline.
+
+## Check logs or stop
 
 ```powershell
 docker compose ps
-docker compose logs -f backend frontend
+docker compose logs --tail=100 backend frontend db
+docker compose stop
 ```
 
-Đợi các service `healthy`. Nhấn `Ctrl+C` để thoát xem log.
+Named PostgreSQL volumes and published snapshots are preserved. The launcher recreates backend/frontend containers and renews only the frontend's anonymous dependency volume to match the image; it does not renew or delete the PostgreSQL volume.
 
-## 4. Dừng app
-
-```powershell
-docker compose down
-```
-
-Dữ liệu PostgreSQL được giữ lại. Không thêm `-v` nếu muốn giữ database.
-
-Database mới cần nạp dữ liệu theo [Staging runbook](staging_runbook.md) và [DW/Mart runbook](dw_runbook.md).
+To continue frontend editing, sources remain mounted as before. After editing an artifact or changing data/config, rerun the one-command startup to rebuild and verify the serving images. The frontend API proxy is verified as part of startup.

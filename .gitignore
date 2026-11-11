@@ -20,6 +20,7 @@ venv/
 # Node / frontend
 node_modules/
 frontend/dist/
+/.playwright-mcp/
 
 # Local data and generated outputs
 data/raw/**/*.csv
@@ -44,3 +45,10 @@ Thumbs.db
 .stitch/
 .agents/
 graphify-out/
+# Reproducible local ML inputs and fitted binary states; metadata stays reviewable.
+/artifacts/ml_serving/snapshot/*.csv
+/artifacts/ml_serving/models/**/*.joblib
+/artifacts/ml_serving/releases/
+/artifacts/startup/
+
+/artifacts/ml_serving/*_report.txt

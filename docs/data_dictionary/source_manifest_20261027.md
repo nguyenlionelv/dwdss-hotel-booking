@@ -1,5 +1,7 @@
 # Source selection — Weather refresh 2026-10-27
 
+> Historical selection. The current recovery uses fresh, verified acquisitions from [2026-11-10](source_manifest_20261110.md); `operations_source_set.json` selects the current files.
+
 The user authorized using the newly downloaded Open-Meteo Weather file on 2026-10-27. The executable selection remains `operations_source_set.json`, so the existing Staging runbook and default loader entry point continue to apply.
 
 Booking and Holiday retain their 2026-10-17 checksums. Holiday CSV was reproduced with python-holidays 0.106 and matched the selected checksum exactly; its original acquisition metadata content was recovered from `artifacts/staging/quality_report.json`. The old Weather metadata was also recovered for provenance, but the selected Weather input now uses its own new acquisition metadata.

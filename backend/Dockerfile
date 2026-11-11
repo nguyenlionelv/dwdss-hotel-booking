@@ -9,10 +9,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt ./backend/requirements.txt
+COPY ml/requirements.txt ./ml/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
 COPY backend/app ./backend/app
+COPY ml ./ml
+COPY pipeline ./pipeline
+ARG MODEL_ARTIFACT_PATH=artifacts/ml_serving/models
+ARG MODEL_SNAPSHOT_PATH=artifacts/ml_serving/snapshot
+COPY ${MODEL_ARTIFACT_PATH} ./artifacts/ml_serving/models
+COPY ${MODEL_SNAPSHOT_PATH} ./artifacts/ml_serving/snapshot
+ENV DWDSS_MODEL_DIR=/app/artifacts/ml_serving/models \
+    DWDSS_SNAPSHOT_DIR=/app/artifacts/ml_serving/snapshot
 
 EXPOSE 8000
 
