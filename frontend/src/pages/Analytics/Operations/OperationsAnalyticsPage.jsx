@@ -596,13 +596,12 @@ export default function OperationsAnalyticsPage() {
                 {coverage.calendar_days_count || 732} calendar days
               </strong>
             </span>
-            <span>•</span>
-            <Badge variant={guestStatus === "COMPLETE" ? "emerald" : "amber"}>
+            {/* <Badge variant={guestStatus === "COMPLETE" ? "emerald" : "amber"}>
               Guest status: {guestStatus}
               {partialDaysCount > 0
                 ? ` (${partialDaysCount} partial days)`
                 : ""}
-            </Badge>
+            </Badge> */}
           </div>
         </div>
 
@@ -717,48 +716,20 @@ export default function OperationsAnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-[#FFFFFF] border border-[#E5E5E0] p-4">
+        <div className="w-full bg-[#FFFFFF] border border-[#E5E5E0] p-4">
           {loading ? (
-            <Skeleton className="h-[290px] w-full" />
+            <Skeleton className="h-[580px] w-full" />
           ) : (
             <TrendChart
               series={series}
               grain={grain}
               measure={chartMeasure}
               measureLabel={activeMeasureObj.label}
+              height={500}
               canDrill={Boolean(CHILD_GRAIN[grain])}
               onDrill={handleBarDrilldown}
             />
           )}
-        </div>
-
-        {/* Roll-up Reconciliation Bar (Proving Drill-down / Roll-up invariance) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-[12px] text-[#666666]">
-          <div>
-            Roll-up verification across{" "}
-            <strong className="font-mono text-[#252525]">
-              {series.length}
-            </strong>{" "}
-            {grain} periods:
-          </div>
-          <div className="flex flex-wrap items-center gap-4 font-mono text-[12px] text-[#252525]">
-            <span>
-              Σ Guests: <strong>{seriesSumGuests.toLocaleString()}</strong>
-            </span>
-            <span className="text-[#E5E5E0]">|</span>
-            <span>
-              Σ Non-Canceled Bookings:{" "}
-              <strong>{seriesSumBookings.toLocaleString()}</strong>
-            </span>
-            <span className="text-[#E5E5E0]">|</span>
-            <span>
-              Σ Stay Nights:{" "}
-              <strong>{seriesSumStayNights.toLocaleString()}</strong>
-            </span>
-            <span className="text-[#477A61] font-sans font-medium">
-              ✓ Reconciled with Summary KPIs
-            </span>
-          </div>
         </div>
       </section>
 
@@ -1022,10 +993,6 @@ export default function OperationsAnalyticsPage() {
                 lift
               </span>
             </div>
-            <p className="text-[12px] text-[#666666]">
-              Reports both cumulative observed guests and normalized daily
-              averages to account for calendar day count differences.
-            </p>
 
             <div className="divide-y divide-[#E5E5E0] border-y border-[#E5E5E0] bg-[#FFFFFF]">
               {holidayGroups.map((g) => (
@@ -1082,13 +1049,6 @@ export default function OperationsAnalyticsPage() {
               <h2 className="editorial-section-title">
                 Lisbon Weather &amp; Demand Correlation
               </h2>
-              <span className="text-[12px] font-mono text-[#666666]">
-                ERA5 Lisbon •{" "}
-                {(
-                  (impactData?.weather_impact?.completeness_ratio ?? 1) * 100
-                ).toFixed(1)}
-                % complete
-              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
@@ -1114,12 +1074,6 @@ export default function OperationsAnalyticsPage() {
                 </div>
               )}
             </div>
-
-            <p className="text-[12px] text-[#666666] italic">
-              Note:{" "}
-              {impactData?.weather_impact?.insight ||
-                "Descriptive historical correlation only; does not imply a causal relationship."}
-            </p>
           </div>
         </div>
 

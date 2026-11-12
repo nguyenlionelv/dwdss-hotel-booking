@@ -38,7 +38,7 @@ function useCanvasSize(containerRef, defaultHeight = 280) {
     const update = () => {
       const rect = el.getBoundingClientRect();
       if (rect.width > 0) {
-        setSize({ width: Math.floor(rect.width), height: defaultHeight });
+        setSize({ width: Math.floor(el.clientWidth || rect.width), height: defaultHeight });
       }
     };
     update();
@@ -64,6 +64,7 @@ export default function TrendChart({
   grain = "month",
   measure = "observed_total_guests",
   measureLabel = "Observed Guests",
+  height: customHeight = 580,
   onDrill,
   canDrill = false,
 }) {
@@ -71,7 +72,7 @@ export default function TrendChart({
   const canvasRef = useRef(null);
   const hitBoxesRef = useRef([]);
   const [hovered, setHovered] = useState(null);
-  const { width, height } = useCanvasSize(containerRef, 290);
+  const { width, height } = useCanvasSize(containerRef, customHeight);
 
   const getVal = (item) => {
     if (!item) return 0;
@@ -115,7 +116,7 @@ export default function TrendChart({
       return;
     }
 
-    const pad = { top: 20, right: 20, bottom: 38, left: 56 };
+    const pad = { top: 20, right: 6, bottom: 38, left: 44 };
     const plotW = Math.max(100, width - pad.left - pad.right);
     const plotH = Math.max(80, height - pad.top - pad.bottom);
 
@@ -125,7 +126,7 @@ export default function TrendChart({
     const avgVal = values.reduce((a, b) => a + b, 0) / (values.length || 1);
 
     // Draw horizontal gridlines & Y-axis labels
-    const ticks = 4;
+    const ticks = height >= 500 ? 6 : 4;
     ctx.font = "11px 'JetBrains Mono', monospace";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
@@ -206,7 +207,7 @@ export default function TrendChart({
       });
     } else {
       // Bar chart with optional comparison line
-      const barWidth = Math.min(44, Math.max(8, stepX * 0.62));
+      const barWidth = Math.max(8, Math.floor(stepX * 0.82));
       series.forEach((item, idx) => {
         const v = values[idx];
         const barH = Math.max(2, (v / niceMax) * plotH);
@@ -292,7 +293,7 @@ export default function TrendChart({
 
   return (
     <div ref={containerRef} className="relative w-full select-none">
-      <canvas
+      <canvas className="block w-full"
         ref={canvasRef}
         style={{
           width: `${width}px`,
@@ -392,7 +393,7 @@ export function CanvasHorizontalBarChart({
 
     if (!items.length) return;
 
-    const labelColW = Math.min(200, Math.max(120, Math.floor(width * 0.36)));
+    const labelColW = Math.min(180, Math.max(110, Math.floor(width * 0.24)));
     const rightValW = 105;
     const barAreaW = Math.max(80, width - labelColW - rightValW - 16);
     const maxVal = Math.max(...items.map((x) => Number(x.value || 0)), 1);
@@ -440,7 +441,7 @@ export function CanvasHorizontalBarChart({
 
   return (
     <div ref={containerRef} className="w-full select-none">
-      <canvas
+      <canvas className="block w-full"
         ref={canvasRef}
         style={{ width: `${width}px`, height: `${height}px` }}
         role="img"
@@ -474,7 +475,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
     hitBoxesRef.current = [];
     if (!dailyRows.length) return;
 
-    const pad = { top: 24, right: 20, bottom: 16, left: 48 };
+    const pad = { top: 24, right: 6, bottom: 16, left: 40 };
     const plotW = Math.max(100, width - pad.left - pad.right);
     const plotH = Math.max(80, height - pad.top - pad.bottom);
 
@@ -501,7 +502,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
     }
 
     const stepX = plotW / dailyRows.length;
-    const barW = Math.min(22, Math.max(4, stepX * 0.28));
+    const barW = Math.max(4, Math.floor(stepX * 0.42));
     const barGap = stepX < 18 ? 1 : 2;
 
     // Grouped bars: Observed Guests (Series 1 #315B52) & Non-canceled bookings (Series 3 #547A9B)
@@ -595,7 +596,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
 
   return (
     <div ref={containerRef} className="relative w-full select-none">
-      <canvas
+      <canvas className="block w-full"
         ref={canvasRef}
         style={{ width: `${width}px`, height: `${height}px` }}
         onMouseMove={handleMouseMove}
@@ -932,7 +933,7 @@ export function CanvasForecastChart({
 
   return (
     <div ref={containerRef} className="w-full select-none">
-      <canvas
+      <canvas className="block w-full"
         ref={canvasRef}
         style={{ width: `${width}px`, height: `${height}px` }}
         role="img"

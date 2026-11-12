@@ -318,21 +318,6 @@ export default function OperationsReportsPage() {
       <header className="border-b border-[#E5E5E0] pb-6">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#666666]">
-              <span>Standardized Operations Reporting</span>
-              <span className="text-[#E5E5E0]">/</span>
-              <span className="font-mono text-[11px]">
-                mart.daily_hotel_ops
-              </span>
-              {reportData?.data_version && (
-                <>
-                  <span className="text-[#E5E5E0]">/</span>
-                  <span className="font-mono text-[11px]">
-                    ver:{String(reportData.data_version).slice(0, 8)}
-                  </span>
-                </>
-              )}
-            </div>
             <h1 className="editorial-page-title">
               Operations Reports — Weekly Demand &amp; Capacity Summary
             </h1>
@@ -510,26 +495,6 @@ export default function OperationsReportsPage() {
               </div>
             </div>
           </div>
-
-          {/* Coverage & Reconciliation Status Strip */}
-          <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#666666]">
-            <span className="font-mono text-[#252525]">
-              {period.actual_start || period.start_date || customStartDate} →{" "}
-              {period.actual_end || period.end_date || customEndDate}
-            </span>
-            <Badge variant={isCompleteWeek ? "emerald" : "amber"}>
-              {reconciled.days_count > 7
-                ? `LATEST_4_WEEKS (${reconciled.days_count}/28 days)`
-                : isCompleteWeek
-                  ? `COMPLETE_WEEK (${reconciled.days_count}/7 days)`
-                  : `INCOMPLETE_WEEK (${reconciled.days_count}/7 days available)`}
-            </Badge>
-            <Badge
-              variant={overallGuestStatus === "COMPLETE" ? "emerald" : "amber"}
-            >
-              Guest Data: {overallGuestStatus}
-            </Badge>
-          </div>
         </div>
       </header>
 
@@ -643,10 +608,6 @@ export default function OperationsReportsPage() {
                   Operations Capacity &amp; Workload Summary
                 </h2>
               </div>
-              <p className="text-[12px] text-[#666666] mt-0.5">
-                Historical arrival-date workload profile paired with upcoming
-                7-day forecast demand signals.
-              </p>
             </div>
             <Link
               to="/analytics/operations"
@@ -659,17 +620,14 @@ export default function OperationsReportsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left 7 Columns: Pure HTML5 Canvas Weekly Workload Chart + Group A Breakdown */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-12 space-y-6 w-full">
               <div className="border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] p-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                   <div>
                     <h3 className="text-[14px] font-semibold text-[#252525]">
-                      Daily Observed Guests, Non-Canceled Arrivals &amp; Stay-Night Trajectory
+                      Daily Observed Guests, Non-Canceled Arrivals &amp;
+                      Stay-Night Trajectory
                     </h3>
-                    <p className="text-[12px] text-[#666666]">
-                      Grouped bars compare daily observed guests vs. non-canceled bookings;
-                      overlay line tracks observed stay-nights.
-                    </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#666666]">
                     <span className="inline-flex items-center gap-1.5">
@@ -718,18 +676,11 @@ export default function OperationsReportsPage() {
             </div>
 
             {/* Right 5 Columns: Group B Upcoming 7-Day Forecast Signal & Operational Directives */}
-            <div className="lg:col-span-5 space-y-5 border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] p-5">
+            <div className="lg:col-span-12 space-y-5 border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] p-5 w-full">
               <div className="border-b border-[#E5E5E0] pb-3">
-                <span className="font-mono text-[11px] text-[#315B52] font-medium">
-                  GROUP B • UPCOMING 7-DAY FORECAST SIGNAL &amp; DIRECTIVES
-                </span>
                 <h3 className="text-[15px] font-semibold text-[#252525] mt-0.5">
                   Departmental Workload &amp; Action Directives
                 </h3>
-                <p className="text-[12px] text-[#666666] mt-0.5">
-                  Weekday vs. weekend arrival intensity and standardized
-                  operational guidance.
-                </p>
               </div>
 
               {/* Weekday vs Weekend Typographic Comparison */}
@@ -831,14 +782,6 @@ export default function OperationsReportsPage() {
                   </p>
                 </div>
               </div>
-
-              {/* Mandatory Capacity Disclaimer (ui_specification_and_api_contracts.md Section 5.2) */}
-              <div className="pt-3 border-t border-[#E5E5E0] text-[11px] text-[#666666] leading-relaxed">
-                <strong className="text-[#252525] font-medium">
-                  Data Scope Note:
-                </strong>{" "}
-                {disclaimer}
-              </div>
             </div>
           </div>
         </section>
@@ -857,12 +800,6 @@ export default function OperationsReportsPage() {
                   Daily Operations Demand Log ({reconciled.days_count} Days)
                 </h2>
               </div>
-              <p className="text-[12px] text-[#666666] mt-0.5">
-                Arrival-date operational grain aligned with{" "}
-                <code className="font-mono text-[11px]">Europe/Lisbon</code>,
-                Open-Meteo daily weather observations, and Nager.Date Portuguese
-                public holidays.
-              </p>
             </div>
             <span className="font-mono text-[11px] text-[#666666]">
               Sorted chronologically: full_date ASC
@@ -878,9 +815,7 @@ export default function OperationsReportsPage() {
                   <TableHead className="text-right">Total Bookings</TableHead>
                   <TableHead className="text-right">Non-Canceled</TableHead>
                   <TableHead className="text-right">Canceled (Rate)</TableHead>
-                  <TableHead className="text-right">
-                    Observed Guests (A/C/B)
-                  </TableHead>
+                  <TableHead className="text-right">Observed Guests</TableHead>
                   <TableHead className="text-right">Stay Nights</TableHead>
                   <TableHead className="text-right">Party / Stay</TableHead>
                   <TableHead className="text-right">Lead Time</TableHead>
@@ -931,15 +866,25 @@ export default function OperationsReportsPage() {
                     <TableRow
                       key={fullDate}
                       className={
-                        row.is_peak_day ? "bg-[#B64C43]/[0.04]" : undefined
+                        row.is_peak_day
+                          ? "bg-[#B64C43]/[0.20]"
+                          : isHoliday
+                            ? "bg-[#C58B35]/[0.20]"
+                            : undefined
                       }
                     >
                       <TableCell className="font-mono font-medium text-[#252525] whitespace-nowrap">
                         {fullDate}
-                        {row.is_peak_day && (
+                        {row.is_peak_day ? (
                           <span className="ml-1.5 text-[10px] font-sans font-semibold text-[#B64C43]">
                             PEAK
                           </span>
+                        ) : (
+                          isHoliday && (
+                            <span className="ml-1.5 text-[10px] font-sans font-semibold text-[#C58B35]">
+                              Holiday
+                            </span>
+                          )
                         )}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -947,7 +892,13 @@ export default function OperationsReportsPage() {
                           {row.day_of_week}
                         </span>
                         <span className="ml-1.5 text-[11px] text-[#666666]">
-                          ({isWeekend ? "Weekend" : "Weekday"})
+                          (
+                          {isWeekend
+                            ? "Weekend"
+                            : isHoliday
+                              ? "Holiday"
+                              : "Weekday"}
+                          )
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-[#252525]">
@@ -963,9 +914,9 @@ export default function OperationsReportsPage() {
                         <span className="font-semibold text-[#252525]">
                           {guests.toLocaleString()}
                         </span>
-                        <span className="ml-1.5 text-[11px] text-[#666666]">
+                        {/* <span className="ml-1.5 text-[11px] text-[#666666]">
                           ({adults}/{children}/{babies})
-                        </span>
+                        </span> */}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-[#252525]">
                         {stayNights.toLocaleString()}
@@ -981,16 +932,16 @@ export default function OperationsReportsPage() {
                         €{Number(adr).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-[12px] text-[#666666] whitespace-nowrap">
-                        {isHoliday || holidayName ? (
-                          <span className="text-[#C58B35] font-medium mr-2">
-                            ★ {holidayName || "PT Holiday"}
-                          </span>
-                        ) : null}
                         <span className="font-mono text-[11px]">
                           {temp != null ? `${temp}°C` : "—"} ·{" "}
                           {precip != null ? `${precip}mm` : "—"} (
                           {row.weather_status || "Clear"})
                         </span>
+                        {/* {isHoliday || holidayName ? (
+                          <span className="text-[#C58B35] font-medium mr-2">
+                            ★ {holidayName || "PT Holiday"}
+                          </span>
+                        ) : null} */}
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap">
                         <Badge

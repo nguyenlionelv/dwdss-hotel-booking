@@ -26,13 +26,16 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isDemo = Boolean(
-    health?.is_mock || health?.demo_mode || metadata?.is_mock || metadata?.demo_mode
+    health?.is_mock ||
+    health?.demo_mode ||
+    metadata?.is_mock ||
+    metadata?.demo_mode,
   );
   const isOffline = Boolean(
     health?.api_error ||
-      metadata?.api_error ||
-      health?.status === "offline" ||
-      health?.db_connected === false
+    metadata?.api_error ||
+    health?.status === "offline" ||
+    health?.db_connected === false,
   );
   const isHealthy =
     !isDemo &&
@@ -42,13 +45,9 @@ export default function Header() {
     Boolean(health?.mart_published);
 
   const actualStart =
-    metadata?.date_range?.actual_start ||
-    metadata?.date_range?.min_date ||
-    "—";
+    metadata?.date_range?.actual_start || metadata?.date_range?.min_date || "—";
   const actualEnd =
-    metadata?.date_range?.actual_end ||
-    metadata?.date_range?.max_date ||
-    "—";
+    metadata?.date_range?.actual_end || metadata?.date_range?.max_date || "—";
   const totalDays = metadata?.date_range?.total_days || 0;
 
   const rawVersion =
@@ -161,13 +160,6 @@ export default function Header() {
         <span className="hidden xl:inline">
           City Hotel — Lisbon, Portugal (
           <span className="font-mono">Europe/Lisbon</span>)
-        </span>
-        <span className="hidden xl:inline text-[#E5E5E0]">|</span>
-        <span className="hidden md:inline font-mono text-[#252525]">
-          {actualStart} → {actualEnd}{" "}
-          {totalDays > 0 && (
-            <span className="font-sans text-[#666666]">({totalDays} days)</span>
-          )}
         </span>
         <span className="hidden md:inline text-[#E5E5E0]">|</span>
         <span

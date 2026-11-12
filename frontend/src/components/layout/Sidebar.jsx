@@ -154,26 +154,6 @@ export function NavigationContent({ onNavClick }) {
           })}
         </nav>
       </div>
-
-      {/* Technical Metadata Footer (No decorative card, clean typographic rows) */}
-      <div className="pt-4 border-t border-[#E5E5E0] px-3 space-y-1.5 text-[12px]">
-        <div className="flex items-center justify-between">
-          <span className="text-[#666666]">Mart schema</span>
-          <span className="font-mono text-[#252525]">mart.daily_hotel_ops</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-[#666666]">Data version</span>
-          <span className="font-mono text-[#252525]">{shortVersion}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-[#666666]">Published</span>
-          <span className="font-mono text-[#999999]">{formattedPublished}</span>
-        </div>
-        <div className="flex items-center justify-between pt-1 text-[11px] text-[#999999]">
-          <span>Timezone</span>
-          <span className="font-mono">Europe/Lisbon</span>
-        </div>
-      </div>
     </div>
   );
 }
