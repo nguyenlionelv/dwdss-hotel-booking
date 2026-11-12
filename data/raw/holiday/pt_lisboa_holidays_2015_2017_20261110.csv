@@ -1,0 +1,39 @@
+date,holiday_name,country,subdivision,scope,category,observed
+2015-01-01,Ano Novo,PT,,national,public,false
+2015-04-03,Sexta-feira Santa,PT,,national,public,false
+2015-04-05,Páscoa,PT,,national,public,false
+2015-04-25,Dia da Liberdade,PT,,national,public,false
+2015-05-01,Dia do Trabalhador,PT,,national,public,false
+2015-06-10,"Dia de Portugal, de Camões e das Comunidades Portuguesas",PT,,national,public,false
+2015-06-13,Dia de Santo António,PT,11,Lisboa,public,false
+2015-08-15,Assunção de Nossa Senhora,PT,,national,public,false
+2015-12-08,Imaculada Conceição,PT,,national,public,false
+2015-12-25,Dia de Natal,PT,,national,public,false
+2016-01-01,Ano Novo,PT,,national,public,false
+2016-03-25,Sexta-feira Santa,PT,,national,public,false
+2016-03-27,Páscoa,PT,,national,public,false
+2016-04-25,Dia da Liberdade,PT,,national,public,false
+2016-05-01,Dia do Trabalhador,PT,,national,public,false
+2016-05-26,Corpo de Deus,PT,,national,public,false
+2016-06-10,"Dia de Portugal, de Camões e das Comunidades Portuguesas",PT,,national,public,false
+2016-06-13,Dia de Santo António,PT,11,Lisboa,public,false
+2016-08-15,Assunção de Nossa Senhora,PT,,national,public,false
+2016-10-05,Implantação da República,PT,,national,public,false
+2016-11-01,Dia de Todos os Santos,PT,,national,public,false
+2016-12-01,Restauração da Independência,PT,,national,public,false
+2016-12-08,Imaculada Conceição,PT,,national,public,false
+2016-12-25,Dia de Natal,PT,,national,public,false
+2017-01-01,Ano Novo,PT,,national,public,false
+2017-04-14,Sexta-feira Santa,PT,,national,public,false
+2017-04-16,Páscoa,PT,,national,public,false
+2017-04-25,Dia da Liberdade,PT,,national,public,false
+2017-05-01,Dia do Trabalhador,PT,,national,public,false
+2017-06-10,"Dia de Portugal, de Camões e das Comunidades Portuguesas",PT,,national,public,false
+2017-06-13,Dia de Santo António,PT,11,Lisboa,public,false
+2017-06-15,Corpo de Deus,PT,,national,public,false
+2017-08-15,Assunção de Nossa Senhora,PT,,national,public,false
+2017-10-05,Implantação da República,PT,,national,public,false
+2017-11-01,Dia de Todos os Santos,PT,,national,public,false
+2017-12-01,Restauração da Independência,PT,,national,public,false
+2017-12-08,Imaculada Conceição,PT,,national,public,false
+2017-12-25,Dia de Natal,PT,,national,public,false

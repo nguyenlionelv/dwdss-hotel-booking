@@ -1,9 +1,9 @@
 {
-  "version": "selected-coverage-v2",
+  "version": "selected-coverage-v3-20261110",
   "source_checksums": {
     "booking": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
     "holiday": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
-    "weather": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3"
+    "weather": "fccc24f4ba84849005154e31aee6ff7b307ce0d2a8f6556ae44c1e1f28f3339a"
   },
   "default_status": "UNKNOWN",
   "intervals": [
@@ -49,10 +49,10 @@
       "start": "2015-07-01",
       "end": "2017-08-31",
       "status": "COMPLETE",
-      "reason": "Selected daily series; preflight must verify each day and both measures",
+      "reason": "Fresh 2026-11-10 ERA5 acquisition independently validated: exact 793-day sequence, aligned arrays, unique dates, finite temperatures and finite nonnegative precipitation, matching location, units, model and timezone.",
       "evidence": {
-        "file": "artifacts/dw/operations/input_preparation_20261027/coverage_assessment.json",
-        "sha256": "edc008f3f8d3307cbd2f291f587ea771c13443fba1a3f97ec0d9a0ee97710020"
+        "file": "artifacts/recovery/pipeline_20261110/source_verification.json",
+        "sha256": "0c93261e8961286df2f40b50cfd5ca02202b7106a438a81472fe8dbbb28264e7"
       }
     }
   ]

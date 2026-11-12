@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "live_http": true,
+  "client": "frontend/src/services/dssApi.js",
+  "exit_code": 0
+}

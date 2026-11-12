@@ -1,1 +1,4 @@
-"""TODO: Implement ml\\demand_forecast\\baseline.py according to docs/Hotel_booking_Overall_plan.md."""
+"""Notebook-selected baseline families; daily and monthly remain separate."""
+DAILY_IMPUTED = 'B4_weekday'
+DAILY_CAUSAL = 'B4_matched'
+MONTHLY = 'M0_last_month_rate'

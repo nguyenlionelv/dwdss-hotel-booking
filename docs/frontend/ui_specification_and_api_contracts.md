@@ -588,7 +588,7 @@ Tuân thủ nghiêm ngặt quy định tại [detailed_plan.md mục 8](../detai
 ### 6.1. Các khối thông tin hiển thị trên màn hình
 
 #### Khối 1: Bộ chọn Ngày chốt dữ liệu (`as_of_date` — Cutoff $T$) & Chọn Model
-- **Date Picker `as_of_date` ($T$):** Chọn ngày chốt trong khoảng dữ liệu lịch sử (ví dụ mặc định `2017-08-24` để dự báo cho `2017-08-25` → `2017-08-31`).
+- **Date Picker `as_of_date` ($T$):** Default `2017-08-31`; forecasts `2017-09-01` through `2017-09-07`. Earlier cutoffs remain available for backtesting.
 - **Model Selector:** Chọn mô hình đã train (mặc định mô hình tốt nhất trên tập validation hoặc `seasonal_naive`).
 - **Nhãn minh bạch Cutoff:** Hiển thị rõ *"Dự báo tại ngày chốt T = YYYY-MM-DD cho 7 ngày tiếp theo (T+1 đến T+7) của City Hotel. Chỉ dùng lịch sử đến ngày T, không đọc actual sau T."*
 

@@ -1,0 +1,263 @@
+{
+  "protocol": "causal-level-probe-v1",
+  "holdout_used_for_selection": false,
+  "holdout_already_inspected": true,
+  "event_definition": "COMPLETE target differs from causal same-weekday mean by >1 sample SD; direction checked separately",
+  "trials": [
+    {
+      "quantile": 0.75,
+      "threshold": 0.6498651321054775,
+      "validation": {
+        "n": 1610,
+        "alerts": 197,
+        "detection_rate": 0.12236024844720497,
+        "event_count": 599,
+        "false_positive_rate": 0.08605341246290801,
+        "unconfirmed_alert_fraction": 0.6091370558375635,
+        "correct_direction_event_precision": 0.39086294416243655,
+        "missingness_flip_rate": 0.02608695652173913,
+        "adjacent_cutoff_flip_rate": 0.05378151260504202
+      }
+    },
+    {
+      "quantile": 0.85,
+      "threshold": 0.8062817237199776,
+      "validation": {
+        "n": 1610,
+        "alerts": 85,
+        "detection_rate": 0.052795031055900624,
+        "event_count": 599,
+        "false_positive_rate": 0.026706231454005934,
+        "unconfirmed_alert_fraction": 0.5294117647058824,
+        "correct_direction_event_precision": 0.47058823529411764,
+        "missingness_flip_rate": 0.01987577639751553,
+        "adjacent_cutoff_flip_rate": 0.021848739495798318
+      }
+    },
+    {
+      "quantile": 0.9,
+      "threshold": 0.9193741220540151,
+      "validation": {
+        "n": 1610,
+        "alerts": 61,
+        "detection_rate": 0.037888198757763975,
+        "event_count": 599,
+        "false_positive_rate": 0.018793273986152326,
+        "unconfirmed_alert_fraction": 0.5737704918032787,
+        "correct_direction_event_precision": 0.4262295081967213,
+        "missingness_flip_rate": 0.014285714285714285,
+        "adjacent_cutoff_flip_rate": 0.01680672268907563
+      }
+    },
+    {
+      "quantile": 0.95,
+      "threshold": 1.1397059489064205,
+      "validation": {
+        "n": 1610,
+        "alerts": 28,
+        "detection_rate": 0.017391304347826087,
+        "event_count": 599,
+        "false_positive_rate": 0.005934718100890208,
+        "unconfirmed_alert_fraction": 0.39285714285714285,
+        "correct_direction_event_precision": 0.6071428571428571,
+        "missingness_flip_rate": 0.006211180124223602,
+        "adjacent_cutoff_flip_rate": 0.011764705882352941
+      }
+    },
+    {
+      "quantile": 0.975,
+      "threshold": 1.2902608720117565,
+      "validation": {
+        "n": 1610,
+        "alerts": 14,
+        "detection_rate": 0.008695652173913044,
+        "event_count": 599,
+        "false_positive_rate": 0.0009891196834817012,
+        "unconfirmed_alert_fraction": 0.21428571428571427,
+        "correct_direction_event_precision": 0.7857142857142857,
+        "missingness_flip_rate": 0.0006211180124223603,
+        "adjacent_cutoff_flip_rate": 0.0067226890756302525
+      }
+    }
+  ],
+  "selected": {
+    "quantile": 0.75,
+    "threshold": 0.6498651321054775,
+    "validation": {
+      "n": 1610,
+      "alerts": 197,
+      "detection_rate": 0.12236024844720497,
+      "event_count": 599,
+      "false_positive_rate": 0.08605341246290801,
+      "unconfirmed_alert_fraction": 0.6091370558375635,
+      "correct_direction_event_precision": 0.39086294416243655,
+      "missingness_flip_rate": 0.02608695652173913,
+      "adjacent_cutoff_flip_rate": 0.05378151260504202
+    }
+  },
+  "calibration_n": 1553,
+  "validation_n": 1610,
+  "by_weekday": {
+    "0": {
+      "n": 260,
+      "alerts": 40,
+      "detection_rate": 0.15384615384615385,
+      "event_count": 86,
+      "false_positive_rate": 0.06896551724137931,
+      "unconfirmed_alert_fraction": 0.3,
+      "correct_direction_event_precision": 0.7,
+      "missingness_flip_rate": 0.015384615384615385,
+      "adjacent_cutoff_flip_rate": 0.08064516129032258
+    },
+    "1": {
+      "n": 221,
+      "alerts": 36,
+      "detection_rate": 0.16289592760180996,
+      "event_count": 76,
+      "false_positive_rate": 0.15862068965517243,
+      "unconfirmed_alert_fraction": 0.9166666666666666,
+      "correct_direction_event_precision": 0.08333333333333333,
+      "missingness_flip_rate": 0.02262443438914027,
+      "adjacent_cutoff_flip_rate": 0.049079754601226995
+    },
+    "2": {
+      "n": 204,
+      "alerts": 17,
+      "detection_rate": 0.08333333333333333,
+      "event_count": 74,
+      "false_positive_rate": 0.038461538461538464,
+      "unconfirmed_alert_fraction": 0.6470588235294118,
+      "correct_direction_event_precision": 0.35294117647058826,
+      "missingness_flip_rate": 0.03431372549019608,
+      "adjacent_cutoff_flip_rate": 0.01948051948051948
+    },
+    "3": {
+      "n": 230,
+      "alerts": 21,
+      "detection_rate": 0.09130434782608696,
+      "event_count": 86,
+      "false_positive_rate": 0.0625,
+      "unconfirmed_alert_fraction": 0.5238095238095238,
+      "correct_direction_event_precision": 0.47619047619047616,
+      "missingness_flip_rate": 0.043478260869565216,
+      "adjacent_cutoff_flip_rate": 0.045714285714285714
+    },
+    "4": {
+      "n": 219,
+      "alerts": 28,
+      "detection_rate": 0.1278538812785388,
+      "event_count": 84,
+      "false_positive_rate": 0.05185185185185185,
+      "unconfirmed_alert_fraction": 0.5357142857142857,
+      "correct_direction_event_precision": 0.4642857142857143,
+      "missingness_flip_rate": 0.0228310502283105,
+      "adjacent_cutoff_flip_rate": 0.07453416149068323
+    },
+    "5": {
+      "n": 240,
+      "alerts": 39,
+      "detection_rate": 0.1625,
+      "event_count": 103,
+      "false_positive_rate": 0.1678832116788321,
+      "unconfirmed_alert_fraction": 0.6923076923076923,
+      "correct_direction_event_precision": 0.3076923076923077,
+      "missingness_flip_rate": 0.0125,
+      "adjacent_cutoff_flip_rate": 0.07303370786516854
+    },
+    "6": {
+      "n": 236,
+      "alerts": 16,
+      "detection_rate": 0.06779661016949153,
+      "event_count": 90,
+      "false_positive_rate": 0.0547945205479452,
+      "unconfirmed_alert_fraction": 0.6875,
+      "correct_direction_event_precision": 0.3125,
+      "missingness_flip_rate": 0.03389830508474576,
+      "adjacent_cutoff_flip_rate": 0.028901734104046242
+    }
+  },
+  "by_horizon": {
+    "1": {
+      "n": 230,
+      "alerts": 27,
+      "detection_rate": 0.11739130434782609,
+      "event_count": 82,
+      "false_positive_rate": 0.0945945945945946,
+      "unconfirmed_alert_fraction": 0.5555555555555556,
+      "correct_direction_event_precision": 0.4444444444444444,
+      "missingness_flip_rate": 0.0,
+      "adjacent_cutoff_flip_rate": null
+    },
+    "2": {
+      "n": 233,
+      "alerts": 34,
+      "detection_rate": 0.1459227467811159,
+      "event_count": 81,
+      "false_positive_rate": 0.10526315789473684,
+      "unconfirmed_alert_fraction": 0.6470588235294118,
+      "correct_direction_event_precision": 0.35294117647058826,
+      "missingness_flip_rate": 0.0,
+      "adjacent_cutoff_flip_rate": null
+    },
+    "3": {
+      "n": 230,
+      "alerts": 32,
+      "detection_rate": 0.1391304347826087,
+      "event_count": 86,
+      "false_positive_rate": 0.09722222222222222,
+      "unconfirmed_alert_fraction": 0.65625,
+      "correct_direction_event_precision": 0.34375,
+      "missingness_flip_rate": 0.0,
+      "adjacent_cutoff_flip_rate": null
+    },
+    "4": {
+      "n": 228,
+      "alerts": 26,
+      "detection_rate": 0.11403508771929824,
+      "event_count": 85,
+      "false_positive_rate": 0.0979020979020979,
+      "unconfirmed_alert_fraction": 0.6923076923076923,
+      "correct_direction_event_precision": 0.3076923076923077,
+      "missingness_flip_rate": 0.0,
+      "adjacent_cutoff_flip_rate": null
+    },
+    "5": {
+      "n": 228,
+      "alerts": 28,
+      "detection_rate": 0.12280701754385964,
+      "event_count": 87,
+      "false_positive_rate": 0.0851063829787234,
+      "unconfirmed_alert_fraction": 0.6428571428571429,
+      "correct_direction_event_precision": 0.35714285714285715,
+      "missingness_flip_rate": 0.0,
+      "adjacent_cutoff_flip_rate": null
+    },
+    "6": {
+      "n": 232,
+      "alerts": 24,
+      "detection_rate": 0.10344827586206896,
+      "event_count": 91,
+      "false_positive_rate": 0.04964539007092199,
+      "unconfirmed_alert_fraction": 0.5,
+      "correct_direction_event_precision": 0.5,
+      "missingness_flip_rate": 0.0,
+      "adjacent_cutoff_flip_rate": null
+    },
+    "7": {
+      "n": 229,
+      "alerts": 26,
+      "detection_rate": 0.11353711790393013,
+      "event_count": 87,
+      "false_positive_rate": 0.07042253521126761,
+      "unconfirmed_alert_fraction": 0.5384615384615384,
+      "correct_direction_event_precision": 0.46153846153846156,
+      "missingness_flip_rate": 0.18340611353711792,
+      "adjacent_cutoff_flip_rate": null
+    }
+  },
+  "limitations": [
+    "Probe validation is not validation of the saved models; pre-selection saved-model replay would leak.",
+    "Overlapping origins are dependent; one-SD event is a statistical definition, not an operational outcome.",
+    "Existing holdout has already been inspected. Subsequent results are descriptive, not unbiased."
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "version": "selected-coverage-v2",
+  "source_checksums": {
+    "booking": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06",
+    "holiday": "0ee97e00fc4cbb89361454fd9b9e84ef363b29780e40be3cd0ecafaaa7378428",
+    "weather": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3"
+  },
+  "default_status": "UNKNOWN",
+  "intervals": [
+    {
+      "source_id": "booking",
+      "scope": "all",
+      "start": "2015-07-01",
+      "end": "2017-08-31",
+      "status": "COMPLETE",
+      "reason": "User-accepted dataset completeness assumption booking-completeness-assumption-v1; only the selected Booking checksum and arrival interval",
+      "evidence": {
+        "file": "artifacts/dw/operations/booking_coverage_accepted_20261027/decision.json",
+        "sha256": "9cffbdf46645cff851b155b7e1147e947da82250c48d764879f632ce5eab98e7"
+      }
+    },
+    {
+      "source_id": "holiday",
+      "scope": "national",
+      "start": "2015-01-01",
+      "end": "2017-12-31",
+      "status": "COMPLETE",
+      "reason": "Full generated PT national calendar replay matches accepted source",
+      "evidence": {
+        "file": "artifacts/dw/operations/input_preparation_20261027/coverage_assessment.json",
+        "sha256": "edc008f3f8d3307cbd2f291f587ea771c13443fba1a3f97ec0d9a0ee97710020"
+      }
+    },
+    {
+      "source_id": "holiday",
+      "scope": "Lisboa",
+      "start": "2015-01-01",
+      "end": "2017-12-31",
+      "status": "COMPLETE",
+      "reason": "Full generated PT/Lisboa calendar replay matches accepted source",
+      "evidence": {
+        "file": "artifacts/dw/operations/input_preparation_20261027/coverage_assessment.json",
+        "sha256": "edc008f3f8d3307cbd2f291f587ea771c13443fba1a3f97ec0d9a0ee97710020"
+      }
+    },
+    {
+      "source_id": "weather",
+      "scope": "all",
+      "start": "2015-07-01",
+      "end": "2017-08-31",
+      "status": "COMPLETE",
+      "reason": "Selected daily series; preflight must verify each day and both measures",
+      "evidence": {
+        "file": "artifacts/dw/operations/input_preparation_20261027/coverage_assessment.json",
+        "sha256": "edc008f3f8d3307cbd2f291f587ea771c13443fba1a3f97ec0d9a0ee97710020"
+      }
+    }
+  ]
+}

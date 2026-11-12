@@ -1,0 +1,60 @@
+{
+  "counts": {
+    "origins": 255,
+    "candidate_comparisons": 3315,
+    "insufficient_support": 38,
+    "supported_comparisons": 3277,
+    "historical_pass": 0,
+    "mae_pass_independent": 136,
+    "both_pass": 0
+  },
+  "by_analysis": {
+    "weekday": {
+      "supported": 1785,
+      "historical_pass": 0,
+      "mae_pass_independent": 136,
+      "both_pass": 0
+    },
+    "transition": {
+      "supported": 1492,
+      "historical_pass": 0,
+      "mae_pass_independent": 0,
+      "both_pass": 0
+    }
+  },
+  "distributions": {
+    "absolute_deviation": {
+      "min": 0.05127802022538219,
+      "p25": 6.283805961832218,
+      "median": 13.842291894024555,
+      "p75": 22.38245783329353,
+      "p95": 37.63100196473163,
+      "max": 52.1793450029225
+    },
+    "standardized_deviation": {
+      "min": 0.0018699169960510597,
+      "p25": 0.1749679951311148,
+      "median": 0.3849181013285634,
+      "p75": 0.6255625078551134,
+      "p95": 1.1091401537487597,
+      "max": 1.7318790415572565
+    },
+    "threshold": {
+      "min": 3.4552788240291954,
+      "p25": 3.4552788240291954,
+      "median": 3.829081204614483,
+      "p75": 3.829081204614483,
+      "p95": 3.829081204614483,
+      "max": 3.829081204614483
+    },
+    "mae_scale": {
+      "min": 29.962939723630598,
+      "p25": 30.747743359987147,
+      "median": 31.029075507263116,
+      "p75": 61.41318873605391,
+      "p95": 62.02087226438808,
+      "max": 62.20239740628982
+    }
+  },
+  "holdout_already_inspected": true
+}
