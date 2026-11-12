@@ -10,3 +10,7 @@ artifacts/recovery/pipeline_20261110/database_before.json -text whitespace=-trai
 
 # ML artifact metadata and snapshot manifests are checksummed at publication.
 artifacts/ml_serving/** -text whitespace=cr-at-eol
+
+# Raw sources and acquisition metadata must retain their original bytes.
+# Booking uses LF; Holiday and its acquisition evidence use CRLF.
+data/raw/** -text whitespace=cr-at-eol

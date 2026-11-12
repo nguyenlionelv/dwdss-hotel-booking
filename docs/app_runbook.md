@@ -19,6 +19,16 @@ It prints these links only after readiness checks pass. First-time image builds 
 
 ## Prerequisites
 
+Raw files retain their original bytes through `.gitattributes`, including mixed source line endings. If an older Windows checkout reports a raw checksum mismatch after Git converted line endings, update the branch and restore the pinned raw copies before starting:
+
+```powershell
+git pull
+git restore --source=HEAD --worktree -- data/raw
+python scripts/start_app.py
+```
+
+The restore command replaces local raw edits with the committed originals. Do not change the source manifest's expected hashes to accept modified files.
+
 - Python 3.12+ on the host; only its standard library is needed for the launcher.
 - Running Docker Desktop/Engine with Compose v2 (including `up --wait`). Python ETL/ML dependencies are installed inside the tools image; no host pip/venv setup is required.
 - The verified raw files and acquisition metadata selected by `docs/data_dictionary/operations_source_set.json` are included in Git. The launcher stops on missing files or checksum differences. See [the current source manifest](data_dictionary/source_manifest_20261110.md).
