@@ -261,10 +261,6 @@ export default function OperationsReportsPage() {
     reportData?.capacity_summary || capacityReport?.capacity_summary || {};
   const histCap = capacityReport?.historical_period || {};
   const forecastCap = capacityReport?.forecast_7d_summary || {};
-  const disclaimer =
-    reportData?.capacity_disclaimer ||
-    capacityReport?.capacity_disclaimer ||
-    "Dataset does not contain physical room inventory or staffing headcount tables; directives reflect arrival-date booking & stay-night workload.";
 
   const stayNightBreakdownItems = useMemo(() => {
     const groups = histCap.stay_nights_by_arrival_group || {
@@ -291,31 +287,28 @@ export default function OperationsReportsPage() {
       {
         label: "Weekday Arrivals (Mon–Fri)",
         value: groups.weekday_arrival_stay_nights || 0,
-        color: "#315B52",
+        color: "series1",
         sublabel: "stay-nights",
       },
       {
         label: "Weekend Arrivals (Sat–Sun)",
         value: groups.weekend_arrival_stay_nights || 0,
-        color: "#C58B55",
+        color: "series2",
         sublabel: "stay-nights",
       },
       {
         label: "PT National Holiday Arrivals",
         value: groups.holiday_arrival_stay_nights || 0,
-        color: "#547A9B",
+        color: "series3",
         sublabel: "stay-nights",
       },
     ];
   }, [histCap, dailyRows]);
 
-  const isCompleteWeek = (period.calendar_days_count ?? dailyRows.length) >= 7;
-  const overallGuestStatus = period.overall_guest_status || "COMPLETE";
-
   return (
     <div className="space-y-8 lg:space-y-10">
       {/* Editorial Page Header */}
-      <header className="border-b border-[#E5E5E0] pb-6">
+      <header className="border-b border-divider pb-6">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div className="space-y-2">
             <h1 className="editorial-page-title">
@@ -348,14 +341,14 @@ export default function OperationsReportsPage() {
         </div>
 
         {/* Flat Parameter & Period Filter Bar */}
-        <div className="mt-6 pt-5 border-t border-[#E5E5E0] flex flex-col xl:flex-row xl:items-end justify-between gap-4">
+        <div className="mt-6 pt-5 border-t border-divider flex flex-col xl:flex-row xl:items-end justify-between gap-4">
           <div className="flex flex-wrap items-end gap-4">
             {/* Report Template Switcher */}
             <div>
-              <span className="block text-[12px] font-medium text-[#666666] mb-1.5">
+              <span className="block text-[12px] font-medium text-ink-secondary mb-1.5">
                 Report Template View
               </span>
-              <div className="inline-flex rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] p-0.5">
+              <div className="inline-flex rounded-[4px] border border-divider bg-surface-primary p-0.5">
                 {[
                   { id: "ALL", label: "Combined (DO-R01 + DO-R02)" },
                   { id: "DO-R01", label: "DO-R01 Weekly Demand" },
@@ -367,8 +360,8 @@ export default function OperationsReportsPage() {
                     onClick={() => setReportMode(tab.id)}
                     className={`px-2.5 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
                       reportMode === tab.id
-                        ? "bg-[#315B52] text-[#FFFFFF] font-medium"
-                        : "text-[#666666] hover:text-[#252525]"
+                        ? "bg-brand text-white font-medium"
+                        : "text-ink-secondary hover:text-ink-primary"
                     }`}
                   >
                     {tab.label}
@@ -379,17 +372,17 @@ export default function OperationsReportsPage() {
 
             {/* Period Mode Selector */}
             <div>
-              <span className="block text-[12px] font-medium text-[#666666] mb-1.5">
+              <span className="block text-[12px] font-medium text-ink-secondary mb-1.5">
                 Period Selection Mode
               </span>
-              <div className="inline-flex rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] p-0.5">
+              <div className="inline-flex rounded-[4px] border border-divider bg-surface-primary p-0.5">
                 <button
                   type="button"
                   onClick={() => setPeriodMode("ISO_WEEK")}
                   className={`px-2.5 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
                     periodMode === "ISO_WEEK"
-                      ? "bg-[#252525] text-[#FFFFFF] font-medium"
-                      : "text-[#666666] hover:text-[#252525]"
+                      ? "bg-ink-primary text-surface-primary font-medium"
+                      : "text-ink-secondary hover:text-ink-primary"
                   }`}
                 >
                   ISO Week
@@ -399,8 +392,8 @@ export default function OperationsReportsPage() {
                   onClick={() => setPeriodMode("CUSTOM_RANGE")}
                   className={`px-2.5 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
                     periodMode === "CUSTOM_RANGE"
-                      ? "bg-[#252525] text-[#FFFFFF] font-medium"
-                      : "text-[#666666] hover:text-[#252525]"
+                      ? "bg-ink-primary text-surface-primary font-medium"
+                      : "text-ink-secondary hover:text-ink-primary"
                   }`}
                 >
                   Custom Range
@@ -412,7 +405,7 @@ export default function OperationsReportsPage() {
               <div>
                 <label
                   htmlFor="report-week-select"
-                  className="block text-[12px] font-medium text-[#666666] mb-1.5"
+                  className="block text-[12px] font-medium text-ink-secondary mb-1.5"
                 >
                   Reporting Week (Europe/Lisbon)
                 </label>
@@ -420,7 +413,7 @@ export default function OperationsReportsPage() {
                   id="report-week-select"
                   value={selectedWeek}
                   onChange={(e) => handleWeekChange(e.target.value)}
-                  className="h-8 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-2.5 text-[12px] font-medium text-[#252525] focus:outline-none focus:border-[#315B52]"
+                  className="h-8 rounded-[4px] border border-divider bg-surface-primary px-2.5 text-[12px] font-medium text-ink-primary focus:outline-none focus:border-brand"
                 >
                   {AVAILABLE_WEEKS.map((w) => (
                     <option key={w.id} value={w.id}>
@@ -434,7 +427,7 @@ export default function OperationsReportsPage() {
                 <div>
                   <label
                     htmlFor="report-custom-start"
-                    className="block text-[12px] font-medium text-[#666666] mb-1.5"
+                    className="block text-[12px] font-medium text-ink-secondary mb-1.5"
                   >
                     Start Date
                   </label>
@@ -445,13 +438,13 @@ export default function OperationsReportsPage() {
                     max="2017-08-31"
                     value={customStartDate}
                     onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="h-8 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-2.5 font-mono text-[12px] text-[#252525]"
+                    className="h-8 rounded-[4px] border border-divider bg-surface-primary px-2.5 font-mono text-[12px] text-ink-primary"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="report-custom-end"
-                    className="block text-[12px] font-medium text-[#666666] mb-1.5"
+                    className="block text-[12px] font-medium text-ink-secondary mb-1.5"
                   >
                     End Date
                   </label>
@@ -462,7 +455,7 @@ export default function OperationsReportsPage() {
                     max="2017-08-31"
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="h-8 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-2.5 font-mono text-[12px] text-[#252525]"
+                    className="h-8 rounded-[4px] border border-divider bg-surface-primary px-2.5 font-mono text-[12px] text-ink-primary"
                   />
                 </div>
               </div>
@@ -470,10 +463,10 @@ export default function OperationsReportsPage() {
 
             {/* Day Type Filter */}
             <div>
-              <span className="block text-[12px] font-medium text-[#666666] mb-1.5">
+              <span className="block text-[12px] font-medium text-ink-secondary mb-1.5">
                 Arrival Day Type
               </span>
-              <div className="inline-flex rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] p-0.5">
+              <div className="inline-flex rounded-[4px] border border-divider bg-surface-primary p-0.5">
                 {[
                   { id: "ALL", label: "All Days" },
                   { id: "Weekday", label: "Weekdays" },
@@ -485,8 +478,8 @@ export default function OperationsReportsPage() {
                     onClick={() => setDayTypeFilter(type.id)}
                     className={`px-2.5 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
                       dayTypeFilter === type.id
-                        ? "bg-[#315B52] text-[#FFFFFF] font-medium"
-                        : "text-[#666666] hover:text-[#252525]"
+                        ? "bg-brand text-white font-medium"
+                        : "text-ink-secondary hover:text-ink-primary"
                     }`}
                   >
                     {type.label}
@@ -501,9 +494,9 @@ export default function OperationsReportsPage() {
       {reportData?.api_error && (
         <div
           role="alert"
-          className="rounded-[4px] border border-[#B64C43]/30 bg-[#B64C43]/[0.05] px-4 py-3 text-[12px] text-[#252525]"
+          className="rounded-[4px] border border-status-critical/30 bg-status-critical/[0.05] px-4 py-3 text-[12px] text-ink-primary"
         >
-          <span className="font-semibold text-[#B64C43]">
+          <span className="font-semibold text-status-critical">
             Report Data Unavailable ({reportData.status_code || "Error"}):
           </span>{" "}
           {reportData.error_message ||
@@ -514,7 +507,7 @@ export default function OperationsReportsPage() {
       {/* Section 1: BI-05 Reconciled Typographic KPI Strip */}
       <section
         aria-label="Weekly Report Reconciled KPIs"
-        className="border-b border-[#E5E5E0] pb-8"
+        className="border-b border-divider pb-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
           <div>
@@ -522,7 +515,7 @@ export default function OperationsReportsPage() {
               Executive Period Summary
             </h2>
           </div>
-          <span className="font-mono text-[11px] text-[#477A61]">
+          <span className="font-mono text-[11px] text-status-success">
             ● Reconciled against mart.daily_hotel_ops
           </span>
         </div>
@@ -599,7 +592,7 @@ export default function OperationsReportsPage() {
       {(reportMode === "ALL" || reportMode === "DO-R02") && (
         <section
           aria-label="DO-R02 Operations Capacity Summary"
-          className="border-b border-[#E5E5E0] pb-8 space-y-6"
+          className="border-b border-divider pb-8 space-y-6"
         >
           <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
             <div>
@@ -611,7 +604,7 @@ export default function OperationsReportsPage() {
             </div>
             <Link
               to="/analytics/operations"
-              className="text-[12px] font-medium text-[#315B52] hover:underline inline-flex items-center gap-1"
+              className="text-[12px] font-medium text-brand hover:underline inline-flex items-center gap-1"
             >
               <span>Inspect period in OLAP Analytics</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -619,31 +612,31 @@ export default function OperationsReportsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left 7 Columns: Pure HTML5 Canvas Weekly Workload Chart + Group A Breakdown */}
+            {/* Pure HTML5 Canvas Weekly Workload Chart + Group A Breakdown */}
             <div className="lg:col-span-12 space-y-6 w-full">
-              <div className="border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] p-5">
+              <div className="border border-divider rounded-[4px] bg-surface-primary p-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                   <div>
-                    <h3 className="text-[14px] font-semibold text-[#252525]">
+                    <h3 className="text-[14px] font-semibold text-ink-primary">
                       Daily Observed Guests, Non-Canceled Arrivals &amp;
                       Stay-Night Trajectory
                     </h3>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#666666]">
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-ink-secondary">
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 bg-[#315B52] inline-block" />
+                      <span className="w-2.5 h-2.5 bg-brand inline-block" />
                       Observed Guests (guests)
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 bg-[#C58B55] inline-block" />
+                      <span className="w-2.5 h-2.5 bg-series-2 inline-block" />
                       Peak / Holiday Guests
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 bg-[#547A9B] inline-block" />
+                      <span className="w-2.5 h-2.5 bg-series-3 inline-block" />
                       Non-Canceled Bookings (check-ins)
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="w-3 border-t-2 border-[#9B7185] inline-block" />
+                      <span className="w-3 border-t-2 border-series-4 inline-block" />
                       Stay Nights (nights)
                     </span>
                   </div>
@@ -653,17 +646,17 @@ export default function OperationsReportsPage() {
               </div>
 
               {/* Group A: Historical Stay-Nights by Arrival Group (Canvas Horizontal Bars) */}
-              <div className="border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] p-5">
+              <div className="border border-divider rounded-[4px] bg-surface-primary p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <span className="font-mono text-[11px] text-[#666666]">
+                    <span className="font-mono text-[11px] text-ink-secondary">
                       GROUP A • HISTORICAL WORKLOAD
                     </span>
-                    <h3 className="text-[14px] font-semibold text-[#252525]">
+                    <h3 className="text-[14px] font-semibold text-ink-primary">
                       Stay-Nights Distribution by Arrival Segment
                     </h3>
                   </div>
-                  <span className="font-mono text-[12px] text-[#252525]">
+                  <span className="font-mono text-[12px] text-ink-primary">
                     Weekend surge: {capacity.weekend_surge_pct || "0.0%"}
                   </span>
                 </div>
@@ -675,42 +668,42 @@ export default function OperationsReportsPage() {
               </div>
             </div>
 
-            {/* Right 5 Columns: Group B Upcoming 7-Day Forecast Signal & Operational Directives */}
-            <div className="lg:col-span-12 space-y-5 border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] p-5 w-full">
-              <div className="border-b border-[#E5E5E0] pb-3">
-                <h3 className="text-[15px] font-semibold text-[#252525] mt-0.5">
+            {/* Group B Upcoming 7-Day Forecast Signal & Operational Directives */}
+            <div className="lg:col-span-12 space-y-5 border border-divider rounded-[4px] bg-surface-primary p-5 w-full">
+              <div className="border-b border-divider pb-3">
+                <h3 className="text-[15px] font-semibold text-ink-primary mt-0.5">
                   Departmental Workload &amp; Action Directives
                 </h3>
               </div>
 
               {/* Weekday vs Weekend Typographic Comparison */}
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-[#E5E5E0]">
+              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-divider">
                 <div>
-                  <div className="text-[11px] text-[#666666]">
+                  <div className="text-[11px] text-ink-secondary">
                     Weekday Avg (Mon–Fri)
                   </div>
-                  <div className="font-mono text-[20px] font-semibold text-[#252525] tabular-nums mt-0.5">
+                  <div className="font-mono text-[20px] font-semibold text-ink-primary tabular-nums mt-0.5">
                     {capacity.weekday_avg_arrivals ?? "—"}{" "}
-                    <span className="text-[12px] font-normal text-[#666666]">
+                    <span className="text-[12px] font-normal text-ink-secondary">
                       check-ins
                     </span>
                   </div>
-                  <div className="font-mono text-[11px] text-[#666666] mt-0.5">
+                  <div className="font-mono text-[11px] text-ink-secondary mt-0.5">
                     ~{capacity.weekday_avg_guests ?? "—"} guests/day
                   </div>
                 </div>
 
-                <div className="border-l border-[#E5E5E0] pl-4">
-                  <div className="text-[11px] text-[#666666]">
+                <div className="border-l border-divider pl-4">
+                  <div className="text-[11px] text-ink-secondary">
                     Weekend Avg (Sat–Sun)
                   </div>
-                  <div className="font-mono text-[20px] font-semibold text-[#315B52] tabular-nums mt-0.5">
+                  <div className="font-mono text-[20px] font-semibold text-brand tabular-nums mt-0.5">
                     {capacity.weekend_avg_arrivals ?? "—"}{" "}
-                    <span className="text-[12px] font-normal text-[#666666]">
+                    <span className="text-[12px] font-normal text-ink-secondary">
                       check-ins
                     </span>
                   </div>
-                  <div className="font-mono text-[11px] text-[#666666] mt-0.5">
+                  <div className="font-mono text-[11px] text-ink-secondary mt-0.5">
                     ~{capacity.weekend_avg_guests ?? "—"} guests/day
                   </div>
                 </div>
@@ -718,20 +711,20 @@ export default function OperationsReportsPage() {
 
               {/* Forward 7-Day Signal Summary */}
               {forecastCap.predicted_total_guests_7d && (
-                <div className="pb-4 border-b border-[#E5E5E0] space-y-2">
+                <div className="pb-4 border-b border-divider space-y-2">
                   <div className="flex items-center justify-between text-[12px]">
-                    <span className="font-medium text-[#252525]">
+                    <span className="font-medium text-ink-primary">
                       Forward 7-Day Forecast ({forecastCap.horizon_start} →{" "}
                       {forecastCap.horizon_end})
                     </span>
                     <Link
                       to="/dss/demand-forecast"
-                      className="font-mono text-[11px] text-[#315B52] hover:underline"
+                      className="font-mono text-[11px] text-brand hover:underline"
                     >
                       DO-M01 →
                     </Link>
                   </div>
-                  <div className="flex items-center justify-between text-[12px] font-mono bg-[#F2F1ED] px-3 py-2 rounded-[3px]">
+                  <div className="flex items-center justify-between text-[12px] font-mono bg-surface-subtle px-3 py-2 rounded-[3px]">
                     <span>
                       7d Guests:{" "}
                       <strong>
@@ -740,13 +733,13 @@ export default function OperationsReportsPage() {
                         ).toLocaleString()}
                       </strong>
                     </span>
-                    <span className="text-[#B64C43]">
+                    <span className="text-status-critical">
                       HIGH: {forecastCap.demand_level_counts?.HIGH ?? 2}d
                     </span>
-                    <span className="text-[#477A61]">
+                    <span className="text-status-success">
                       NORMAL: {forecastCap.demand_level_counts?.NORMAL ?? 4}d
                     </span>
-                    <span className="text-[#C58B35]">
+                    <span className="text-status-warning">
                       LOW: {forecastCap.demand_level_counts?.LOW ?? 1}d
                     </span>
                   </div>
@@ -755,29 +748,29 @@ export default function OperationsReportsPage() {
 
               {/* Departmental Directives (No Hallucinated Room/Staff Counts) */}
               <div className="space-y-3 text-[12px]">
-                <div className="border-l-2 border-[#315B52] pl-3 py-0.5">
-                  <div className="font-semibold text-[#252525]">
+                <div className="border-l-2 border-brand pl-3 py-0.5">
+                  <div className="font-semibold text-ink-primary">
                     Front Office &amp; Check-in Windows
                   </div>
-                  <p className="text-[#666666] mt-0.5 leading-relaxed">
+                  <p className="text-ink-secondary mt-0.5 leading-relaxed">
                     {capacity.front_desk_directive}
                   </p>
                 </div>
 
-                <div className="border-l-2 border-[#547A9B] pl-3 py-0.5">
-                  <div className="font-semibold text-[#252525]">
+                <div className="border-l-2 border-series-3 pl-3 py-0.5">
+                  <div className="font-semibold text-ink-primary">
                     Housekeeping &amp; Room Turnover
                   </div>
-                  <p className="text-[#666666] mt-0.5 leading-relaxed">
+                  <p className="text-ink-secondary mt-0.5 leading-relaxed">
                     {capacity.housekeeping_directive}
                   </p>
                 </div>
 
-                <div className="border-l-2 border-[#C58B55] pl-3 py-0.5">
-                  <div className="font-semibold text-[#252525]">
+                <div className="border-l-2 border-series-2 pl-3 py-0.5">
+                  <div className="font-semibold text-ink-primary">
                     Food &amp; Beverage Provisioning
                   </div>
-                  <p className="text-[#666666] mt-0.5 leading-relaxed">
+                  <p className="text-ink-secondary mt-0.5 leading-relaxed">
                     {capacity.fb_directive}
                   </p>
                 </div>
@@ -801,7 +794,7 @@ export default function OperationsReportsPage() {
                 </h2>
               </div>
             </div>
-            <span className="font-mono text-[11px] text-[#666666]">
+            <span className="font-mono text-[11px] text-ink-secondary">
               Sorted chronologically: full_date ASC
             </span>
           </div>
@@ -830,11 +823,6 @@ export default function OperationsReportsPage() {
                   const isWeekend =
                     row.is_weekend ?? row.day_type === "Weekend";
                   const isHoliday = row.is_holiday ?? row.is_pt_holiday;
-                  const holidayName =
-                    (Array.isArray(row.holiday_names) &&
-                      row.holiday_names[0]) ||
-                    row.holiday_local_name ||
-                    null;
                   const totalBookings = row.total_bookings ?? row.arrivals ?? 0;
                   const nonCanceled =
                     row.non_canceled_bookings ?? row.arrivals ?? 0;
@@ -849,9 +837,6 @@ export default function OperationsReportsPage() {
                         : 0;
                   const guests =
                     row.observed_total_guests ?? row.active_guests ?? 0;
-                  const adults = row.observed_total_adults ?? 0;
-                  const children = row.observed_total_children ?? 0;
-                  const babies = row.observed_total_babies ?? 0;
                   const stayNights =
                     row.observed_total_stay_nights ?? row.room_nights ?? 0;
                   const avgParty = row.avg_party_size ?? 1.95;
@@ -867,31 +852,31 @@ export default function OperationsReportsPage() {
                       key={fullDate}
                       className={
                         row.is_peak_day
-                          ? "bg-[#B64C43]/[0.20]"
+                          ? "bg-status-critical/[0.15]"
                           : isHoliday
-                            ? "bg-[#C58B35]/[0.20]"
+                            ? "bg-status-warning/[0.15]"
                             : undefined
                       }
                     >
-                      <TableCell className="font-mono font-medium text-[#252525] whitespace-nowrap">
+                      <TableCell className="font-mono font-medium text-ink-primary whitespace-nowrap">
                         {fullDate}
                         {row.is_peak_day ? (
-                          <span className="ml-1.5 text-[10px] font-sans font-semibold text-[#B64C43]">
+                          <span className="ml-1.5 text-[10px] font-sans font-semibold text-status-critical">
                             PEAK
                           </span>
                         ) : (
                           isHoliday && (
-                            <span className="ml-1.5 text-[10px] font-sans font-semibold text-[#C58B35]">
+                            <span className="ml-1.5 text-[10px] font-sans font-semibold text-status-warning">
                               Holiday
                             </span>
                           )
                         )}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
-                        <span className="text-[#252525] font-medium">
+                        <span className="text-ink-primary font-medium">
                           {row.day_of_week}
                         </span>
-                        <span className="ml-1.5 text-[11px] text-[#666666]">
+                        <span className="ml-1.5 text-[11px] text-ink-secondary">
                           (
                           {isWeekend
                             ? "Weekend"
@@ -901,47 +886,39 @@ export default function OperationsReportsPage() {
                           )
                         </span>
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-[#252525]">
+                      <TableCell className="text-right font-mono tabular-nums text-ink-primary">
                         {totalBookings.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums font-semibold text-[#315B52]">
+                      <TableCell className="text-right font-mono tabular-nums font-semibold text-brand">
                         {nonCanceled.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                      <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
                         {canceled} ({cancelRate.toFixed(1)}%)
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums">
-                        <span className="font-semibold text-[#252525]">
+                        <span className="font-semibold text-ink-primary">
                           {guests.toLocaleString()}
                         </span>
-                        {/* <span className="ml-1.5 text-[11px] text-[#666666]">
-                          ({adults}/{children}/{babies})
-                        </span> */}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-[#252525]">
+                      <TableCell className="text-right font-mono tabular-nums text-ink-primary">
                         {stayNights.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                      <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
                         {Number(avgParty).toFixed(2)} /{" "}
                         {Number(avgStay).toFixed(1)}n
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                      <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
                         {Math.round(avgLead)}d
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-[#252525]">
+                      <TableCell className="text-right font-mono tabular-nums text-ink-primary">
                         €{Number(adr).toFixed(2)}
                       </TableCell>
-                      <TableCell className="text-[12px] text-[#666666] whitespace-nowrap">
+                      <TableCell className="text-[12px] text-ink-secondary whitespace-nowrap">
                         <span className="font-mono text-[11px]">
                           {temp != null ? `${temp}°C` : "—"} ·{" "}
                           {precip != null ? `${precip}mm` : "—"} (
                           {row.weather_status || "Clear"})
                         </span>
-                        {/* {isHoliday || holidayName ? (
-                          <span className="text-[#C58B35] font-medium mr-2">
-                            ★ {holidayName || "PT Holiday"}
-                          </span>
-                        ) : null} */}
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap">
                         <Badge
@@ -960,39 +937,39 @@ export default function OperationsReportsPage() {
                 <TableRow>
                   <TableCell
                     colSpan={2}
-                    className="font-semibold text-[#252525]"
+                    className="font-semibold text-ink-primary"
                   >
                     Reconciled Period Totals ({reconciled.days_count} days)
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-[#252525]">
+                  <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary">
                     {reconciled.total_bookings.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-[#315B52]">
+                  <TableCell className="text-right font-mono tabular-nums font-semibold text-brand">
                     {reconciled.non_canceled_bookings.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                  <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
                     {reconciled.total_cancellations.toLocaleString()} (
                     {(reconciled.cancellation_rate * 100).toFixed(1)}%)
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-[#252525]">
+                  <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary">
                     {reconciled.observed_total_guests.toLocaleString()} (Avg{" "}
                     {reconciled.avg_guests_per_day}/d)
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-[#252525]">
+                  <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary">
                     {reconciled.observed_total_stay_nights.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                  <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
                     {reconciled.avg_party_size} / {reconciled.avg_stay_nights}n
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                  <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
                     {reconciled.avg_lead_time}d
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-[#252525]">
+                  <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary">
                     €{reconciled.avg_adr.toFixed(2)}
                   </TableCell>
                   <TableCell
                     colSpan={2}
-                    className="text-right font-mono text-[11px] text-[#477A61]"
+                    className="text-right font-mono text-[11px] text-status-success"
                   >
                     100% BI-05 Reconciled
                   </TableCell>

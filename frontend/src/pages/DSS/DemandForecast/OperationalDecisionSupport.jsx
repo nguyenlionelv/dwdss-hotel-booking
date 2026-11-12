@@ -14,45 +14,45 @@ export default function OperationalDecisionSupport({ forecastData }) {
   const days = allocation?.daily_allocation ?? [];
 
   return (
-    <section aria-labelledby="operational-support-heading" data-testid="operational-support" className="space-y-5 border-b border-[#E5E5E0] pb-8">
+    <section aria-labelledby="operational-support-heading" data-testid="operational-support" className="space-y-5 border-b border-divider pb-8">
       <div>
         <h2 id="operational-support-heading" className="editorial-section-title">Weekly Resource Allocation</h2>
-        <p className="text-[12px] text-[#666666] mt-1">Relative planning units across the next seven days. These are not staff, rooms, money or hours.</p>
+        <p className="text-[12px] text-ink-secondary mt-1">Relative planning units across the next seven days. These are not staff, rooms, money or hours.</p>
       </div>
 
       {allocation?.status === 'ready' && days.length === 7 ? (
         <>
-          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 border border-[#E5E5E0] rounded-[4px] bg-[#FAFAF8] p-4">
-            <div><span className="block text-[11px] text-[#666666]">Selected policy</span><strong className="text-[15px] text-[#315B52]">{POLICY_NAMES[allocation.selected_policy] ?? allocation.selected_policy ?? '—'}</strong></div>
-            <div><span className="block text-[11px] text-[#666666]">Weekly budget</span><strong className="font-mono text-[15px]">{formatUnits(allocation.budget_units)}</strong></div>
-            {finiteNumber(allocation.lambda) !== null && <div><span className="block text-[11px] text-[#666666]">Forecast weight λ</span><strong className="font-mono text-[15px]">{formatMetric(allocation.lambda)}</strong></div>}
+          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 border border-divider rounded-[4px] bg-surface-workspace p-4">
+            <div><span className="block text-[11px] text-ink-secondary">Selected policy</span><strong className="text-[15px] text-brand">{POLICY_NAMES[allocation.selected_policy] ?? allocation.selected_policy ?? '—'}</strong></div>
+            <div><span className="block text-[11px] text-ink-secondary">Weekly budget</span><strong className="font-mono text-[15px] text-ink-primary">{formatUnits(allocation.budget_units)}</strong></div>
+            {finiteNumber(allocation.lambda) !== null && <div><span className="block text-[11px] text-ink-secondary">Forecast weight λ</span><strong className="font-mono text-[15px] text-ink-primary">{formatMetric(allocation.lambda)}</strong></div>}
           </div>
 
-          <div aria-label="Seven-day relative resource allocation chart" className="border border-[#E5E5E0] rounded-[4px] bg-white p-4 sm:p-5 space-y-3">
+          <div aria-label="Seven-day relative resource allocation chart" className="border border-divider rounded-[4px] bg-surface-primary p-4 sm:p-5 space-y-3">
             {days.map(day => (
               <div key={day.date} className="grid grid-cols-[68px_minmax(0,1fr)_70px] sm:grid-cols-[100px_minmax(0,1fr)_80px_90px] items-center gap-x-2 gap-y-1 sm:gap-x-4 text-[12px]">
-                <time dateTime={day.date} className="font-mono text-[#252525]">{formatDate(day.date, true)}</time>
-                <div className="relative h-7 bg-[#F0F1ED] rounded-[3px] overflow-hidden" aria-hidden="true">
-                  <div className="absolute top-0 left-0 h-full bg-[#315B52]" style={{ width: `${Math.max(0, Math.min(100, finiteNumber(day.allocation_pct) ?? 0))}%` }} />
+                <time dateTime={day.date} className="font-mono text-ink-primary">{formatDate(day.date, true)}</time>
+                <div className="relative h-7 bg-surface-subtle rounded-[3px] overflow-hidden" aria-hidden="true">
+                  <div className="absolute top-0 left-0 h-full bg-brand" style={{ width: `${Math.max(0, Math.min(100, finiteNumber(day.allocation_pct) ?? 0))}%` }} />
                 </div>
-                <span className="text-right font-mono tabular-nums text-[#252525]">{formatShare(day.allocation_pct)}</span>
-                <span className="col-start-2 col-span-2 sm:col-start-auto sm:col-span-1 text-right font-mono tabular-nums text-[#666666]">{formatUnits(day.allocation_units)}</span>
+                <span className="text-right font-mono tabular-nums text-ink-primary">{formatShare(day.allocation_pct)}</span>
+                <span className="col-start-2 col-span-2 sm:col-start-auto sm:col-span-1 text-right font-mono tabular-nums text-ink-secondary">{formatUnits(day.allocation_units)}</span>
               </div>
             ))}
-            <p className="text-[11px] text-[#666666]">Equal share reference: {formatShare(100 / 7)} per day. Percentages are rounded for display.</p>
+            <p className="text-[11px] text-ink-secondary">Equal share reference: {formatShare(100 / 7)} per day. Percentages are rounded for display.</p>
           </div>
 
           {days.some(day => day.review_action) && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {days.filter(day => day.review_action).map(day => (
-              <div key={day.date} className="border border-[#E5E5E0] rounded-[4px] p-4 text-[12px]">
-                <time dateTime={day.date} className="font-mono font-medium">{formatDate(day.date)}</time>
-                <p className="mt-1 tabular-nums">{formatUnits(day.allocation_units)} · {formatSignedPoints(day.comparison_with_uniform_pct_points)} vs equal share</p>
-                <p className="mt-1 text-[#666666]">{day.review_action}</p>
+              <div key={day.date} className="border border-divider bg-surface-primary rounded-[4px] p-4 text-[12px]">
+                <time dateTime={day.date} className="font-mono font-medium text-ink-primary">{formatDate(day.date)}</time>
+                <p className="mt-1 tabular-nums text-ink-primary">{formatUnits(day.allocation_units)} · {formatSignedPoints(day.comparison_with_uniform_pct_points)} vs equal share</p>
+                <p className="mt-1 text-ink-secondary">{day.review_action}</p>
               </div>
             ))}
           </div>}
         </>
-      ) : <p className="border border-[#E5E5E0] rounded-[4px] p-5 text-[13px] text-[#666666]">Seven valid forecast dates are required for resource allocation.</p>}
+      ) : <p className="border border-divider rounded-[4px] p-5 text-[13px] text-ink-secondary">Seven valid forecast dates are required for resource allocation.</p>}
     </section>
   );
 }

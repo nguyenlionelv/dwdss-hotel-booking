@@ -9,19 +9,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[#315B52] text-white hover:bg-[#264942]",
+          "bg-brand text-white hover:bg-brand-hover",
         destructive:
-          "bg-[#B64C43] text-white hover:bg-[#9E3F37]",
+          "bg-status-critical text-white hover:bg-status-critical/90",
         outline:
-          "border border-[#E5E5E0] bg-transparent text-[#252525] hover:bg-[#F4F4F0]",
+          "border border-divider bg-transparent text-ink-primary hover:bg-surface-subtle",
         secondary:
-          "border border-[#E5E5E0] bg-[#FFFFFF] text-[#252525] hover:bg-[#F4F4F0]",
+          "border border-divider bg-surface-primary text-ink-primary hover:bg-surface-subtle",
         ghost:
-          "text-[#666666] hover:text-[#252525] hover:bg-[#F4F4F0]",
+          "text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle",
         link:
-          "text-[#315B52] underline-offset-4 hover:underline p-0 h-auto",
+          "text-brand underline-offset-4 hover:underline p-0 h-auto",
         emerald:
-          "bg-[#315B52] text-white hover:bg-[#264942]",
+          "bg-brand text-white hover:bg-brand-hover",
       },
       size: {
         default: "h-8 px-3 py-1.5",

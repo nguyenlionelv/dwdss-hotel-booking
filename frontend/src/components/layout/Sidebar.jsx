@@ -62,18 +62,18 @@ export function NavigationContent({ onNavClick }) {
         <Link
           to="/"
           onClick={onNavClick}
-          className="block px-3 pb-5 mb-5 border-b border-[#E5E5E0] focus:outline-none"
+          className="block px-3 pb-5 mb-5 border-b border-divider focus:outline-none"
         >
-          <div className="font-semibold text-[#252525] text-[15px] tracking-tight">
+          <div className="font-semibold text-ink-primary text-[15px] tracking-tight">
             Lumina Analytics
           </div>
-          <div className="text-[12px] text-[#666666] mt-0.5">
+          <div className="text-[12px] text-ink-secondary mt-0.5">
             City Hotel — Lisbon, Portugal
           </div>
         </Link>
 
         {/* Primary Operations Navigation */}
-        <div className="px-3 mb-2 text-[12px] font-medium text-[#999999]">
+        <div className="px-3 mb-2 text-[12px] font-medium text-ink-muted">
           Operations views
         </div>
         <nav className="space-y-0.5" aria-label="Primary Navigation">
@@ -97,19 +97,19 @@ export function NavigationContent({ onNavClick }) {
                   cn(
                     "flex items-center justify-between px-3 py-2 rounded-[3px] text-[13px] transition-colors relative",
                     isActive
-                      ? "text-[#315B52] font-semibold bg-[#315B52]/[0.06]"
-                      : "-translate-x-1 text-[#666666] hover:text-[#252525] hover:bg-[#F4F4F0]",
+                      ? "text-brand font-semibold bg-brand/[0.08]"
+                      : "-translate-x-1 text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle",
                   )
                 }
               >
                 {isActive && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-[#315B52]" />
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-brand" />
                 )}
                 <span className="truncate">{item.label}</span>
                 <span
                   className={cn(
                     "text-[11px] font-mono",
-                    isActive ? "text-[#315B52]" : "text-[#999999]",
+                    isActive ? "text-brand" : "text-ink-muted",
                   )}
                 >
                   {item.code}
@@ -119,12 +119,12 @@ export function NavigationContent({ onNavClick }) {
           })}
         </nav>
 
-        <div className="my-5 border-t border-[#E5E5E0]" />
+        <div className="my-5 border-t border-divider" />
 
         {/* Extended Roadmap Scope */}
-        <div className="px-3 mb-2 flex items-center justify-between text-[12px] font-medium text-[#999999]">
+        <div className="px-3 mb-2 flex items-center justify-between text-[12px] font-medium text-ink-muted">
           <span>Extended scope</span>
-          <span className="text-[11px] font-mono text-[#999999]">Phase 2</span>
+          <span className="text-[11px] font-mono text-ink-muted">Phase 2</span>
         </div>
 
         <nav className="space-y-0.5" aria-label="Extended Scope Navigation">
@@ -140,13 +140,13 @@ export function NavigationContent({ onNavClick }) {
                   cn(
                     "flex items-center justify-between px-3 py-1.5 rounded-[3px] text-[13px] transition-colors relative",
                     isActive
-                      ? "text-[#252525] font-semibold bg-[#F4F4F0]"
-                      : "text-[#999999] hover:text-[#666666] hover:bg-[#F4F4F0]/60",
+                      ? "text-ink-primary font-semibold bg-surface-subtle"
+                      : "text-ink-muted hover:text-ink-secondary hover:bg-surface-subtle/60",
                   )
                 }
               >
                 <span className="truncate">{item.label}</span>
-                <span className="text-[11px] font-mono text-[#999999]">
+                <span className="text-[11px] font-mono text-ink-muted">
                   {item.code}
                 </span>
               </NavLink>
@@ -160,7 +160,7 @@ export function NavigationContent({ onNavClick }) {
 
 export default function Sidebar() {
   return (
-    <aside className="fixed left-0 top-0 hidden lg:flex h-screen w-[240px] bg-[#FFFFFF] border-r border-[#E5E5E0] flex-col justify-between py-6 px-3 z-40 select-none">
+    <aside className="fixed left-0 top-0 hidden lg:flex h-screen w-[240px] bg-surface-primary border-r border-divider flex-col justify-between py-6 px-3 z-40 select-none transition-colors">
       <NavigationContent />
     </aside>
   );

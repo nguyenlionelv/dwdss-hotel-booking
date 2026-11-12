@@ -4,22 +4,72 @@ import { formatChartAxis, formatDate, formatGuests, formatReference } from '../.
 
 /**
  * Lumina Analytics Color System (DESIGN.md Section 2.2 & 5.3)
+ * Reads semantic CSS tokens dynamically from :root so HTML5 Canvas charts
+ * adapt seamlessly between Light Mode and Dark Mode without hardcoded hex literals.
  */
-const PALETTE = {
-  series1: "#315B52", // Primary data (muted forest green)
-  series2: "#C58B55", // Secondary comparison / Holiday / Peak (ochre)
-  series3: "#547A9B", // Additional comparison (muted blue)
-  series4: "#9B7185", // Additional comparison (muted plum)
-  series5: "#92958B", // Supporting / reference data (neutral grey)
-  success: "#477A61",
-  warning: "#C58B35",
-  critical: "#B64C43",
-  inkPrimary: "#252525",
-  inkSecondary: "#666666",
-  inkMuted: "#999999",
-  divider: "#E5E5E0",
-  surface: "#FFFFFF",
-};
+function readThemePalette() {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return {};
+  }
+  const styles = window.getComputedStyle(document.documentElement);
+  const token = (name) => styles.getPropertyValue(name).trim();
+  const brandRgbRaw = token("--brand-rgb").split(/\s+/).filter(Boolean).join(", ");
+
+  return {
+    series1: token("--color-series-1"),
+    series2: token("--color-series-2"),
+    series3: token("--color-series-3"),
+    series4: token("--color-series-4"),
+    series5: token("--color-series-5"),
+    success: token("--color-status-success"),
+    warning: token("--color-status-warning"),
+    critical: token("--color-status-critical"),
+    inkPrimary: token("--color-ink-primary"),
+    inkSecondary: token("--color-ink-secondary"),
+    inkMuted: token("--color-ink-muted"),
+    divider: token("--color-divider"),
+    surface: token("--color-surface-primary"),
+    surfaceSubtle: token("--color-surface-subtle"),
+    areaFill: brandRgbRaw ? `rgba(${brandRgbRaw}, 0.10)` : "transparent",
+    hoverFill: brandRgbRaw ? `rgba(${brandRgbRaw}, 0.08)` : "transparent",
+  };
+}
+
+function useThemePalette() {
+  const [palette, setPalette] = useState(() => readThemePalette());
+
+  useEffect(() => {
+    const update = () => setPalette(readThemePalette());
+    update();
+
+    const root = document.documentElement;
+    const observer =
+      typeof MutationObserver !== "undefined"
+        ? new MutationObserver(update)
+        : null;
+    if (observer && root) {
+      observer.observe(root, {
+        attributes: true,
+        attributeFilter: ["class", "style"],
+      });
+    }
+
+    const mql =
+      typeof window !== "undefined" && window.matchMedia
+        ? window.matchMedia("(prefers-color-scheme: dark)")
+        : null;
+    if (mql) {
+      mql.addEventListener("change", update);
+    }
+
+    return () => {
+      if (observer) observer.disconnect();
+      if (mql) mql.removeEventListener("change", update);
+    };
+  }, []);
+
+  return palette;
+}
 
 const fmtNum = (n, decimals = 0) => {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
@@ -73,6 +123,7 @@ export default function TrendChart({
   const hitBoxesRef = useRef([]);
   const [hovered, setHovered] = useState(null);
   const { width, height } = useCanvasSize(containerRef, customHeight);
+  const PALETTE = useThemePalette();
 
   const getVal = (item) => {
     if (!item) return 0;
@@ -173,7 +224,7 @@ export default function TrendChart({
       pts.forEach((p) => ctx.lineTo(p.x, p.y));
       ctx.lineTo(pts[pts.length - 1].x, pad.top + plotH);
       ctx.closePath();
-      ctx.fillStyle = "rgba(49, 91, 82, 0.08)";
+      ctx.fillStyle = PALETTE.areaFill;
       ctx.fill();
 
       // Main line
@@ -272,7 +323,7 @@ export default function TrendChart({
       const cx = pad.left + idx * stepX + stepX / 2;
       ctx.fillText(String(item.period_label || ""), cx, pad.top + plotH + 10);
     });
-  }, [series, width, height, grain, measure, hovered]);
+  }, [series, width, height, grain, measure, hovered, PALETTE]);
 
   const handleMouseMove = (e) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -293,7 +344,8 @@ export default function TrendChart({
 
   return (
     <div ref={containerRef} className="relative w-full select-none">
-      <canvas className="block w-full"
+      <canvas
+        className="block w-full"
         ref={canvasRef}
         style={{
           width: `${width}px`,
@@ -309,52 +361,52 @@ export default function TrendChart({
 
       {hovered?.item && (
         <div
-          className="pointer-events-none absolute z-20 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-3 py-2 text-[12px] text-[#252525] shadow-sm space-y-1 min-w-[200px]"
+          className="pointer-events-none absolute z-20 rounded-[4px] border border-divider bg-surface-primary px-3 py-2 text-[12px] text-ink-primary shadow-sm space-y-1 min-w-[200px]"
           style={{
             left: `${Math.min(Math.max(12, hovered.cx - 95), Math.max(12, width - 215))}px`,
             top: `${Math.max(8, hovered.cy - 88)}px`,
           }}
         >
-          <div className="flex items-center justify-between gap-4 border-b border-[#E5E5E0] pb-1 font-semibold">
+          <div className="flex items-center justify-between gap-4 border-b border-divider pb-1 font-semibold">
             <span>{hovered.item.period_label}</span>
-            <span className="font-mono text-[11px] text-[#666666]">
+            <span className="font-mono text-[11px] text-ink-secondary">
               {hovered.item.guest_data_status || "COMPLETE"}
             </span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-[#666666]">Observed guests</span>
+            <span className="text-ink-secondary">Observed guests</span>
             <span className="font-mono font-semibold tabular-nums">
               {fmtNum(hovered.item.observed_total_guests ?? hovered.item.active_guests)}
             </span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-[#666666]">Non-canceled bookings</span>
+            <span className="text-ink-secondary">Non-canceled bookings</span>
             <span className="font-mono font-semibold tabular-nums">
               {fmtNum(hovered.item.non_canceled_bookings ?? hovered.item.arrivals)}
             </span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-[#666666]">Stay nights</span>
+            <span className="text-ink-secondary">Stay nights</span>
             <span className="font-mono tabular-nums">
               {fmtNum(hovered.item.observed_total_stay_nights ?? hovered.item.room_nights)}
             </span>
           </div>
           {hovered.item.cancellation_rate != null && (
             <div className="flex justify-between gap-4">
-              <span className="text-[#666666]">Cancellation rate</span>
+              <span className="text-ink-secondary">Cancellation rate</span>
               <span className="font-mono tabular-nums">
                 {(Number(hovered.item.cancellation_rate) * 100).toFixed(1)}%
               </span>
             </div>
           )}
           <div className="flex justify-between gap-4">
-            <span className="text-[#666666]">Avg ADR</span>
+            <span className="text-ink-secondary">Avg ADR</span>
             <span className="font-mono tabular-nums">
               €{fmtNum(hovered.item.avg_adr ?? hovered.item.adr, 2)}
             </span>
           </div>
           {canDrill && (
-            <div className="pt-0.5 text-[11px] text-[#315B52] font-medium">
+            <div className="pt-0.5 text-[11px] text-brand font-medium">
               Click to drill down →
             </div>
           )}
@@ -380,6 +432,7 @@ export function CanvasHorizontalBarChart({
   const rowHeight = 36;
   const computedHeight = customHeight || Math.max(120, items.length * rowHeight + 24);
   const { width, height } = useCanvasSize(containerRef, computedHeight);
+  const PALETTE = useThemePalette();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -415,12 +468,13 @@ export function CanvasHorizontalBarChart({
       ctx.fillText(labelText, 4, yCenter);
 
       // Background track
-      ctx.fillStyle = "#F2F2EE";
+      ctx.fillStyle = PALETTE.surfaceSubtle;
       ctx.fillRect(labelColW, barY, barAreaW, barH);
 
-      // Bar fill
+      // Bar fill (resolves semantic token key like 'series1' or falls back to positional series)
+      const resolvedItemColor = item.color ? PALETTE[item.color] || item.color : null;
       ctx.fillStyle =
-        item.color ||
+        resolvedItemColor ||
         (item.highlight
           ? PALETTE.series1
           : idx === 0
@@ -437,11 +491,12 @@ export function CanvasHorizontalBarChart({
       const formatted = item.formattedValue || valueFormatter(val);
       ctx.fillText(formatted, width - 4, yCenter);
     });
-  }, [items, width, height, valueFormatter]);
+  }, [items, width, height, valueFormatter, PALETTE]);
 
   return (
     <div ref={containerRef} className="w-full select-none">
-      <canvas className="block w-full"
+      <canvas
+        className="block w-full"
         ref={canvasRef}
         style={{ width: `${width}px`, height: `${height}px` }}
         role="img"
@@ -461,6 +516,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
   const hitBoxesRef = useRef([]);
   const [hovered, setHovered] = useState(null);
   const { width, height } = useCanvasSize(containerRef, customHeight);
+  const PALETTE = useThemePalette();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -505,7 +561,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
     const barW = Math.max(4, Math.floor(stepX * 0.42));
     const barGap = stepX < 18 ? 1 : 2;
 
-    // Grouped bars: Observed Guests (Series 1 #315B52) & Non-canceled bookings (Series 3 #547A9B)
+    // Grouped bars: Observed Guests (Series 1) & Non-canceled bookings (Series 3)
     dailyRows.forEach((row, idx) => {
       const cx = pad.left + idx * stepX + stepX / 2;
       const gVal = guestsArr[idx];
@@ -519,7 +575,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
       const isHovered = hovered?.idx === idx;
 
       if (isHovered) {
-        ctx.fillStyle = "rgba(49, 91, 82, 0.06)";
+        ctx.fillStyle = PALETTE.hoverFill;
         ctx.fillRect(pad.left + idx * stepX, pad.top, stepX, plotH);
       }
 
@@ -553,7 +609,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
       });
     });
 
-    // Overlay line for Stay Nights (Series 4 #9B7185)
+    // Overlay line for Stay Nights (Series 4)
     ctx.beginPath();
     dailyRows.forEach((_, idx) => {
       const cx = pad.left + idx * stepX + stepX / 2;
@@ -576,7 +632,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
       ctx.fillStyle = PALETTE.series4;
       ctx.fill();
     });
-  }, [dailyRows, width, height, hovered]);
+  }, [dailyRows, width, height, hovered, PALETTE]);
 
   const handleMouseMove = (e) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -596,7 +652,8 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
 
   return (
     <div ref={containerRef} className="relative w-full select-none">
-      <canvas className="block w-full"
+      <canvas
+        className="block w-full"
         ref={canvasRef}
         style={{ width: `${width}px`, height: `${height}px` }}
         onMouseMove={handleMouseMove}
@@ -607,23 +664,23 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
 
       {hovered?.row && (
         <div
-          className="pointer-events-none absolute z-20 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-3 py-2 text-[12px] text-[#252525] shadow-sm space-y-1 min-w-[215px]"
+          className="pointer-events-none absolute z-20 rounded-[4px] border border-divider bg-surface-primary px-3 py-2 text-[12px] text-ink-primary shadow-sm space-y-1 min-w-[215px]"
           style={{
             left: `${Math.min(Math.max(12, hovered.cx - 105), Math.max(12, width - 225))}px`,
             top: `${Math.max(8, hovered.cy - 96)}px`,
           }}
         >
-          <div className="flex items-center justify-between gap-4 border-b border-[#E5E5E0] pb-1 font-semibold">
+          <div className="flex items-center justify-between gap-4 border-b border-divider pb-1 font-semibold">
             <span>
               {hovered.row.full_date || hovered.row.stay_date}
               {hovered.row.day_of_week ? ` (${String(hovered.row.day_of_week).slice(0, 3)})` : ""}
             </span>
-            <span className="font-mono text-[11px] text-[#666666]">
+            <span className="font-mono text-[11px] text-ink-secondary">
               {hovered.row.guest_data_status || "COMPLETE"}
             </span>
           </div>
           {(hovered.row.is_peak_day || hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName) && (
-            <div className="text-[11px] font-medium text-[#C58B55]">
+            <div className="text-[11px] font-medium text-series-2">
               {hovered.row.is_peak_day ? "★ Peak Demand Day" : ""}
               {hovered.row.is_peak_day && (hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName) ? " · " : ""}
               {hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName
@@ -632,33 +689,33 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
             </div>
           )}
           <div className="flex justify-between gap-4">
-            <span className="text-[#666666]">Observed guests</span>
+            <span className="text-ink-secondary">Observed guests</span>
             <span className="font-mono font-semibold tabular-nums">
               {fmtNum(hovered.row.observed_total_guests ?? hovered.row.active_guests)}
             </span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-[#666666]">Non-canceled bookings</span>
+            <span className="text-ink-secondary">Non-canceled bookings</span>
             <span className="font-mono font-semibold tabular-nums">
               {fmtNum(hovered.row.non_canceled_bookings ?? hovered.row.arrivals)}
             </span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-[#666666]">Stay nights</span>
+            <span className="text-ink-secondary">Stay nights</span>
             <span className="font-mono tabular-nums">
               {fmtNum(hovered.row.observed_total_stay_nights ?? hovered.row.room_nights)}
             </span>
           </div>
           {hovered.row.cancellation_rate != null && (
             <div className="flex justify-between gap-4">
-              <span className="text-[#666666]">Cancellation rate</span>
+              <span className="text-ink-secondary">Cancellation rate</span>
               <span className="font-mono tabular-nums">
                 {(Number(hovered.row.cancellation_rate) * 100).toFixed(1)}%
               </span>
             </div>
           )}
           <div className="flex justify-between gap-4">
-            <span className="text-[#666666]">Avg ADR</span>
+            <span className="text-ink-secondary">Avg ADR</span>
             <span className="font-mono tabular-nums">
               €{fmtNum(hovered.row.avg_adr ?? hovered.row.adr, 2)}
             </span>
@@ -683,6 +740,7 @@ export function CanvasForecastChart({
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const { width, height } = useCanvasSize(containerRef, 280);
+  const PALETTE = useThemePalette();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -772,7 +830,7 @@ export function CanvasForecastChart({
       ctx.fillText("Cutoff T", cutoffX + 5, pad.top + 8);
     }
 
-    // Threshold reference lines: HIGH (#B64C43), Mean (#547A9B), LOW (#92958B)
+    // Threshold reference lines: HIGH (status-critical), Mean (series-3), LOW (series-5)
     const drawThreshold = (val, color, label) => {
       const y = toY(val);
       if (y < pad.top || y > pad.top + plotH) return;
@@ -892,7 +950,7 @@ export function CanvasForecastChart({
             ? PALETTE.warning
             : PALETTE.series1;
         ctx.fill();
-        ctx.strokeStyle = "#FFFFFF";
+        ctx.strokeStyle = PALETTE.surface;
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
@@ -929,11 +987,12 @@ export function CanvasForecastChart({
       ctx.font = "400 10px Inter, sans-serif";
       ctx.fillText(d.sub, x, pad.top + plotH + 28);
     });
-  }, [recentHistory, forecasts, thresholdRule, targetMetric, width, height]);
+  }, [recentHistory, forecasts, thresholdRule, targetMetric, width, height, PALETTE]);
 
   return (
     <div ref={containerRef} className="w-full select-none">
-      <canvas className="block w-full"
+      <canvas
+        className="block w-full"
         ref={canvasRef}
         style={{ width: `${width}px`, height: `${height}px` }}
         role="img"

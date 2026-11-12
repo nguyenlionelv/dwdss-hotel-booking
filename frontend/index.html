@@ -1,8 +1,27 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlTheme = params.get("theme");
+        if (urlTheme === "dark" || urlTheme === "light") {
+          localStorage.setItem("color-scheme", urlTheme);
+        }
+        const stored = localStorage.getItem("color-scheme");
+        const meta = document.querySelector('meta[name="color-scheme"]');
+        if (meta && (stored === "light" || stored === "dark")) {
+          meta.content = stored;
+        }
+        const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const isDark = stored === "dark" || (!stored && sysDark);
+        document.documentElement.classList.toggle("dark", isDark);
+        document.documentElement.classList.toggle("light", !isDark);
+      } catch {}
+    </script>
     <title>Hotel Operations DSS — City Hotel, Lisbon</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,7 +30,7 @@
       rel="stylesheet"
     />
   </head>
-  <body class="bg-background text-foreground antialiased selection:bg-primary/15 selection:text-primary">
+  <body class="bg-surface-workspace text-ink-primary antialiased selection:bg-brand/15 selection:text-brand">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

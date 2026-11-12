@@ -22,7 +22,7 @@ export default function AppLayout() {
     );
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-[#252525] flex flex-col">
+    <div className="min-h-screen bg-surface-workspace text-ink-primary flex flex-col transition-colors">
       <Sidebar />
       <div className="lg:pl-[240px] flex-1 flex flex-col min-w-0">
         <Header />
@@ -30,10 +30,10 @@ export default function AppLayout() {
         {isOffline && !isDemo && (
           <div
             role="alert"
-            className="bg-[#B64C43]/10 border-b border-[#B64C43]/30 px-6 sm:px-8 lg:px-10 py-2.5 flex flex-wrap items-center justify-between gap-3 text-[12px] text-[#252525]"
+            className="bg-status-critical/10 border-b border-status-critical/30 px-6 sm:px-8 lg:px-10 py-2.5 flex flex-wrap items-center justify-between gap-3 text-[12px] text-ink-primary"
           >
             <div>
-              <strong className="font-semibold text-[#B64C43]">
+              <strong className="font-semibold text-status-critical">
                 Backend / Database Disconnected:
               </strong>{' '}
               <span>
@@ -57,7 +57,7 @@ export default function AppLayout() {
                 variant="outline"
                 size="sm"
                 onClick={() => toggleDemoMode(true)}
-                className="h-7 text-[11px] border-[#C58B35] text-[#C58B35]"
+                className="h-7 text-[11px] border-status-warning text-status-warning"
               >
                 Enable Demo Mode (Sample Data)
               </Button>
@@ -68,10 +68,10 @@ export default function AppLayout() {
         {isDemo && (
           <div
             role="status"
-            className="bg-[#C58B35]/10 border-b border-[#C58B35]/30 px-6 sm:px-8 lg:px-10 py-2.5 flex flex-wrap items-center justify-between gap-3 text-[12px] text-[#252525]"
+            className="bg-status-warning/10 border-b border-status-warning/30 px-6 sm:px-8 lg:px-10 py-2.5 flex flex-wrap items-center justify-between gap-3 text-[12px] text-ink-primary"
           >
             <div>
-              <strong className="font-semibold text-[#C58B35]">
+              <strong className="font-semibold text-status-warning">
                 DEMO MODE (MOCK DATA):
               </strong>{' '}
               <span>

@@ -302,20 +302,6 @@ export default function OperationsAnalyticsPage() {
       ? `${Number(peakDays[0].observed_total_guests).toLocaleString()} guests`
       : `${Number(summary.peak_room_nights || 0).toLocaleString()} stay nights`;
 
-  // Roll-up reconciliation verification across series
-  const seriesSumGuests = series.reduce(
-    (s, r) => s + Number(r.observed_total_guests ?? r.active_guests ?? 0),
-    0,
-  );
-  const seriesSumBookings = series.reduce(
-    (s, r) => s + Number(r.non_canceled_bookings ?? r.arrivals ?? 0),
-    0,
-  );
-  const seriesSumStayNights = series.reduce(
-    (s, r) => s + Number(r.observed_total_stay_nights ?? r.room_nights ?? 0),
-    0,
-  );
-
   // Holiday groups (DO-A03)
   const holidayGroups = impactData?.holiday_impact?.groups?.length
     ? impactData.holiday_impact.groups
@@ -345,7 +331,7 @@ export default function OperationsAnalyticsPage() {
     label: b.band_label,
     value: Number(b.avg_active_guests ?? b.avg_room_nights ?? 0),
     formattedValue: `${Number(b.avg_active_guests ?? b.avg_room_nights ?? 0).toFixed(1)}/d (${b.days_count}d)`,
-    color: idx === 0 ? "#315B52" : idx === 1 ? "#547A9B" : "#92958B",
+    color: idx === 0 ? "series1" : idx === 1 ? "series3" : "series5",
   }));
 
   const precipBuckets = (
@@ -354,7 +340,7 @@ export default function OperationsAnalyticsPage() {
     label: p.bucket_label,
     value: Number(p.observed_avg_guests_per_day || 0),
     formattedValue: `${Number(p.observed_avg_guests_per_day || 0).toFixed(1)}/d (${p.days_count}d)`,
-    color: idx === 0 ? "#315B52" : idx === 1 ? "#C58B55" : "#92958B",
+    color: idx === 0 ? "series1" : idx === 1 ? "series2" : "series5",
   }));
 
   // Country ranking (DO-A05)
@@ -362,7 +348,7 @@ export default function OperationsAnalyticsPage() {
     label: `${c.name} (${c.code})`,
     value: Number(c.guests ?? c.room_nights ?? 0),
     formattedValue: `${Number(c.guests ?? c.room_nights ?? 0).toLocaleString()} (${c.share_pct}%)`,
-    color: idx === 0 ? "#315B52" : idx < 3 ? "#547A9B" : "#92958B",
+    color: idx === 0 ? "series1" : idx < 3 ? "series3" : "series5",
   }));
 
   const activeMeasureObj =
@@ -375,9 +361,9 @@ export default function OperationsAnalyticsPage() {
   return (
     <div className="space-y-8 lg:space-y-10">
       {/* Page Title & Contextual Navigation */}
-      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-[#E5E5E0] pb-5">
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-divider pb-5">
         <div>
-          <div className="flex items-center gap-2.5 text-[12px] text-[#666666] mb-1">
+          <div className="flex items-center gap-2.5 text-[12px] text-ink-secondary mb-1">
             <span>City Hotel — Lisbon, Portugal</span>
             <span>•</span>
             <span className="font-mono">
@@ -402,9 +388,9 @@ export default function OperationsAnalyticsPage() {
       {trendData?.api_error && (
         <div
           role="alert"
-          className="rounded-[4px] border border-[#B64C43]/30 bg-[#B64C43]/[0.05] px-4 py-3 text-[12px] text-[#252525]"
+          className="rounded-[4px] border border-status-critical/30 bg-status-critical/[0.05] px-4 py-3 text-[12px] text-ink-primary"
         >
-          <span className="font-semibold text-[#B64C43]">
+          <span className="font-semibold text-status-critical">
             Analytics Data Unavailable:
           </span>{" "}
           {trendData.error_message ||
@@ -415,14 +401,14 @@ export default function OperationsAnalyticsPage() {
       {/* Section 1: Flat OLAP Slice, Dice & Grain Controls (No decorative Card wrapper) */}
       <section
         aria-label="OLAP Controls"
-        className="space-y-4 border-b border-[#E5E5E0] pb-6"
+        className="space-y-4 border-b border-divider pb-6"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[12px] font-medium text-[#666666]">
+            <span className="text-[12px] font-medium text-ink-secondary">
               Time grain:
             </span>
-            <div className="inline-flex items-center rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] p-0.5">
+            <div className="inline-flex items-center rounded-[4px] border border-divider bg-surface-primary p-0.5">
               {GRAIN_OPTIONS.map((g) => (
                 <button
                   key={g.id}
@@ -430,8 +416,8 @@ export default function OperationsAnalyticsPage() {
                   onClick={() => handleGrainChange(g.id)}
                   className={`px-2.5 py-1 rounded-[3px] text-[12px] transition-colors cursor-pointer ${
                     grain === g.id
-                      ? "bg-[#315B52] text-white font-medium"
-                      : "text-[#666666] hover:text-[#252525]"
+                      ? "bg-brand text-white font-medium"
+                      : "text-ink-secondary hover:text-ink-primary"
                   }`}
                 >
                   {g.label}
@@ -440,15 +426,15 @@ export default function OperationsAnalyticsPage() {
             </div>
 
             {drilldownContext && (
-              <div className="inline-flex items-center gap-2 text-[12px] bg-[#FFFFFF] border border-[#E5E5E0] px-2.5 py-1 rounded-[4px]">
-                <span className="text-[#666666]">Path:</span>
-                <span className="font-mono font-medium text-[#252525]">
+              <div className="inline-flex items-center gap-2 text-[12px] bg-surface-primary border border-divider px-2.5 py-1 rounded-[4px]">
+                <span className="text-ink-secondary">Path:</span>
+                <span className="font-mono font-medium text-ink-primary">
                   {drilldownContext}
                 </span>
                 <button
                   type="button"
                   onClick={handleRollUp}
-                  className="text-[#315B52] font-medium hover:underline ml-1 cursor-pointer"
+                  className="text-brand font-medium hover:underline ml-1 cursor-pointer"
                 >
                   Roll-up ↑
                 </button>
@@ -472,7 +458,7 @@ export default function OperationsAnalyticsPage() {
           <div>
             <label
               htmlFor="olap-preset"
-              className="block text-[12px] text-[#666666] mb-1"
+              className="block text-[12px] text-ink-secondary mb-1"
             >
               Date range
             </label>
@@ -484,7 +470,7 @@ export default function OperationsAnalyticsPage() {
                 setDrilldownRange(null);
                 setDrilldownContext(null);
               }}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-[#315B52]"
+              className="w-full h-8 bg-surface-primary border border-divider text-ink-primary text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-brand"
             >
               {ANALYTICS_PRESETS.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -497,7 +483,7 @@ export default function OperationsAnalyticsPage() {
           <div>
             <label
               htmlFor="olap-country"
-              className="block text-[12px] text-[#666666] mb-1"
+              className="block text-[12px] text-ink-secondary mb-1"
             >
               Source market (Country)
             </label>
@@ -505,7 +491,7 @@ export default function OperationsAnalyticsPage() {
               id="olap-country"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-[#315B52]"
+              className="w-full h-8 bg-surface-primary border border-divider text-ink-primary text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-brand"
             >
               {(metadata?.countries || []).map((c) => {
                 const code = c.country_code || c.code;
@@ -522,7 +508,7 @@ export default function OperationsAnalyticsPage() {
           <div>
             <label
               htmlFor="olap-daytype"
-              className="block text-[12px] text-[#666666] mb-1"
+              className="block text-[12px] text-ink-secondary mb-1"
             >
               Day type
             </label>
@@ -530,7 +516,7 @@ export default function OperationsAnalyticsPage() {
               id="olap-daytype"
               value={dayType}
               onChange={(e) => setDayType(e.target.value)}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-[#315B52]"
+              className="w-full h-8 bg-surface-primary border border-divider text-ink-primary text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-brand"
             >
               <option value="ALL">All days (Weekday + Weekend)</option>
               <option value="Weekday">Weekday (Mon–Fri)</option>
@@ -541,7 +527,7 @@ export default function OperationsAnalyticsPage() {
           <div>
             <label
               htmlFor="olap-holiday"
-              className="block text-[12px] text-[#666666] mb-1"
+              className="block text-[12px] text-ink-secondary mb-1"
             >
               Holiday scope
             </label>
@@ -549,7 +535,7 @@ export default function OperationsAnalyticsPage() {
               id="olap-holiday"
               value={holidayFilter}
               onChange={(e) => setHolidayFilter(e.target.value)}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-[#315B52]"
+              className="w-full h-8 bg-surface-primary border border-divider text-ink-primary text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-brand"
             >
               <option value="ALL">All calendar days</option>
               <option value="HOLIDAY_ONLY">Holidays only (PT / Lisboa)</option>
@@ -560,7 +546,7 @@ export default function OperationsAnalyticsPage() {
           <div>
             <label
               htmlFor="olap-measure"
-              className="block text-[12px] text-[#666666] mb-1"
+              className="block text-[12px] text-ink-secondary mb-1"
             >
               Primary chart measure
             </label>
@@ -568,7 +554,7 @@ export default function OperationsAnalyticsPage() {
               id="olap-measure"
               value={chartMeasure}
               onChange={(e) => setChartMeasure(e.target.value)}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#315B52] text-[#252525] text-[12px] font-medium rounded-[4px] px-2.5 focus:outline-none"
+              className="w-full h-8 bg-surface-primary border border-brand text-ink-primary text-[12px] font-medium rounded-[4px] px-2.5 focus:outline-none"
             >
               {MEASURE_OPTIONS.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -583,25 +569,19 @@ export default function OperationsAnalyticsPage() {
       {/* Section 2: Key Performance Indicators (Typographic Data Groups — DESIGN.md Section 4.3) */}
       <section
         aria-label="Key Performance Indicators"
-        className="space-y-3 border-b border-[#E5E5E0] pb-7"
+        className="space-y-3 border-b border-divider pb-7"
       >
         <div className="flex items-center justify-between">
           <h2 className="editorial-section-title">
             Key Performance Indicators
           </h2>
-          <div className="flex items-center gap-3 text-[12px] text-[#666666]">
+          <div className="flex items-center gap-3 text-[12px] text-ink-secondary">
             <span>
               Coverage:{" "}
-              <strong className="font-mono text-[#252525]">
+              <strong className="font-mono text-ink-primary">
                 {coverage.calendar_days_count || 732} calendar days
               </strong>
             </span>
-            {/* <Badge variant={guestStatus === "COMPLETE" ? "emerald" : "amber"}>
-              Guest status: {guestStatus}
-              {partialDaysCount > 0
-                ? ` (${partialDaysCount} partial days)`
-                : ""}
-            </Badge> */}
           </div>
         </div>
 
@@ -616,7 +596,7 @@ export default function OperationsAnalyticsPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 pt-1 lg:divide-x lg:divide-[#E5E5E0]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 pt-1 lg:divide-x lg:divide-divider">
             <KpiCard
               label="Observed total guests"
               value={observedGuests.toLocaleString()}
@@ -686,37 +666,37 @@ export default function OperationsAnalyticsPage() {
       {/* Section 3: Demand Trend Canvas Visualization (DO-A01) */}
       <section
         aria-label="Demand Trend Analysis"
-        className="space-y-4 border-b border-[#E5E5E0] pb-8"
+        className="space-y-4 border-b border-divider pb-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 className="editorial-section-title">
               {activeMeasureObj.label} by {grain}
             </h2>
-            <p className="text-[12px] text-[#666666]">
+            <p className="text-[12px] text-ink-secondary">
               {CHILD_GRAIN[grain]
                 ? `Click any period bar/point on the canvas to drill down (${grain} → ${CHILD_GRAIN[grain]}).`
                 : "Leaf daily grain reached. Click Roll-up above to return to coarser aggregation."}
             </p>
           </div>
 
-          <div className="flex items-center gap-4 text-[12px] text-[#666666]">
+          <div className="flex items-center gap-4 text-[12px] text-ink-secondary">
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 bg-[#315B52] inline-block" />
+              <span className="w-2.5 h-2.5 bg-brand inline-block" />
               <span>Standard period</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 bg-[#C58B55] inline-block" />
+              <span className="w-2.5 h-2.5 bg-series-2 inline-block" />
               <span>Holiday / Peak period</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 border-t border-dashed border-[#92958B] inline-block" />
+              <span className="w-3 border-t border-dashed border-series-5 inline-block" />
               <span>Period mean</span>
             </span>
           </div>
         </div>
 
-        <div className="w-full bg-[#FFFFFF] border border-[#E5E5E0] p-4">
+        <div className="w-full bg-surface-primary border border-divider p-4">
           {loading ? (
             <Skeleton className="h-[580px] w-full" />
           ) : (
@@ -725,7 +705,7 @@ export default function OperationsAnalyticsPage() {
               grain={grain}
               measure={chartMeasure}
               measureLabel={activeMeasureObj.label}
-              height={500}
+              height={580}
               canDrill={Boolean(CHILD_GRAIN[grain])}
               onDrill={handleBarDrilldown}
             />
@@ -736,14 +716,14 @@ export default function OperationsAnalyticsPage() {
       {/* Section 4: Multi-Dimensional OLAP Pivot Matrix (DO-A02) */}
       <section
         aria-label="OLAP Pivot Matrix"
-        className="space-y-4 border-b border-[#E5E5E0] pb-8"
+        className="space-y-4 border-b border-divider pb-8"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div>
             <h2 id="olap-pivot-heading" className="editorial-section-title">
               Multi-Dimensional OLAP Pivot Matrix
             </h2>
-            <p className="text-[12px] text-[#666666]">
+            <p className="text-[12px] text-ink-secondary">
               Cross-tabulate operational measures across time dimensions, source
               markets, and day types.
             </p>
@@ -754,7 +734,7 @@ export default function OperationsAnalyticsPage() {
               aria-label="Pivot Row Dimension"
               value={pivotRowDim}
               onChange={(e) => setPivotRowDim(e.target.value)}
-              className="h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none"
+              className="h-8 bg-surface-primary border border-divider text-ink-primary text-[12px] rounded-[4px] px-2.5 focus:outline-none"
             >
               <option value="quarter">Rows: Quarter</option>
               <option value="month">Rows: Month</option>
@@ -765,7 +745,7 @@ export default function OperationsAnalyticsPage() {
               aria-label="Pivot Column Dimension"
               value={pivotColDim}
               onChange={(e) => setPivotColDim(e.target.value)}
-              className="h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none"
+              className="h-8 bg-surface-primary border border-divider text-ink-primary text-[12px] rounded-[4px] px-2.5 focus:outline-none"
             >
               <option value="country">Columns: Source Country</option>
               <option value="day_type">Columns: Day Type / Holiday</option>
@@ -786,7 +766,7 @@ export default function OperationsAnalyticsPage() {
               aria-label="Pivot Measure"
               value={pivotMeasure}
               onChange={(e) => setPivotMeasure(e.target.value)}
-              className="h-8 bg-[#FFFFFF] border border-[#315B52] text-[#315B52] text-[12px] font-medium rounded-[4px] px-2.5 focus:outline-none"
+              className="h-8 bg-surface-primary border border-brand text-brand text-[12px] font-medium rounded-[4px] px-2.5 focus:outline-none"
             >
               <option value="observed_total_guests">
                 Measure: Observed guests
@@ -808,7 +788,7 @@ export default function OperationsAnalyticsPage() {
                       {col}
                     </TableHead>
                   ))}
-                  <TableHead className="text-right text-[#252525]">
+                  <TableHead className="text-right text-ink-primary">
                     Row total
                   </TableHead>
                 </TableRow>
@@ -823,7 +803,7 @@ export default function OperationsAnalyticsPage() {
                       <TableRow
                         className={
                           row.is_highlighted
-                            ? "bg-[#315B52]/[0.04] font-medium"
+                            ? "bg-brand/[0.06] font-medium"
                             : ""
                         }
                       >
@@ -833,7 +813,7 @@ export default function OperationsAnalyticsPage() {
                               <button
                                 type="button"
                                 onClick={() => togglePivotRow(row.row_key)}
-                                className="w-4 h-4 rounded-[2px] border border-[#E5E5E0] bg-[#FAFAF8] text-[#252525] flex items-center justify-center text-[11px] font-mono cursor-pointer"
+                                className="w-4 h-4 rounded-[2px] border border-divider bg-surface-workspace text-ink-primary flex items-center justify-center text-[11px] font-mono cursor-pointer"
                                 aria-label={`Toggle ${row.row_key} details`}
                               >
                                 {isExpanded ? "−" : "+"}
@@ -847,12 +827,12 @@ export default function OperationsAnalyticsPage() {
                         {rawPivotCols.map((col) => (
                           <TableCell
                             key={col}
-                            className="text-right font-mono tabular-nums text-[#666666]"
+                            className="text-right font-mono tabular-nums text-ink-secondary"
                           >
                             {Number(rowMap[col] || 0).toLocaleString()}
                           </TableCell>
                         ))}
-                        <TableCell className="text-right font-mono tabular-nums font-semibold text-[#252525] bg-[#FAFAF8]">
+                        <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary bg-surface-workspace">
                           {Number(rowTotal).toLocaleString()}
                         </TableCell>
                       </TableRow>
@@ -866,11 +846,11 @@ export default function OperationsAnalyticsPage() {
                           return (
                             <TableRow
                               key={child.row_key}
-                              className="bg-[#FAFAF8]/60 text-[12px]"
+                              className="bg-surface-workspace/60 text-[12px]"
                             >
-                              <TableCell className="pl-9 text-[#666666]">
+                              <TableCell className="pl-9 text-ink-secondary">
                                 <span className="inline-flex items-center gap-1">
-                                  <ChevronRight className="h-3 w-3 text-[#999999]" />
+                                  <ChevronRight className="h-3 w-3 text-ink-muted" />
                                   <span>
                                     {child.row_label || child.row_key}
                                   </span>
@@ -879,12 +859,12 @@ export default function OperationsAnalyticsPage() {
                               {rawPivotCols.map((col) => (
                                 <TableCell
                                   key={col}
-                                  className="text-right font-mono tabular-nums text-[#666666]"
+                                  className="text-right font-mono tabular-nums text-ink-secondary"
                                 >
                                   {Number(childMap[col] || 0).toLocaleString()}
                                 </TableCell>
                               ))}
-                              <TableCell className="text-right font-mono tabular-nums font-medium text-[#252525] bg-[#FAFAF8]">
+                              <TableCell className="text-right font-mono tabular-nums font-medium text-ink-primary bg-surface-workspace">
                                 {Number(childTotal).toLocaleString()}
                               </TableCell>
                             </TableRow>
@@ -907,7 +887,7 @@ export default function OperationsAnalyticsPage() {
                       ).toLocaleString()}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-mono tabular-nums font-bold text-[#315B52]">
+                  <TableCell className="text-right font-mono tabular-nums font-bold text-brand">
                     {Number(pivotData?.grand_total || 0).toLocaleString()}
                   </TableCell>
                 </TableRow>
@@ -926,7 +906,7 @@ export default function OperationsAnalyticsPage() {
                       {r.row_key}
                     </TableHead>
                   ))}
-                  <TableHead className="text-right text-[#252525]">
+                  <TableHead className="text-right text-ink-primary">
                     Row total
                   </TableHead>
                 </TableRow>
@@ -940,13 +920,13 @@ export default function OperationsAnalyticsPage() {
                       return (
                         <TableCell
                           key={r.row_key}
-                          className="text-right font-mono tabular-nums text-[#666666]"
+                          className="text-right font-mono tabular-nums text-ink-secondary"
                         >
                           {Number(val).toLocaleString()}
                         </TableCell>
                       );
                     })}
-                    <TableCell className="text-right font-mono tabular-nums font-semibold text-[#252525] bg-[#FAFAF8]">
+                    <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary bg-surface-workspace">
                       {Number(
                         pivotData?.column_totals?.[col] || 0,
                       ).toLocaleString()}
@@ -965,7 +945,7 @@ export default function OperationsAnalyticsPage() {
                       {Number(r.total ?? r.row_total ?? 0).toLocaleString()}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-mono tabular-nums font-bold text-[#315B52]">
+                  <TableCell className="text-right font-mono tabular-nums font-bold text-brand">
                     {Number(pivotData?.grand_total || 0).toLocaleString()}
                   </TableCell>
                 </TableRow>
@@ -984,27 +964,27 @@ export default function OperationsAnalyticsPage() {
         <div className="lg:col-span-7 space-y-8">
           {/* DO-A03: Holiday vs Non-Holiday */}
           <div className="space-y-3">
-            <div className="flex items-baseline justify-between border-b border-[#E5E5E0] pb-2">
+            <div className="flex items-baseline justify-between border-b border-divider pb-2">
               <h2 className="editorial-section-title">
                 Holiday vs. Non-Holiday Demand
               </h2>
-              <span className="text-[12px] font-mono text-[#315B52] font-medium">
+              <span className="text-[12px] font-mono text-brand font-medium">
                 +{impactData?.holiday_impact?.lift_pct ?? 11.5}% daily demand
                 lift
               </span>
             </div>
 
-            <div className="divide-y divide-[#E5E5E0] border-y border-[#E5E5E0] bg-[#FFFFFF]">
+            <div className="divide-y divide-divider border-y border-divider bg-surface-primary">
               {holidayGroups.map((g) => (
                 <div
                   key={g.group_key}
                   className="py-3 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                 >
                   <div>
-                    <div className="text-[13px] font-semibold text-[#252525]">
+                    <div className="text-[13px] font-semibold text-ink-primary">
                       {g.group_label}
                     </div>
-                    <div className="text-[12px] text-[#666666] font-mono">
+                    <div className="text-[12px] text-ink-secondary font-mono">
                       {g.days_count} calendar days • Cancel rate:{" "}
                       {g.cancellation_rate != null
                         ? `${(g.cancellation_rate * 100).toFixed(1)}%`
@@ -1014,26 +994,26 @@ export default function OperationsAnalyticsPage() {
 
                   <div className="flex items-center gap-6 text-right font-mono">
                     <div>
-                      <div className="text-[11px] font-sans text-[#666666]">
+                      <div className="text-[11px] font-sans text-ink-secondary">
                         Total guests
                       </div>
-                      <div className="text-[14px] font-semibold text-[#252525] tabular-nums">
+                      <div className="text-[14px] font-semibold text-ink-primary tabular-nums">
                         {Number(g.observed_total_guests || 0).toLocaleString()}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[11px] font-sans text-[#666666]">
+                      <div className="text-[11px] font-sans text-ink-secondary">
                         Avg guests / day
                       </div>
-                      <div className="text-[14px] font-semibold text-[#315B52] tabular-nums">
+                      <div className="text-[14px] font-semibold text-brand tabular-nums">
                         {Number(g.observed_avg_guests_per_day || 0).toFixed(1)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[11px] font-sans text-[#666666]">
+                      <div className="text-[11px] font-sans text-ink-secondary">
                         Avg stay
                       </div>
-                      <div className="text-[14px] text-[#252525] tabular-nums">
+                      <div className="text-[14px] text-ink-primary tabular-nums">
                         {Number(g.avg_stay_nights || 3.0).toFixed(2)}n
                       </div>
                     </div>
@@ -1045,15 +1025,15 @@ export default function OperationsAnalyticsPage() {
 
           {/* DO-A04: Weather & Demand Correlation */}
           <div className="space-y-4">
-            <div className="flex items-baseline justify-between border-b border-[#E5E5E0] pb-2">
+            <div className="flex items-baseline justify-between border-b border-divider pb-2">
               <h2 className="editorial-section-title">
                 Lisbon Weather &amp; Demand Correlation
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-              <div className="bg-[#FFFFFF] border border-[#E5E5E0] p-4 space-y-2">
-                <div className="text-[12px] font-semibold text-[#252525]">
+              <div className="bg-surface-primary border border-divider p-4 space-y-2">
+                <div className="text-[12px] font-semibold text-ink-primary">
                   By mean temperature (°C) — Avg daily demand
                 </div>
                 <CanvasHorizontalBarChart
@@ -1063,8 +1043,8 @@ export default function OperationsAnalyticsPage() {
               </div>
 
               {precipBuckets.length > 0 && (
-                <div className="bg-[#FFFFFF] border border-[#E5E5E0] p-4 space-y-2">
-                  <div className="text-[12px] font-semibold text-[#252525]">
+                <div className="bg-surface-primary border border-divider p-4 space-y-2">
+                  <div className="text-[12px] font-semibold text-ink-primary">
                     By precipitation (mm) — Avg guests / day
                   </div>
                   <CanvasHorizontalBarChart
@@ -1078,16 +1058,16 @@ export default function OperationsAnalyticsPage() {
         </div>
 
         {/* Right 5 Columns: Source Country Ranking (DO-A05) */}
-        <div className="lg:col-span-5 lg:border-l lg:border-[#E5E5E0] lg:pl-8 space-y-4">
-          <div className="flex items-baseline justify-between border-b border-[#E5E5E0] pb-2">
+        <div className="lg:col-span-5 lg:border-l lg:border-divider lg:pl-8 space-y-4">
+          <div className="flex items-baseline justify-between border-b border-divider pb-2">
             <h2 className="editorial-section-title">Source Market Breakdown</h2>
-            <span className="text-[12px] text-[#666666]">
+            <span className="text-[12px] text-ink-secondary">
               Includes <code className="font-mono">UNK</code>
             </span>
           </div>
 
-          <div className="bg-[#FFFFFF] border border-[#E5E5E0] p-4 space-y-3">
-            <div className="text-[12px] font-semibold text-[#252525]">
+          <div className="bg-surface-primary border border-divider p-4 space-y-3">
+            <div className="text-[12px] font-semibold text-ink-primary">
               Top origin markets by guest volume &amp; share
             </div>
             <CanvasHorizontalBarChart
@@ -1097,8 +1077,8 @@ export default function OperationsAnalyticsPage() {
           </div>
 
           {/* Aligned typographic rows for exact country metrics */}
-          <div className="divide-y divide-[#E5E5E0] border-y border-[#E5E5E0] bg-[#FFFFFF] text-[12px]">
-            <div className="py-2 px-3 grid grid-cols-12 font-semibold text-[#666666] bg-[#FAFAF8]">
+          <div className="divide-y divide-divider border-y border-divider bg-surface-primary text-[12px]">
+            <div className="py-2 px-3 grid grid-cols-12 font-semibold text-ink-secondary bg-surface-workspace">
               <span className="col-span-4">Market</span>
               <span className="col-span-3 text-right">Bookings</span>
               <span className="col-span-3 text-right">Cancel %</span>
@@ -1109,21 +1089,21 @@ export default function OperationsAnalyticsPage() {
                 key={c.code}
                 className="py-2 px-3 grid grid-cols-12 items-center"
               >
-                <span className="col-span-4 font-medium text-[#252525] truncate">
+                <span className="col-span-4 font-medium text-ink-primary truncate">
                   {c.name}{" "}
-                  <span className="font-mono text-[11px] text-[#666666]">
+                  <span className="font-mono text-[11px] text-ink-secondary">
                     ({c.code})
                   </span>
                 </span>
-                <span className="col-span-3 text-right font-mono tabular-nums text-[#666666]">
+                <span className="col-span-3 text-right font-mono tabular-nums text-ink-secondary">
                   {Number(c.bookings ?? c.room_nights ?? 0).toLocaleString()}
                 </span>
-                <span className="col-span-3 text-right font-mono tabular-nums text-[#666666]">
+                <span className="col-span-3 text-right font-mono tabular-nums text-ink-secondary">
                   {c.cancellation_rate != null
                     ? `${(c.cancellation_rate * 100).toFixed(1)}%`
                     : c.yoy_growth || "—"}
                 </span>
-                <span className="col-span-2 text-right font-mono tabular-nums font-semibold text-[#315B52]">
+                <span className="col-span-2 text-right font-mono tabular-nums font-semibold text-brand">
                   {c.share_pct}%
                 </span>
               </div>

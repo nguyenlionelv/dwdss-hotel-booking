@@ -37,7 +37,7 @@ function getDemandStatusBadge(level) {
   if (level === "HIGH") {
     return (
       <Badge variant="destructive" className="gap-1.5 font-mono">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#B64C43]" />
+        <span className="w-1.5 h-1.5 rounded-full bg-status-critical" />
         <span>HIGH</span>
       </Badge>
     );
@@ -45,14 +45,14 @@ function getDemandStatusBadge(level) {
   if (level === "LOW") {
     return (
       <Badge variant="amber" className="gap-1.5 font-mono">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#C58B35]" />
+        <span className="w-1.5 h-1.5 rounded-full bg-status-warning" />
         <span>LOW</span>
       </Badge>
     );
   }
   return (
     <Badge variant="emerald" className="gap-1.5 font-mono">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#477A61]" />
+      <span className="w-1.5 h-1.5 rounded-full bg-status-success" />
       <span>NORMAL</span>
     </Badge>
   );
@@ -141,14 +141,14 @@ export default function DemandForecastPage() {
   const hasLowThreshold = isNumber(lowThreshold);
   const hasThresholdMetrics = hasMean || hasStd || hasHighThreshold || hasLowThreshold;
 
-  if (error) return <div role="alert" className="border border-[#E5E5E0] rounded p-6 text-[#B64C43]">Forecast unavailable: {error}</div>;
+  if (error) return <div role="alert" className="border border-divider rounded p-6 text-status-critical">Forecast unavailable: {error}</div>;
 
   return (
     <div className="space-y-8 lg:space-y-10">
       {/* Page introduction and forecast selectors */}
-      <header className="border-b border-[#E5E5E0] pb-5">
+      <header className="border-b border-divider pb-5">
         <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#666666]">
+          <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink-secondary">
             <span>Short-Horizon 7-Day Demand Forecasting &amp; DSS</span>
             {forecastData?.is_mock && <Badge variant="amber">DEMO MODE - static sample</Badge>}
           </div>
@@ -159,11 +159,11 @@ export default function DemandForecastPage() {
         </div>
 
         {/* Flat DSS Parameter Bar */}
-        <div className="mt-5 pt-4 border-t border-[#E5E5E0] grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+        <div className="mt-5 pt-4 border-t border-divider grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
           <div>
             <label
               htmlFor="dss-cutoff-select"
-              className="block text-[12px] font-medium text-[#666666] mb-1.5"
+              className="block text-[12px] font-medium text-ink-secondary mb-1.5"
             >
               Forecast Cutoff Date (as_of_date T)
             </label>
@@ -171,7 +171,7 @@ export default function DemandForecastPage() {
               id="dss-cutoff-select"
               value={cutoffDate}
               onChange={(e) => setCutoffDate(e.target.value)}
-              className="w-full h-8 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-2.5 text-[12px] font-medium text-[#252525] focus:outline-none focus:border-[#315B52]"
+              className="w-full h-8 rounded-[4px] border border-divider bg-surface-primary px-2.5 text-[12px] font-medium text-ink-primary focus:outline-none focus:border-brand"
             >
               {CUTOFF_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -182,19 +182,19 @@ export default function DemandForecastPage() {
           </div>
 
           <div>
-            <label htmlFor="dss-budget-input" className="block text-[12px] font-medium text-[#666666] mb-1.5">Weekly resource budget (abstract units)</label>
+            <label htmlFor="dss-budget-input" className="block text-[12px] font-medium text-ink-secondary mb-1.5">Weekly resource budget (abstract units)</label>
             <input id="dss-budget-input" type="number" min="0.01" max="10000" step="0.01" value={budgetUnits}
               onChange={(event) => {
                 const next = Number(event.target.value);
                 if (Number.isFinite(next) && next > 0 && next <= 10000) setBudgetUnits(next);
               }}
-              className="w-full h-8 rounded-[4px] border border-[#E5E5E0] bg-white px-2.5 text-[12px] font-medium text-[#252525] focus:outline-none focus:border-[#315B52]" />
+              className="w-full h-8 rounded-[4px] border border-divider bg-surface-primary px-2.5 text-[12px] font-medium text-ink-primary focus:outline-none focus:border-brand" />
           </div>
 
           <div>
             <label
               htmlFor="dss-model-select"
-              className="block text-[12px] font-medium text-[#666666] mb-1.5"
+              className="block text-[12px] font-medium text-ink-secondary mb-1.5"
             >
               Forecasting Model Family
             </label>
@@ -202,7 +202,7 @@ export default function DemandForecastPage() {
               id="dss-model-select"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full h-8 rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] px-2.5 text-[12px] font-medium text-[#252525] focus:outline-none focus:border-[#315B52]"
+              className="w-full h-8 rounded-[4px] border border-divider bg-surface-primary px-2.5 text-[12px] font-medium text-ink-primary focus:outline-none focus:border-brand"
             >
               {modelOptions.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -211,8 +211,6 @@ export default function DemandForecastPage() {
               ))}
             </select>
           </div>
-
-
         </div>
       </header>
 
@@ -222,7 +220,7 @@ export default function DemandForecastPage() {
       {/* Forecast summary */}
       <section
         aria-label="DSS Statistical Thresholds and Summary KPIs"
-        className="border-b border-[#E5E5E0] pb-8"
+        className="border-b border-divider pb-8"
       >
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -296,14 +294,14 @@ export default function DemandForecastPage() {
       {/* Section 2: Pure HTML5 Canvas Actual History vs. 7-Day Forecast Curve */}
       <section
         aria-label="Actual History vs 7-Day Forecast Trajectory"
-        className="border-b border-[#E5E5E0] pb-8 space-y-4"
+        className="border-b border-divider pb-8 space-y-4"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div>
-            <h3 className="text-[15px] font-semibold text-[#252525]">
+            <h3 className="text-[15px] font-semibold text-ink-primary">
               Actual History (Pre-Cutoff) vs. 7-Day Forward Forecast Trajectory
             </h3>
-            <p className="text-[12px] text-[#666666] mt-0.5">
+            <p className="text-[12px] text-ink-secondary mt-0.5">
               Solid line plots observed demand up to cutoff{" "}
               <code className="font-mono text-[11px]">T = {formatDate(cutoffDate)}</code>;
               dashed curve projects{" "}
@@ -312,31 +310,31 @@ export default function DemandForecastPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-[11px] text-[#666666]">
+          <div className="flex flex-wrap items-center gap-4 text-[11px] text-ink-secondary">
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 border-t-2 border-[#252525] inline-block" />
+              <span className="w-3 border-t-2 border-ink-primary inline-block" />
               Actual History (≤ T)
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 border-t-2 border-dashed border-[#315B52] inline-block" />
+              <span className="w-3 border-t-2 border-dashed border-brand inline-block" />
               7-Day Forecast (T+1..T+7)
             </span>
             {hasHighThreshold && <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#B64C43] inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-status-critical inline-block" />
               HIGH (&ge; {formatReference(highThreshold)})
             </span>}
             {hasLowThreshold && <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#C58B35] inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-status-warning inline-block" />
               LOW (&le; {formatReference(lowThreshold)})
             </span>}
             {hasMean && <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 border-t border-dashed border-[#547A9B] inline-block" />
+              <span className="w-3 border-t border-dashed border-series-3 inline-block" />
               8W Mean ({formatReference(mean8w)})
             </span>}
           </div>
         </div>
 
-        <div className="border border-[#E5E5E0] rounded-[4px] bg-[#FFFFFF] p-5">
+        <div className="border border-divider rounded-[4px] bg-surface-primary p-5">
           <CanvasForecastChart
             recentHistory={recentHistory}
             forecasts={rows}
@@ -353,24 +351,24 @@ export default function DemandForecastPage() {
       {/* Section 3: DO-M01 7-Day Operational Decision Schedule Table */}
       <section
         aria-label="7-Day Operational Decision Schedule Table"
-        className="border-b border-[#E5E5E0] pb-8 space-y-4"
+        className="border-b border-divider pb-8 space-y-4"
       >
         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
               <h3
                 id="dss-schedule-table-heading"
-                className="text-[15px] font-semibold text-[#252525]"
+                className="text-[15px] font-semibold text-ink-primary"
               >
                 {sufficientHistory ? "7-Day Operational Decision Schedule & Recommended Actions" : "7-Day Guest Forecast Schedule"}
               </h3>
             </div>
-            <p className="text-[12px] text-[#666666] mt-0.5">
+            <p className="text-[12px] text-ink-secondary mt-0.5">
               Daily guest forecasts and canonical backtest actuals.
               {sufficientHistory && " Demand tiers use the documented statistical rule and fixed actions."}
             </p>
           </div>
-          <span className="font-mono text-[11px] text-[#666666]">
+          <span className="font-mono text-[11px] text-ink-secondary">
             as_of_date: {formatDate(cutoffDate)} · model:{" "}
             {forecastData?.model_version || selectedModel}
           </span>
@@ -411,36 +409,36 @@ export default function DemandForecastPage() {
                     key={fDate}
                     className={
                       level === "HIGH"
-                        ? "bg-[#B64C43]/[0.04]"
+                        ? "bg-status-critical/[0.06]"
                         : level === "LOW"
-                          ? "bg-[#C58B35]/[0.04]"
+                          ? "bg-status-warning/[0.06]"
                           : undefined
                     }
                   >
-                    <TableCell className="font-mono font-medium text-[#252525] whitespace-nowrap">
+                    <TableCell className="font-mono font-medium text-ink-primary whitespace-nowrap">
                       {formatDate(fDate)}
                       {row.is_peak && (
-                        <span className="ml-1.5 text-[10px] font-sans font-semibold text-[#B64C43]">
+                        <span className="ml-1.5 text-[10px] font-sans font-semibold text-status-critical">
                           PEAK
                         </span>
                       )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      <div className="font-medium text-[#252525]">
+                      <div className="font-medium text-ink-primary">
                         {formatWeekday(fDate)}
                       </div>
                       {(row.weather_status || row.holiday_local_name) && (
-                        <div className="text-[11px] text-[#666666]">
+                        <div className="text-[11px] text-ink-secondary">
                           {[row.weather_status, row.holiday_local_name && `★ ${row.holiday_local_name}`].filter(Boolean).join(' · ')}
                         </div>
                       )}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
-                      <span className="font-semibold text-[#252525] text-[14px]">
+                      <span className="font-semibold text-ink-primary text-[14px]">
                         {formatGuests(predExact)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums text-[#666666]">
+                    <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
                       {actualBacktest != null ? (
                         <span>
                           {formatGuests(actualBacktest)}
@@ -449,13 +447,13 @@ export default function DemandForecastPage() {
                         "—"
                       )}
                     </TableCell>
-                    {hasStayNights && <TableCell className="text-right font-mono tabular-nums text-[#252525]">
+                    {hasStayNights && <TableCell className="text-right font-mono tabular-nums text-ink-primary">
                       {formatGuests(row.predicted_room_nights)}
                     </TableCell>}
                     {sufficientHistory && <TableCell className="text-center whitespace-nowrap">
                       {getDemandStatusBadge(level)}
                     </TableCell>}
-                    {sufficientHistory && <TableCell className="text-[12px] text-[#252525] leading-relaxed max-w-xl">
+                    {sufficientHistory && <TableCell className="text-[12px] text-ink-primary leading-relaxed max-w-xl">
                       {row.recommended_action}
                     </TableCell>}
                   </TableRow>
