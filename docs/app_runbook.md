@@ -8,6 +8,10 @@ python scripts/start_app.py
 
 The command checks the pinned raw files, starts PostgreSQL, runs Staging migrations/load/quality, executes the verified DW/Mart workflow with reconciliation and idempotency checks, prepares compatible ML artifacts, builds the backend/frontend images, starts both services and verifies live inference through the API and frontend proxy.
 
+After selecting the ML release, startup recalibrates both DSS policies against that release's verified snapshot. Calibration and validation end before the holdout period; saved-model holdout results remain descriptive. Policies, validation evidence and release checksums are written under the startup report's `preparation/policies/` directory and packaged into the backend image. Tracked reference policies are not overwritten.
+
+Readiness verifies the served insights policy hash/status and allocation policy hash/evaluation through both the backend and frontend proxy. A missing or mismatched policy fails startup. A verified neutral insight result or a uniform policy genuinely selected by validation can still pass; readiness does not require an alert or force a nonuniform allocation.
+
 - App: http://localhost:5173/dss/demand-forecast
 - API explorer: http://localhost:8000/docs
 
@@ -17,7 +21,7 @@ It prints these links only after readiness checks pass. First-time image builds 
 
 - Python 3.12+ on the host; only its standard library is needed for the launcher.
 - Running Docker Desktop/Engine with Compose v2 (including `up --wait`). Python ETL/ML dependencies are installed inside the tools image; no host pip/venv setup is required.
-- The verified raw files and acquisition metadata selected by `docs/data_dictionary/operations_source_set.json`. This checkout already has them. They are ignored by Git, so transfer/restore them when using a fresh clone. The launcher deliberately stops on missing files or checksum differences rather than downloading a different Weather version or changing the source contract. See [the current source manifest](data_dictionary/source_manifest_20261110.md).
+- The verified raw files and acquisition metadata selected by `docs/data_dictionary/operations_source_set.json` are included in Git. The launcher stops on missing files or checksum differences. See [the current source manifest](data_dictionary/source_manifest_20261110.md).
 
 Existing `.env` settings are preserved. If `.env` is absent, the launcher creates local defaults with a generated password without printing it. With an existing PostgreSQL volume, use that volume's existing credentials; a newly generated password cannot change an existing database login. Connection failures stop preparation; the launcher does not reset the database, alter existing passwords or remove volumes.
 

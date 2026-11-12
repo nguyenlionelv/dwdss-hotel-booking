@@ -74,10 +74,14 @@ def development(daily, rows, actuals):
     return calibration, validation
 
 
-def holdout(model_entries, policy):
+def holdout(model_entries, policy, snapshot=None):
+    from ml.demand_forecast.data import load_snapshot
     models = []
     for metadata, state in model_entries:
-        daily, bookings = inputs(metadata)
+        if snapshot is None:
+            daily, bookings = inputs(metadata)
+        else:
+            daily, bookings, _ = load_snapshot(snapshot)
         actuals, rows = eligible_actuals(daily), history_rows(daily)
         scored, maes = [], []
         for origin in pd.date_range('2017-06-01', '2017-08-24'):
@@ -104,15 +108,22 @@ def holdout(model_entries, policy):
             'not_used_for_policy_selection': True, 'models': models}
 
 
-def main():
+def calibrate(models=None, snapshot=None, output=None, policy_path=None):
     from ml.demand_forecast.data import load_snapshot
-    registry = json.loads((ROOT / 'artifacts/ml_serving/models/registry.json').read_text(encoding='utf-8'))
+    models = Path(models or ROOT / 'artifacts/ml_serving/models')
+    snapshot = Path(snapshot or ROOT / 'artifacts/ml_serving/snapshot')
+    output = Path(output or OUT)
+    policy_path = Path(policy_path or POLICY)
+    registry = json.loads((models / 'registry.json').read_text(encoding='utf-8'))
     first_folder = registry['models'][0]['folder']
-    version = json.loads((ROOT / 'artifacts/ml_serving/models' / first_folder / 'metadata.json').read_text(encoding='utf-8'))['data_version']
-    model_entries = entries(version, 'daily')
-    daily, _, provenance = load_snapshot(model_entries[0][0]['snapshot'])
+    version = json.loads((models / first_folder / 'metadata.json').read_text(encoding='utf-8'))['data_version']
+    model_entries = entries(version, 'daily', root=models)
+    daily, _, provenance = load_snapshot(snapshot)
     if provenance['data_version'] != version:
         raise ValueError('Snapshot/registry version mismatch')
+    from pipeline.source_to_staging.common import sha256
+    if any(m['input_manifest_sha256'] != sha256(snapshot / 'input_manifest.json') for m, _ in model_entries):
+        raise ValueError('Snapshot/model manifest mismatch')
     rows, actuals = history_rows(daily), eligible_actuals(daily)
     calibration, validation = development(daily, rows, actuals)
     selected, lam, reason = choose_policy(validation)
@@ -136,16 +147,17 @@ def main():
               'limitations': ['Saved final models have no archived per-origin pre-selection validation predictions.',
                               'Proxy selection does not establish model-specific validation superiority.',
                               'Overlapping seven-day origins are dependent.']}
-    OUT.mkdir(parents=True, exist_ok=True)
-    POLICY.write_text(json.dumps(policy, indent=2) + '\n', encoding='utf-8')
-    (OUT / 'validation.json').write_text(json.dumps({'calibration': calibration_result,
+    output.mkdir(parents=True, exist_ok=True)
+    policy_path.write_text(json.dumps(policy, indent=2) + '\n', encoding='utf-8')
+    (output / 'validation.json').write_text(json.dumps({'calibration': calibration_result,
         'validation': validation_result, 'policy': {k: v for k, v in policy.items() if k not in ('validation_results', 'calibration_results')}},
         indent=2) + '\n', encoding='utf-8')
-    descriptive = holdout(model_entries, policy)
-    (OUT / 'holdout_descriptive.json').write_text(json.dumps(descriptive, indent=2) + '\n', encoding='utf-8')
+    descriptive = holdout(model_entries, policy, snapshot)
+    (output / 'holdout_descriptive.json').write_text(json.dumps(descriptive, indent=2) + '\n', encoding='utf-8')
     print(json.dumps({'selected_policy': selected, 'lambda': lam,
                       'validation': validation_result, 'holdout': descriptive}, indent=2))
+    return policy
 
 
 if __name__ == '__main__':
-    main()
+    calibrate()

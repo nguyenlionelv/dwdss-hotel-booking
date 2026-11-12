@@ -58,8 +58,10 @@ def observations(rows, support):
     return result
 
 
-def calibrate():
-    rows = list(csv.DictReader(SNAPSHOT.open(encoding='utf-8')))
+def calibrate(snapshot=SNAPSHOT, policy_path=POLICY, report_path=REPORT):
+    snapshot = Path(snapshot)
+    with snapshot.open(encoding='utf-8') as handle:
+        rows = list(csv.DictReader(handle))
     versions = {r['data_version'] for r in rows}
     assert len(versions) == 1
     candidates = {n: observations(rows, n) for n in (42, 46, 50, 53, 56)}
@@ -97,17 +99,18 @@ def calibrate():
         raise ValueError('No candidate passed prespecified validation; do not publish policy')
     chosen = max(eligible, key=lambda t: t['min_complete_56'])
     policy = {**BASE, 'data_version': versions.pop(), 'min_complete_56': chosen['min_complete_56'],
-              'thresholds': chosen['thresholds'], 'snapshot_sha256': hashlib.sha256(SNAPSHOT.read_bytes()).hexdigest(),
+              'thresholds': chosen['thresholds'], 'snapshot_sha256': hashlib.sha256(snapshot.read_bytes()).hexdigest(),
               'selection': 'highest support with >=85% retention, <=5% missingness flips, <=5% validation tails'}
     report = dict(policy=policy, trials=trials, calibration_start=(min(day(r['full_date']) for r in rows)+timedelta(days=112)).isoformat(),
                   validation_start='2016-07-01', holdout_used_for_selection=False,
                   limitations=['Overlapping rolling windows are dependent.',
                     'Reference-tail frequency and single-day deletion flips are proxies, not operational false-alarm labels.',
                     'Selection measures historical context; separate saved-model holdout evaluation is descriptive.'])
-    POLICY.write_text(json.dumps(policy, indent=2)+'\n', encoding='utf-8')
-    REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
+    Path(policy_path).write_text(json.dumps(policy, indent=2)+'\n', encoding='utf-8')
+    Path(report_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(report_path).write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(dict(policy=policy, trials=[{k:t[k] for k in ('min_complete_56','retention','eligible')} for t in trials]), indent=2))
+    return policy
 
 
 if __name__ == '__main__':

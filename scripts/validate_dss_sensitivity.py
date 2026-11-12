@@ -55,9 +55,14 @@ def metrics(rows,threshold):
         missingness_flip_rate=flips/n if n else None,
         adjacent_cutoff_flip_rate=sum(adjacent)/len(adjacent) if adjacent else None)
 
-def run():
-    policy=json.loads((ROOT/'artifacts/dss_v2/calibration.json').read_text())['policy']
-    rows=list(csv.DictReader((ROOT/'artifacts/ml_serving/snapshot/daily_input.csv').open(encoding='utf-8')))
+def run(calibration=None, snapshot=None, report_path=None, policy_path=None):
+    calibration=Path(calibration or ROOT/'artifacts/dss_v2/calibration.json')
+    snapshot=Path(snapshot or ROOT/'artifacts/ml_serving/snapshot/daily_input.csv')
+    report_path=Path(report_path or ROOT/'artifacts/dss_v2/sensitivity_validation.json')
+    policy_path=Path(policy_path or ROOT/'backend/app/services/decision_engine/policy.json')
+    policy=json.loads(calibration.read_text(encoding='utf-8'))['policy']
+    with snapshot.open(encoding='utf-8') as handle:
+        rows=list(csv.DictReader(handle))
     records=samples(rows,policy)
     # Split by origin AND target: calibration targets end June 30, validation starts July 1.
     calibration=[r for r in records if day(r['origin'])+timedelta(days=r['horizon'])<=date(2016,6,30)]
@@ -83,8 +88,11 @@ def run():
         limitations=['Probe validation is not validation of the saved models; pre-selection saved-model replay would leak.',
             'Overlapping origins are dependent; one-SD event is a statistical definition, not an operational outcome.',
             'Existing holdout has already been inspected. Subsequent results are descriptive, not unbiased.'])
-    (ROOT/'artifacts/dss_v2/sensitivity_validation.json').write_text(json.dumps(report,indent=2)+'\n')
-    if selected:(ROOT/'backend/app/services/decision_engine/policy.json').write_text(json.dumps(policy,indent=2)+'\n')
+    report_path.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+    if not selected:
+        raise ValueError('No insight threshold passed development validation; do not publish policy')
+    policy_path.write_text(json.dumps(policy,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(dict(selected=selected,trials=trials),indent=2))
+    return policy
 
 if __name__=='__main__':run()

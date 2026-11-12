@@ -119,9 +119,14 @@ def prepare(report_dir, *, with_tests=False, tree_jobs=6):
         step = 'models'
         models, snapshot, details = select_models(summary['data_version'], fingerprint, report_dir, tree_jobs)
         model_status = details.pop('status')
+        step = 'dss_policies'
+        from scripts.prepare_dss import prepare_policies
+        policies = report_dir / 'policies'
+        policy_details = prepare_policies(models, snapshot, policies, summary['data_version'])
         result = {'status': 'completed', 'model_status': model_status,
                   'data_version': summary['data_version'], 'run_id': summary['run_id'],
-                  'models': models.relative_to(ROOT).as_posix(), 'snapshot': snapshot.relative_to(ROOT).as_posix(), **details}
+                  'models': models.relative_to(ROOT).as_posix(), 'snapshot': snapshot.relative_to(ROOT).as_posix(),
+                  'policies': policies.relative_to(ROOT).as_posix(), 'dss_policies': policy_details, **details}
         save(report_dir / 'prepared.json', result)
         return result
     except Exception as exc:

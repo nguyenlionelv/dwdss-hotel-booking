@@ -79,6 +79,26 @@ class PreparationTests(unittest.TestCase):
                 prepare.compatible_models(self.models, self.root / 'snapshot', 'new', 's')
         entries.assert_not_called()
 
+    def test_policy_failure_prevents_completed_preparation(self):
+        output = self.root / 'preparation'
+        def command(*args):
+            if args[0] == 'scripts/run_pipeline.py' and '--with-mart' in args:
+                dw = output / 'dw'
+                dw.mkdir()
+                (dw / 'summary.json').write_text(json.dumps({'status': 'completed', 'verified': True,
+                    'mart_verified': True, 'data_version': 'v2', 'run_id': 'run2'}))
+        with patch.object(prepare, 'ROOT', self.root), \
+             patch.object(prepare, 'source_set', return_value=('v1', {}, 'fingerprint')), \
+             patch.object(prepare, 'inspect_database', return_value={}), \
+             patch.object(prepare, 'command', side_effect=command), \
+             patch.object(prepare, 'select_models', return_value=(self.models, self.models.parent/'snapshot', {'status': 'reused'})), \
+             patch('scripts.prepare_dss.prepare_policies', side_effect=ValueError('calibration failed')) as policies:
+            with self.assertRaisesRegex(ValueError, 'calibration failed'):
+                prepare.prepare(output)
+        policies.assert_called_once_with(self.models, self.models.parent/'snapshot', output/'policies', 'v2')
+        self.assertFalse((output/'prepared.json').exists())
+        self.assertEqual(json.loads((output/'failed.json').read_text())['step'], 'dss_policies')
+
 
 if __name__ == '__main__':
     unittest.main()

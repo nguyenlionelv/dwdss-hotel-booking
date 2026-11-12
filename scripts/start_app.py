@@ -6,7 +6,7 @@ No host Python packages are needed: preparation runs in a temporary container.
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import hashlib
 import json
 import os
@@ -61,18 +61,25 @@ def verify_raw(root):
             raise ValueError(f'Missing {source_id} acquisition metadata: {source["metadata_file"]}')
 
 
-def checked_relative(root, value):
+def checked_relative(root, value, allowed='artifacts/ml_serving'):
     path = (root / value).resolve()
-    if not path.is_relative_to((root / 'artifacts/ml_serving').resolve()) or not path.is_dir():
-        raise ValueError('Prepared model paths must be existing directories inside artifacts/ml_serving.')
+    if not path.is_relative_to((root / allowed).resolve()) or not path.is_dir():
+        raise ValueError(f'Prepared paths must be existing directories inside {allowed}.')
     return path.relative_to(root).as_posix()
 
 
 def write_override(root, output, prepared):
     models = checked_relative(root, prepared['models'])
     snapshot = checked_relative(root, prepared['snapshot'])
+    policies = checked_relative(root, prepared['policies'], 'artifacts/startup')
+    policy_details = prepared['dss_policies']
+    if policy_details.get('status') != 'ready' or policy_details.get('data_version') != prepared['data_version']:
+        raise ValueError('DSS policies are not prepared for this data version.')
+    for filename, key in [('policy.json', 'decision_sha256'), ('allocation_policy.json', 'allocation_sha256')]:
+        if hashlib.sha256((root / policies / filename).read_bytes()).hexdigest() != policy_details[key]:
+            raise ValueError('Prepared DSS policy checksum differs.')
     override = {'services': {'backend': {'build': {'args': {
-        'MODEL_ARTIFACT_PATH': models, 'MODEL_SNAPSHOT_PATH': snapshot,
+        'MODEL_ARTIFACT_PATH': models, 'MODEL_SNAPSHOT_PATH': snapshot, 'DSS_POLICY_PATH': policies,
     }}}}}
     path = output / 'compose.json'
     path.write_text(json.dumps(override, indent=2), encoding='utf-8')
@@ -94,6 +101,22 @@ def get_json(url):
         return json.load(response)
 
 
+def verify_dss_readiness(daily, prepared):
+    expected = prepared['dss_policies']
+    decision = daily.get('decision_support', {}).get('metadata', {})
+    allocation = daily.get('resource_allocation', {})
+    metadata = allocation.get('metadata', {})
+    if (decision.get('status') != 'READY' or decision.get('data_version') != prepared['data_version']
+            or decision.get('policy_sha256') != expected['decision_sha256']):
+        raise ValueError('DSS insights policy is unavailable or differs from the prepared release.')
+    if (allocation.get('status') != 'ready' or metadata.get('data_version') != prepared['data_version']
+            or metadata.get('policy_sha256') != expected['allocation_sha256']
+            or allocation.get('selected_policy') != expected['selected_allocation_policy']
+            or allocation.get('policy_evaluation', {}).get('availability') != 'available'):
+        raise ValueError('DSS allocation policy or evaluation is unavailable or differs from the prepared release.')
+    # Neutral insights and a genuinely selected uniform policy are valid results.
+
+
 def wait_for_app(backend, frontend, prepared, timeout=120):
     deadline = time.monotonic() + timeout
     last_error = 'Services have not become ready.'
@@ -110,15 +133,21 @@ def wait_for_app(backend, frontend, prepared, timeout=120):
                 daily = get_json(base + '/api/dss/demand-forecast?' + query)
                 if daily.get('data_version') != prepared['data_version'] or len(daily.get('forecasts', [])) != 7:
                     raise ValueError('Daily inference or frontend API proxy did not match the prepared release.')
+                origin = datetime.fromisoformat(prepared['daily_cutoff'])
+                dates = [(origin + timedelta(days=h)).date().isoformat() for h in range(1, 8)]
+                if [r.get('forecast_date') for r in daily['forecasts']] != dates:
+                    raise ValueError('Daily forecast dates differ from the prepared horizon.')
+                verify_dss_readiness(daily, prepared)
             monthly = get_json(backend + '/api/dss/monthly-demand-forecast?' + monthly_query)
             if monthly.get('data_version') != prepared['data_version'] or monthly.get('kind') != 'monthly':
                 raise ValueError('Monthly inference did not match the prepared release.')
             with urllib.request.urlopen(frontend, timeout=5) as response:
                 if response.status != 200:
                     raise ValueError('Frontend did not return HTTP 200.')
-            return {'health': 'passed', 'daily_inference': 'passed', 'monthly_inference': 'passed', 'frontend_proxy': 'passed'}
+            return {'health': 'passed', 'daily_inference': 'passed', 'monthly_inference': 'passed',
+                    'frontend_proxy': 'passed', 'dss_policies': 'passed'}
         except (OSError, ValueError, urllib.error.URLError) as exc:
-            last_error = type(exc).__name__
+            last_error = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
             time.sleep(2)
     raise RuntimeError(f'App readiness failed ({last_error}). Inspect docker compose logs backend frontend.')
 
@@ -155,7 +184,7 @@ def start(root=ROOT, *, with_tests=False, tree_jobs=6):
         run('Build pipeline tools', [*compose, 'build', 'pipeline'])
         report_dir = output / 'preparation'
         flags = ['--with-tests'] if with_tests else []
-        run('Verify and rerun pipeline; prepare compatible models', [*compose, 'run', '--rm', '--no-deps', '-T',
+        run('Verify pipeline; prepare compatible models and DSS policies', [*compose, 'run', '--rm', '--no-deps', '-T',
             'pipeline', 'python', 'scripts/prepare_app.py', '--report-dir', report_dir.relative_to(root).as_posix(),
             '--tree-jobs', str(tree_jobs), *flags])
         prepared = json.loads((report_dir / 'prepared.json').read_text(encoding='utf-8'))
@@ -168,7 +197,7 @@ def start(root=ROOT, *, with_tests=False, tree_jobs=6):
         summary['steps'].append('Verify live app, inference and frontend proxy')
         checks = wait_for_app(backend, frontend, prepared)
         summary.update(status='completed', data_version=prepared['data_version'], model_status=prepared['model_status'],
-                       checks=checks, frontend=frontend, api_docs=backend + '/docs')
+                       dss_policies=prepared['dss_policies'], checks=checks, frontend=frontend, api_docs=backend + '/docs')
         print(f'\nReady: {frontend}/dss/demand-forecast\nAPI: {backend}/docs\nReports: {output}', flush=True)
         return summary
     except (Exception, KeyboardInterrupt) as exc:

@@ -35,6 +35,14 @@ class StartupTests(unittest.TestCase):
         self.snapshot = self.models.parent / 'snapshot'
         self.models.mkdir(parents=True)
         self.snapshot.mkdir()
+        self.policies = self.root / 'artifacts/startup/test/preparation/policies'
+        self.policies.mkdir(parents=True)
+        for name in ('policy.json', 'allocation_policy.json'):
+            (self.policies / name).write_text('{}')
+        self.policy_details = {'status': 'ready', 'data_version': 'v1',
+            'decision_sha256': hashlib.sha256(b'{}').hexdigest(),
+            'allocation_sha256': hashlib.sha256(b'{}').hexdigest(),
+            'selected_allocation_policy': 'historical_weekday'}
 
     def test_env_is_preserved_and_password_not_logged(self):
         before = (self.root / '.env').read_bytes()
@@ -64,6 +72,7 @@ class StartupTests(unittest.TestCase):
                 (output / 'prepared.json').write_text(json.dumps({
                     'status': 'completed', 'model_status': 'reused', 'data_version': 'v1',
                     'models': 'artifacts/ml_serving/models', 'snapshot': 'artifacts/ml_serving/snapshot',
+                    'policies': self.policies.relative_to(root).as_posix(), 'dss_policies': self.policy_details,
                     'daily_cutoff': '2017-08-24', 'monthly_cutoff': '2017-08-31',
                 }))
         return run
@@ -85,6 +94,7 @@ class StartupTests(unittest.TestCase):
         self.assertNotIn('down', [arg for command in commands for arg in command])
         override = json.loads(next((self.root / 'artifacts/startup').glob('*/compose.json')).read_text())
         self.assertEqual(override['services']['backend']['build']['args']['MODEL_ARTIFACT_PATH'], 'artifacts/ml_serving/models')
+        self.assertEqual(override['services']['backend']['build']['args']['DSS_POLICY_PATH'], self.policies.relative_to(self.root).as_posix())
         ready.assert_called_once()
 
     def test_preparation_failure_prevents_app_build_and_readiness(self):
@@ -110,6 +120,35 @@ class StartupTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'readiness failed'):
                 startup.wait_for_app('http://backend', 'http://frontend', {'data_version': 'v1',
                     'daily_cutoff': '2017-08-24', 'monthly_cutoff': '2017-08-31'}, timeout=1)
+
+    def ready_daily(self):
+        return {'decision_support': {'state': 'NEUTRAL', 'insights': [], 'metadata': {
+            'status': 'READY', 'data_version': 'v1', 'policy_sha256': self.policy_details['decision_sha256']}},
+            'resource_allocation': {'status': 'ready', 'selected_policy': 'historical_weekday',
+                'metadata': {'data_version': 'v1', 'policy_sha256': self.policy_details['allocation_sha256']},
+                'policy_evaluation': {'availability': 'available'}}}
+
+    def test_neutral_with_verified_policies_is_ready(self):
+        startup.verify_dss_readiness(self.ready_daily(), {'data_version': 'v1', 'dss_policies': self.policy_details})
+
+    def test_readiness_rejects_policy_mismatch_and_uniform_fallback(self):
+        for change in ('decision', 'allocation', 'evaluation'):
+            daily = self.ready_daily()
+            if change == 'decision':
+                daily['decision_support']['metadata']['status'] = 'POLICY_DATA_VERSION_MISMATCH'
+            elif change == 'allocation':
+                daily['resource_allocation']['metadata']['policy_sha256'] = None
+                daily['resource_allocation']['selected_policy'] = 'uniform'
+            else:
+                daily['resource_allocation']['policy_evaluation']['availability'] = 'unavailable'
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                startup.verify_dss_readiness(daily, {'data_version': 'v1', 'dss_policies': self.policy_details})
+
+    def test_changed_policy_cannot_be_packaged(self):
+        (self.policies / 'policy.json').write_text('{"changed": true}')
+        with self.assertRaisesRegex(ValueError, 'checksum'):
+            startup.write_override(self.root, self.root, {'models': str(self.models), 'snapshot': str(self.snapshot),
+                'policies': str(self.policies), 'data_version': 'v1', 'dss_policies': self.policy_details})
 
 
 if __name__ == '__main__':
