@@ -1,5 +1,5 @@
-import React from "react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 /**
  * Typographic KPI Data Group (DESIGN.md Section 4.3):
@@ -13,18 +13,18 @@ export default function KpiCard({
   label,
   value,
   unit,
-  valueType = "number",
+  valueType = 'number',
   badgeText,
   subtext,
-  statusTone = "neutral", // 'neutral' | 'success' | 'warning' | 'critical' | 'accent'
+  statusTone = 'neutral', // 'neutral' | 'success' | 'warning' | 'critical' | 'accent'
   emphasize = false,
   className,
 }) {
   return (
     <div
       className={cn(
-        "kpi-data-group py-1 pr-4 flex flex-col gap-3 min-w-0",
-        className,
+        'kpi-data-group py-1 pr-4 flex flex-col gap-3 min-w-0',
+        className
       )}
     >
       <div className="min-h-10 text-[14px] font-medium leading-5 text-ink-primary">
@@ -34,15 +34,17 @@ export default function KpiCard({
       <div className="flex flex-col items-start gap-1">
         <span
           className={cn(
-            "editorial-metric-value tabular-nums",
-            valueType === "date" && "editorial-metric-date",
-            emphasize ? "text-status-critical" : "text-ink-primary",
+            'editorial-metric-value tabular-nums',
+            valueType === 'date' && 'editorial-metric-date',
+            emphasize ? 'text-status-critical' : 'text-ink-primary'
           )}
         >
           {value}
         </span>
         {unit && (
-          <span className="text-[13px] font-normal text-ink-secondary">{unit}</span>
+          <span className="text-[13px] font-normal text-ink-secondary">
+            {unit}
+          </span>
         )}
       </div>
     </div>

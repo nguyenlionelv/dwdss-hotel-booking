@@ -31,7 +31,9 @@ const INITIAL_METADATA = {
     max_date: null,
     total_days: 0,
   },
-  countries: [{ code: 'ALL', name: 'All Markets (Worldwide)', booking_count: null }],
+  countries: [
+    { code: 'ALL', name: 'All Markets (Worldwide)', booking_count: null },
+  ],
   is_mock: false,
   demo_mode: false,
   api_error: false,
@@ -39,7 +41,9 @@ const INITIAL_METADATA = {
 
 function getSystemScheme() {
   if (typeof window === 'undefined' || !window.matchMedia) return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
 }
 
 function getInitialRenderedScheme() {
@@ -129,7 +133,8 @@ export function SystemProvider({ children }) {
     try {
       saved = localStorage.getItem('color-scheme');
     } catch (e) {}
-    const metaVal = saved === 'dark' || saved === 'light' ? saved : 'light dark';
+    const metaVal =
+      saved === 'dark' || saved === 'light' ? saved : 'light dark';
     applyDocumentScheme(rendered, metaVal);
     setThemeState(rendered);
 

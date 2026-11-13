@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   fetchOperationsTrend,
   fetchOperationsPivot,
   fetchOperationsImpact,
   resolvePresetDates,
-} from "../../../services/analyticsApi";
-import { ANALYTICS_PRESETS } from "../../../data/mockData";
-import { useSystemContext } from "../../../hooks/useSystemContext";
-import KpiCard from "../../../components/kpi/KpiCard";
-import CompactFilter from "../../../components/filters/CompactFilter";
-import ResponsiveTableContainer from "../../../components/tables/ResponsiveTableContainer";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '../../../services/analyticsApi';
+import { ANALYTICS_PRESETS } from '../../../data/mockData';
+import { useSystemContext } from '../../../hooks/useSystemContext';
+import KpiCard from '../../../components/kpi/KpiCard';
+import CompactFilter from '../../../components/filters/CompactFilter';
+import ResponsiveTableContainer from '../../../components/tables/ResponsiveTableContainer';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableHeader,
@@ -22,74 +22,74 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/ui/table";
-import { ArrowLeftRight, ChevronRight, RotateCcw } from "lucide-react";
+} from '@/components/ui/table';
+import { ArrowLeftRight, ChevronRight, RotateCcw } from 'lucide-react';
 import TrendChart, {
   HorizontalBarChart,
-} from "../../../components/charts/TrendChart";
+} from '../../../components/charts/TrendChart';
 
 const GRAIN_OPTIONS = [
-  { id: "year", label: "Year" },
-  { id: "quarter", label: "Quarter" },
-  { id: "month", label: "Month" },
-  { id: "week", label: "Week" },
-  { id: "day", label: "Day" },
+  { id: 'year', label: 'Year' },
+  { id: 'quarter', label: 'Quarter' },
+  { id: 'month', label: 'Month' },
+  { id: 'week', label: 'Week' },
+  { id: 'day', label: 'Day' },
 ];
 
 const MEASURE_OPTIONS = [
-  { id: "observed_total_guests", label: "Observed guests" },
-  { id: "non_canceled_bookings", label: "Non-canceled bookings" },
-  { id: "total_bookings", label: "Total bookings" },
-  { id: "observed_total_stay_nights", label: "Stay nights" },
-  { id: "cancellation_rate", label: "Cancellation rate (%)" },
-  { id: "avg_adr", label: "ADR (€)" },
+  { id: 'observed_total_guests', label: 'Observed guests' },
+  { id: 'non_canceled_bookings', label: 'Non-canceled bookings' },
+  { id: 'total_bookings', label: 'Total bookings' },
+  { id: 'observed_total_stay_nights', label: 'Stay nights' },
+  { id: 'cancellation_rate', label: 'Cancellation rate (%)' },
+  { id: 'avg_adr', label: 'ADR (€)' },
 ];
 
 const PERIOD_LABELS = {
-  full_793: "All dates",
-  year_2016: "2016",
-  year_2017: "2017",
-  summer_peak_2016: "Summer 2016",
+  full_793: 'All dates',
+  year_2016: '2016',
+  year_2017: '2017',
+  summer_peak_2016: 'Summer 2016',
 };
 
 const PIVOT_ROW_OPTIONS = [
-  { value: "quarter", label: "Quarter" },
-  { value: "month", label: "Month" },
-  { value: "year", label: "Year" },
+  { value: 'quarter', label: 'Quarter' },
+  { value: 'month', label: 'Month' },
+  { value: 'year', label: 'Year' },
 ];
 
 const PIVOT_COLUMN_OPTIONS = [
-  { value: "country", label: "Market" },
-  { value: "day_type", label: "Day type / holiday" },
+  { value: 'country', label: 'Market' },
+  { value: 'day_type', label: 'Day type / holiday' },
 ];
 
 const PIVOT_METRIC_OPTIONS = [
-  { value: "observed_total_guests", label: "Observed guests" },
-  { value: "room_nights", label: "Stay nights" },
-  { value: "arrivals", label: "Non-canceled bookings" },
+  { value: 'observed_total_guests', label: 'Observed guests' },
+  { value: 'room_nights', label: 'Stay nights' },
+  { value: 'arrivals', label: 'Non-canceled bookings' },
 ];
 
 const CHILD_GRAIN = {
-  year: "quarter",
-  quarter: "month",
-  month: "week",
-  week: "day",
+  year: 'quarter',
+  quarter: 'month',
+  month: 'week',
+  week: 'day',
 };
 
 function getPeriodRange(item, grain) {
   if (item.period_start && item.period_end) {
     return { from: item.period_start, to: item.period_end };
   }
-  const label = String(item.period_label || "");
+  const label = String(item.period_label || '');
 
-  if (grain === "month" && label.includes("-")) {
-    const [y, m] = label.split("-").map(Number);
+  if (grain === 'month' && label.includes('-')) {
+    const [y, m] = label.split('-').map(Number);
     const last = new Date(y, m, 0).getDate();
-    const mm = String(m).padStart(2, "0");
+    const mm = String(m).padStart(2, '0');
     return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${last}` };
   }
 
-  if (grain === "quarter") {
+  if (grain === 'quarter') {
     const match = label.match(/(\d{4})-Q(\d)/);
     if (match) {
       const year = match[1];
@@ -104,7 +104,7 @@ function getPeriodRange(item, grain) {
     }
   }
 
-  if (grain === "year") {
+  if (grain === 'year') {
     const match = label.match(/\b(20\d\d)\b/);
     if (match) {
       const y = match[1];
@@ -112,7 +112,7 @@ function getPeriodRange(item, grain) {
     }
   }
 
-  if (grain === "week") {
+  if (grain === 'week') {
     const match = label.match(/(\d{4})-W(\d{2})/);
     if (match) {
       const y = Number(match[1]);
@@ -139,19 +139,19 @@ export default function OperationsAnalyticsPage() {
   const { metadata, demoMode } = useSystemContext();
 
   // OLAP Filter & Grain State
-  const [preset, setPreset] = useState("full_793");
-  const [grain, setGrain] = useState("week");
-  const [country, setCountry] = useState("ALL");
-  const [dayType, setDayType] = useState("ALL");
-  const [holidayFilter, setHolidayFilter] = useState("ALL");
-  const [chartMeasure, setChartMeasure] = useState("observed_total_guests");
+  const [preset, setPreset] = useState('full_793');
+  const [grain, setGrain] = useState('week');
+  const [country, setCountry] = useState('ALL');
+  const [dayType, setDayType] = useState('ALL');
+  const [holidayFilter, setHolidayFilter] = useState('ALL');
+  const [chartMeasure, setChartMeasure] = useState('observed_total_guests');
   const [drilldownContext, setDrilldownContext] = useState(null);
   const [drilldownRange, setDrilldownRange] = useState(null);
 
   // Pivot Matrix State (DO-A02)
-  const [pivotRowDim, setPivotRowDim] = useState("quarter");
-  const [pivotColDim, setPivotColDim] = useState("country");
-  const [pivotMeasure, setPivotMeasure] = useState("observed_total_guests");
+  const [pivotRowDim, setPivotRowDim] = useState('quarter');
+  const [pivotColDim, setPivotColDim] = useState('country');
+  const [pivotMeasure, setPivotMeasure] = useState('observed_total_guests');
   const [swapAxes, setSwapAxes] = useState(false);
   const [expandedRows, setExpandedRows] = useState({});
 
@@ -171,44 +171,64 @@ export default function OperationsAnalyticsPage() {
     let active = true;
     setLoading(true);
     fetchOperationsTrend({
-        preset,
-        grain,
-        country,
-        day_type: dayType,
-        is_holiday: holidayFilter,
-        date_from: drilldownRange?.from,
-        date_to: drilldownRange?.to,
-      }).then((data) => {
-        if (!active) return;
-        setTrendData(data);
-        setLoading(false);
-      });
-    return () => { active = false; };
-  }, [preset, grain, country, dayType, holidayFilter, drilldownRange?.from, drilldownRange?.to, demoMode]);
+      preset,
+      grain,
+      country,
+      day_type: dayType,
+      is_holiday: holidayFilter,
+      date_from: drilldownRange?.from,
+      date_to: drilldownRange?.to,
+    }).then((data) => {
+      if (!active) return;
+      setTrendData(data);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [
+    preset,
+    grain,
+    country,
+    dayType,
+    holidayFilter,
+    drilldownRange?.from,
+    drilldownRange?.to,
+    demoMode,
+  ]);
 
   useEffect(() => {
     let active = true;
     setPivotLoading(true);
     fetchOperationsPivot({
-        row_dim: pivotRowDim,
-        col_dim: pivotColDim,
-        measure: pivotMeasure,
-        start_date: activeRange.start_date,
-        end_date: activeRange.end_date,
-      }).then((data) => {
-        if (!active) return;
-        setPivotData(data);
-        setPivotLoading(false);
-      });
-    return () => { active = false; };
-  }, [pivotRowDim, pivotColDim, pivotMeasure, activeRange.start_date, activeRange.end_date, demoMode]);
+      row_dim: pivotRowDim,
+      col_dim: pivotColDim,
+      measure: pivotMeasure,
+      start_date: activeRange.start_date,
+      end_date: activeRange.end_date,
+    }).then((data) => {
+      if (!active) return;
+      setPivotData(data);
+      setPivotLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [
+    pivotRowDim,
+    pivotColDim,
+    pivotMeasure,
+    activeRange.start_date,
+    activeRange.end_date,
+    demoMode,
+  ]);
 
   useEffect(() => {
     let active = true;
     fetchOperationsImpact({
-        start_date: activeRange.start_date,
-        end_date: activeRange.end_date,
-      }).then((data) => {
+      start_date: activeRange.start_date,
+      end_date: activeRange.end_date,
+    }).then((data) => {
       if (!active) return;
       setImpactData(data);
     });
@@ -248,17 +268,17 @@ export default function OperationsAnalyticsPage() {
     setDrilldownContext(
       parent
         ? `${parent.label} → ${parent.parentGrain || drilldownRange.parentGrain}`
-        : null,
+        : null
     );
   };
 
   const handleResetFilters = () => {
-    setPreset("full_793");
-    setGrain("week");
-    setCountry("ALL");
-    setDayType("ALL");
-    setHolidayFilter("ALL");
-    setChartMeasure("observed_total_guests");
+    setPreset('full_793');
+    setGrain('week');
+    setCountry('ALL');
+    setDayType('ALL');
+    setHolidayFilter('ALL');
+    setChartMeasure('observed_total_guests');
     setDrilldownRange(null);
     setDrilldownContext(null);
   };
@@ -271,7 +291,7 @@ export default function OperationsAnalyticsPage() {
   const summary = trendData?.summary || {};
   const coverage = trendData?.coverage || {};
 
-  const guestStatus = coverage.overall_guest_status || "COMPLETE";
+  const guestStatus = coverage.overall_guest_status || 'COMPLETE';
   const partialDaysCount = coverage.guest_partial_days ?? 0;
 
   const totalBookings = summary.total_bookings ?? 0;
@@ -285,7 +305,7 @@ export default function OperationsAnalyticsPage() {
       ? (Number(summary.cancellation_rate) * 100).toFixed(1)
       : totalBookings > 0
         ? ((totalCancellations / totalBookings) * 100).toFixed(1)
-        : "0.0";
+        : '0.0';
 
   const observedGuests = summary.observed_total_guests ?? 0;
   const adults =
@@ -305,35 +325,35 @@ export default function OperationsAnalyticsPage() {
   const avgStayNights =
     summary.avg_stay_nights != null
       ? Number(summary.avg_stay_nights).toFixed(2)
-      : "0.00";
+      : '0.00';
   const avgPartySize =
     summary.avg_party_size != null
       ? Number(summary.avg_party_size).toFixed(2)
-      : "0.00";
+      : '0.00';
   const avgLeadTime =
     summary.avg_lead_time != null
       ? Number(summary.avg_lead_time).toFixed(1)
-      : "0.0";
+      : '0.0';
   const avgAdr =
-    summary.avg_adr != null ? Number(summary.avg_adr).toFixed(2) : "0.00";
+    summary.avg_adr != null ? Number(summary.avg_adr).toFixed(2) : '0.00';
 
   const peakDays = summary.peak_demand_days || [];
   const peakLabel =
     peakDays.length > 0
-      ? peakDays.map((p) => p.full_date).join(", ")
-      : summary.peak_period || "—";
+      ? peakDays.map((p) => p.full_date).join(', ')
+      : summary.peak_period || '—';
   const peakGuestsVal =
     peakDays.length > 0
-      ? `${Number(peakDays[0].observed_total_guests).toLocaleString("en-US")} guests`
-      : `${Number(summary.peak_room_nights || 0).toLocaleString("en-US")} stay nights`;
+      ? `${Number(peakDays[0].observed_total_guests).toLocaleString('en-US')} guests`
+      : `${Number(summary.peak_room_nights || 0).toLocaleString('en-US')} stay nights`;
 
   // Holiday groups (DO-A03)
   const holidayGroups = impactData?.holiday_impact?.groups?.length
     ? impactData.holiday_impact.groups
     : [
         {
-          group_key: "holiday",
-          group_label: "Holiday (National or Lisboa)",
+          group_key: 'holiday',
+          group_label: 'Holiday (National or Lisboa)',
           days_count: impactData?.holiday_impact?.holiday_days_count || 30,
           observed_total_guests: 3560,
           observed_avg_guests_per_day: 118.67,
@@ -341,8 +361,8 @@ export default function OperationsAnalyticsPage() {
           cancellation_rate: 0.3966,
         },
         {
-          group_key: "non_holiday",
-          group_label: "Non-Holiday",
+          group_key: 'non_holiday',
+          group_label: 'Non-Holiday',
           days_count: impactData?.holiday_impact?.non_holiday_days_count || 763,
           observed_total_guests: 84910,
           observed_avg_guests_per_day: 111.28,
@@ -356,7 +376,7 @@ export default function OperationsAnalyticsPage() {
     label: b.band_label,
     value: Number(b.avg_active_guests ?? b.avg_room_nights ?? 0),
     formattedValue: `${Number(b.avg_active_guests ?? b.avg_room_nights ?? 0).toFixed(1)}/d (${b.days_count}d)`,
-    color: idx === 0 ? "series1" : idx === 1 ? "series3" : "series5",
+    color: idx === 0 ? 'series1' : idx === 1 ? 'series3' : 'series5',
   }));
 
   const precipBuckets = (
@@ -365,15 +385,15 @@ export default function OperationsAnalyticsPage() {
     label: p.bucket_label,
     value: Number(p.observed_avg_guests_per_day || 0),
     formattedValue: `${Number(p.observed_avg_guests_per_day || 0).toFixed(1)}/d (${p.days_count}d)`,
-    color: idx === 0 ? "series1" : idx === 1 ? "series2" : "series5",
+    color: idx === 0 ? 'series1' : idx === 1 ? 'series2' : 'series5',
   }));
 
   // Country ranking (DO-A05)
   const topCountries = (impactData?.top_countries || []).map((c, idx) => ({
     label: `${c.name} (${c.code})`,
     value: Number(c.guests ?? c.room_nights ?? 0),
-    formattedValue: `${Number(c.guests ?? c.room_nights ?? 0).toLocaleString("en-US")} (${c.share_pct}%)`,
-    color: idx === 0 ? "series1" : idx < 3 ? "series3" : "series5",
+    formattedValue: `${Number(c.guests ?? c.room_nights ?? 0).toLocaleString('en-US')} (${c.share_pct}%)`,
+    color: idx === 0 ? 'series1' : idx < 3 ? 'series3' : 'series5',
   }));
 
   const activeMeasureObj =
@@ -387,7 +407,10 @@ export default function OperationsAnalyticsPage() {
     const name = market.country_name || market.name || code;
     return {
       value: code,
-      label: code === "ALL" ? "All markets" : name.replace(/\s*\([A-Z]{2,3}\)\s*$/, ""),
+      label:
+        code === 'ALL'
+          ? 'All markets'
+          : name.replace(/\s*\([A-Z]{2,3}\)\s*$/, ''),
     };
   });
 
@@ -400,13 +423,21 @@ export default function OperationsAnalyticsPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="secondary" size="sm" className="h-8 w-28 border-slate-200 bg-slate-100 text-slate-700 hover:border-slate-300 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700" asChild>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 w-28 border-slate-200 bg-slate-100 text-slate-700 hover:border-slate-300 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            asChild
+          >
             <Link to="/reports/operations">Reporting</Link>
           </Button>
-          <Button variant="secondary" size="sm" className="h-8 w-28 border-slate-200 bg-slate-100 text-slate-700 hover:border-slate-300 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700" asChild>
-            <Link to="/dss/demand-forecast">
-              Forecasting
-            </Link>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 w-28 border-slate-200 bg-slate-100 text-slate-700 hover:border-slate-300 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            asChild
+          >
+            <Link to="/dss/demand-forecast">Forecasting</Link>
           </Button>
         </div>
       </header>
@@ -418,9 +449,9 @@ export default function OperationsAnalyticsPage() {
         >
           <span className="font-semibold text-status-critical">
             Analytics Data Unavailable:
-          </span>{" "}
+          </span>{' '}
           {trendData.error_message ||
-            "Unable to load OLAP analytics from mart.daily_hotel_ops."}
+            'Unable to load OLAP analytics from mart.daily_hotel_ops.'}
         </div>
       )}
 
@@ -431,10 +462,17 @@ export default function OperationsAnalyticsPage() {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4 flex-wrap">
-            <span id="time-grain-label" className="text-[14px] text-ink-secondary">
+            <span
+              id="time-grain-label"
+              className="text-[14px] text-ink-secondary"
+            >
               Time grain
             </span>
-            <div className="time-grain-control" role="radiogroup" aria-labelledby="time-grain-label">
+            <div
+              className="time-grain-control"
+              role="radiogroup"
+              aria-labelledby="time-grain-label"
+            >
               {GRAIN_OPTIONS.map((g) => (
                 <label key={g.id} className="relative">
                   <input
@@ -489,25 +527,50 @@ export default function OperationsAnalyticsPage() {
               setDrilldownRange(null);
               setDrilldownContext(null);
             }}
-            options={ANALYTICS_PRESETS.map((p) => ({ value: p.id, label: PERIOD_LABELS[p.id] || p.label }))}
+            options={ANALYTICS_PRESETS.map((p) => ({
+              value: p.id,
+              label: PERIOD_LABELS[p.id] || p.label,
+            }))}
           />
-          <CompactFilter id="olap-country" label="Market" value={country}
-            onChange={(e) => setCountry(e.target.value)} options={marketOptions} />
-          <CompactFilter id="olap-daytype" label="Day type" value={dayType}
-            onChange={(e) => setDayType(e.target.value)} options={[
-              { value: "ALL", label: "All days" },
-              { value: "Weekday", label: "Weekdays" },
-              { value: "Weekend", label: "Weekends" },
-            ]} />
-          <CompactFilter id="olap-holiday" label="Holidays" value={holidayFilter}
-            onChange={(e) => setHolidayFilter(e.target.value)} options={[
-              { value: "ALL", label: "All days" },
-              { value: "HOLIDAY_ONLY", label: "Holidays" },
-              { value: "NON_HOLIDAY", label: "Non-holidays" },
-            ]} />
-          <CompactFilter id="olap-measure" label="Metric" value={chartMeasure}
+          <CompactFilter
+            id="olap-country"
+            label="Market"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            options={marketOptions}
+          />
+          <CompactFilter
+            id="olap-daytype"
+            label="Day type"
+            value={dayType}
+            onChange={(e) => setDayType(e.target.value)}
+            options={[
+              { value: 'ALL', label: 'All days' },
+              { value: 'Weekday', label: 'Weekdays' },
+              { value: 'Weekend', label: 'Weekends' },
+            ]}
+          />
+          <CompactFilter
+            id="olap-holiday"
+            label="Holidays"
+            value={holidayFilter}
+            onChange={(e) => setHolidayFilter(e.target.value)}
+            options={[
+              { value: 'ALL', label: 'All days' },
+              { value: 'HOLIDAY_ONLY', label: 'Holidays' },
+              { value: 'NON_HOLIDAY', label: 'Non-holidays' },
+            ]}
+          />
+          <CompactFilter
+            id="olap-measure"
+            label="Metric"
+            value={chartMeasure}
             onChange={(e) => setChartMeasure(e.target.value)}
-            options={MEASURE_OPTIONS.map((m) => ({ value: m.id, label: m.label }))} />
+            options={MEASURE_OPTIONS.map((m) => ({
+              value: m.id,
+              label: m.label,
+            }))}
+          />
         </div>
       </section>
 
@@ -522,7 +585,7 @@ export default function OperationsAnalyticsPage() {
           </h2>
           <div className="flex items-center gap-3 text-[12px] text-ink-secondary">
             <span>
-              Coverage:{" "}
+              Coverage:{' '}
               <strong className="font-mono text-ink-primary">
                 {coverage.calendar_days_count || 732} calendar days
               </strong>
@@ -544,11 +607,11 @@ export default function OperationsAnalyticsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 pt-1 xl:divide-x xl:divide-divider">
             <KpiCard
               label="Observed total guests"
-              value={observedGuests.toLocaleString("en-US")}
+              value={observedGuests.toLocaleString('en-US')}
               unit="guests"
               badgeText={guestStatus}
-              statusTone={guestStatus === "COMPLETE" ? "success" : "warning"}
-              subtext={`${adults.toLocaleString("en-US")}A · ${children.toLocaleString("en-US")}C · ${babies.toLocaleString("en-US")}B`}
+              statusTone={guestStatus === 'COMPLETE' ? 'success' : 'warning'}
+              subtext={`${adults.toLocaleString('en-US')}A · ${children.toLocaleString('en-US')}C · ${babies.toLocaleString('en-US')}B`}
             />
 
             <KpiCard
@@ -561,18 +624,18 @@ export default function OperationsAnalyticsPage() {
               }
               unit="guests/d"
               badgeText={
-                strictAvgGuests != null ? "Strict avg" : "Observed avg"
+                strictAvgGuests != null ? 'Strict avg' : 'Observed avg'
               }
-              statusTone={strictAvgGuests != null ? "success" : "warning"}
+              statusTone={strictAvgGuests != null ? 'success' : 'warning'}
               subtext={`Over ${coverage.calendar_days_count || 732} calendar days`}
             />
 
             <KpiCard
               className="xl:pl-5"
               label="Non-canceled bookings"
-              value={nonCanceledBookings.toLocaleString("en-US")}
+              value={nonCanceledBookings.toLocaleString('en-US')}
               unit="arrivals"
-              badgeText={`Total: ${totalBookings.toLocaleString("en-US")}`}
+              badgeText={`Total: ${totalBookings.toLocaleString('en-US')}`}
               statusTone="accent"
               subtext="Valid arrival bookings"
             />
@@ -581,15 +644,15 @@ export default function OperationsAnalyticsPage() {
               className="xl:pl-5"
               label="Cancellation rate"
               value={`${cancelRatePct}%`}
-              badgeText={`${totalCancellations.toLocaleString("en-US")} canceled`}
-              statusTone={Number(cancelRatePct) > 40 ? "warning" : "neutral"}
+              badgeText={`${totalCancellations.toLocaleString('en-US')} canceled`}
+              statusTone={Number(cancelRatePct) > 40 ? 'warning' : 'neutral'}
               subtext="Of total bookings"
             />
 
             <KpiCard
               className="xl:pl-5"
               label="Observed stay nights"
-              value={stayNights.toLocaleString("en-US")}
+              value={stayNights.toLocaleString('en-US')}
               unit="nights"
               badgeText={`Avg ${avgStayNights} nights/stay`}
               statusTone="neutral"
@@ -621,7 +684,7 @@ export default function OperationsAnalyticsPage() {
             <p className="text-[12px] text-ink-secondary">
               {CHILD_GRAIN[grain]
                 ? `Click any period bar/point on the canvas to drill down (${grain} → ${CHILD_GRAIN[grain]}).`
-                : "Leaf daily grain reached. Click Roll-up above to return to coarser aggregation."}
+                : 'Leaf daily grain reached. Click Roll-up above to return to coarser aggregation.'}
             </p>
           </div>
 
@@ -670,12 +733,27 @@ export default function OperationsAnalyticsPage() {
             Operations breakdown
           </h2>
           <div className="flex flex-wrap items-end gap-x-6 gap-y-5">
-            <CompactFilter id="pivot-rows" label="Rows" value={pivotRowDim}
-              onChange={(e) => setPivotRowDim(e.target.value)} options={PIVOT_ROW_OPTIONS} />
-            <CompactFilter id="pivot-columns" label="Columns" value={pivotColDim}
-              onChange={(e) => setPivotColDim(e.target.value)} options={PIVOT_COLUMN_OPTIONS} />
-            <CompactFilter id="pivot-metric" label="Metric" value={pivotMeasure}
-              onChange={(e) => setPivotMeasure(e.target.value)} options={PIVOT_METRIC_OPTIONS} />
+            <CompactFilter
+              id="pivot-rows"
+              label="Rows"
+              value={pivotRowDim}
+              onChange={(e) => setPivotRowDim(e.target.value)}
+              options={PIVOT_ROW_OPTIONS}
+            />
+            <CompactFilter
+              id="pivot-columns"
+              label="Columns"
+              value={pivotColDim}
+              onChange={(e) => setPivotColDim(e.target.value)}
+              options={PIVOT_COLUMN_OPTIONS}
+            />
+            <CompactFilter
+              id="pivot-metric"
+              label="Metric"
+              value={pivotMeasure}
+              onChange={(e) => setPivotMeasure(e.target.value)}
+              options={PIVOT_METRIC_OPTIONS}
+            />
             <Button
               type="button"
               variant="outline"
@@ -723,7 +801,7 @@ export default function OperationsAnalyticsPage() {
                                 className="w-4 h-4 rounded-[2px] border border-divider bg-surface-workspace text-ink-primary flex items-center justify-center text-[11px] font-mono cursor-pointer"
                                 aria-label={`Toggle ${row.row_key} details`}
                               >
-                                {isExpanded ? "−" : "+"}
+                                {isExpanded ? '−' : '+'}
                               </button>
                             ) : (
                               <span className="w-4 h-4 inline-block" />
@@ -736,11 +814,11 @@ export default function OperationsAnalyticsPage() {
                             key={col}
                             className="text-right font-sans tabular-nums text-ink-secondary"
                           >
-                            {Number(rowMap[col] || 0).toLocaleString("en-US")}
+                            {Number(rowMap[col] || 0).toLocaleString('en-US')}
                           </TableCell>
                         ))}
                         <TableCell className="text-right font-sans tabular-nums font-semibold text-ink-primary bg-surface-workspace">
-                          {Number(rowTotal).toLocaleString("en-US")}
+                          {Number(rowTotal).toLocaleString('en-US')}
                         </TableCell>
                       </TableRow>
 
@@ -768,11 +846,13 @@ export default function OperationsAnalyticsPage() {
                                   key={col}
                                   className="text-right font-sans tabular-nums text-ink-secondary"
                                 >
-                                  {Number(childMap[col] || 0).toLocaleString("en-US")}
+                                  {Number(childMap[col] || 0).toLocaleString(
+                                    'en-US'
+                                  )}
                                 </TableCell>
                               ))}
                               <TableCell className="text-right font-sans tabular-nums font-medium text-ink-primary bg-surface-workspace">
-                                {Number(childTotal).toLocaleString("en-US")}
+                                {Number(childTotal).toLocaleString('en-US')}
                               </TableCell>
                             </TableRow>
                           );
@@ -790,12 +870,14 @@ export default function OperationsAnalyticsPage() {
                       className="text-right font-sans tabular-nums"
                     >
                       {Number(
-                        pivotData?.column_totals?.[col] || 0,
-                      ).toLocaleString("en-US")}
+                        pivotData?.column_totals?.[col] || 0
+                      ).toLocaleString('en-US')}
                     </TableCell>
                   ))}
                   <TableCell className="text-right font-sans tabular-nums font-bold text-brand">
-                    {Number(pivotData?.grand_total || 0).toLocaleString("en-US")}
+                    {Number(pivotData?.grand_total || 0).toLocaleString(
+                      'en-US'
+                    )}
                   </TableCell>
                 </TableRow>
               </TableFooter>
@@ -806,7 +888,7 @@ export default function OperationsAnalyticsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    {pivotColDim === "country" ? "Source country" : "Day type"}
+                    {pivotColDim === 'country' ? 'Source country' : 'Day type'}
                   </TableHead>
                   {rawPivotRows.map((r) => (
                     <TableHead key={r.row_key} className="text-right">
@@ -829,14 +911,14 @@ export default function OperationsAnalyticsPage() {
                           key={r.row_key}
                           className="text-right font-sans tabular-nums text-ink-secondary"
                         >
-                          {Number(val).toLocaleString("en-US")}
+                          {Number(val).toLocaleString('en-US')}
                         </TableCell>
                       );
                     })}
                     <TableCell className="text-right font-sans tabular-nums font-semibold text-ink-primary bg-surface-workspace">
                       {Number(
-                        pivotData?.column_totals?.[col] || 0,
-                      ).toLocaleString("en-US")}
+                        pivotData?.column_totals?.[col] || 0
+                      ).toLocaleString('en-US')}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -849,11 +931,15 @@ export default function OperationsAnalyticsPage() {
                       key={r.row_key}
                       className="text-right font-sans tabular-nums"
                     >
-                      {Number(r.total ?? r.row_total ?? 0).toLocaleString("en-US")}
+                      {Number(r.total ?? r.row_total ?? 0).toLocaleString(
+                        'en-US'
+                      )}
                     </TableCell>
                   ))}
                   <TableCell className="text-right font-sans tabular-nums font-bold text-brand">
-                    {Number(pivotData?.grand_total || 0).toLocaleString("en-US")}
+                    {Number(pivotData?.grand_total || 0).toLocaleString(
+                      'en-US'
+                    )}
                   </TableCell>
                 </TableRow>
               </TableFooter>
@@ -889,13 +975,17 @@ export default function OperationsAnalyticsPage() {
                 >
                   <div>
                     <div className="text-[13px] font-semibold text-ink-primary">
-                      {g.group_key === "holiday" ? "Holidays" : g.group_key === "non_holiday" ? "Non-holidays" : g.group_label}
+                      {g.group_key === 'holiday'
+                        ? 'Holidays'
+                        : g.group_key === 'non_holiday'
+                          ? 'Non-holidays'
+                          : g.group_label}
                     </div>
                     <div className="text-[12px] text-ink-secondary font-mono">
-                      {g.days_count} calendar days • Cancel rate:{" "}
+                      {g.days_count} calendar days • Cancel rate:{' '}
                       {g.cancellation_rate != null
                         ? `${(g.cancellation_rate * 100).toFixed(1)}%`
-                        : "—"}
+                        : '—'}
                     </div>
                   </div>
 
@@ -905,7 +995,9 @@ export default function OperationsAnalyticsPage() {
                         Total guests
                       </div>
                       <div className="text-[14px] font-semibold text-ink-primary tabular-nums">
-                        {Number(g.observed_total_guests || 0).toLocaleString("en-US")}
+                        {Number(g.observed_total_guests || 0).toLocaleString(
+                          'en-US'
+                        )}
                       </div>
                     </div>
                     <div>
@@ -995,27 +1087,29 @@ export default function OperationsAnalyticsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-            {(impactData?.top_countries || []).map((c) => (
-              <TableRow key={c.code}>
-                <TableCell className="font-medium text-ink-primary">
-                  {c.name}{" "}
-                  <span className="block text-[11px] text-ink-secondary">
-                    ({c.code})
-                  </span>
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-ink-secondary">
-                  {Number(c.bookings ?? c.room_nights ?? 0).toLocaleString("en-US")}
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-ink-secondary">
-                  {c.cancellation_rate != null
-                    ? `${(c.cancellation_rate * 100).toFixed(1)}%`
-                    : c.yoy_growth || "—"}
-                </TableCell>
-                <TableCell className="text-right tabular-nums font-semibold text-brand">
-                  {c.share_pct}%
-                </TableCell>
-              </TableRow>
-            ))}
+                {(impactData?.top_countries || []).map((c) => (
+                  <TableRow key={c.code}>
+                    <TableCell className="font-medium text-ink-primary">
+                      {c.name}{' '}
+                      <span className="block text-[11px] text-ink-secondary">
+                        ({c.code})
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-ink-secondary">
+                      {Number(c.bookings ?? c.room_nights ?? 0).toLocaleString(
+                        'en-US'
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-ink-secondary">
+                      {c.cancellation_rate != null
+                        ? `${(c.cancellation_rate * 100).toFixed(1)}%`
+                        : c.yoy_growth || '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold text-brand">
+                      {c.share_pct}%
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </ResponsiveTableContainer>

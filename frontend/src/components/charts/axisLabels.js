@@ -2,11 +2,26 @@
 export function layoutAxisLabels(labels, left, right, gap = 12) {
   const available = right - left;
   if (!Number.isFinite(available) || available <= 0) return [];
-  const candidates = labels.filter(label => label.text && Number.isFinite(label.x) &&
-    Number.isFinite(label.width) && label.width > 0 && label.width <= available)
-    .map(label => {
-      const x = Math.max(left + label.width / 2, Math.min(right - label.width / 2, label.x));
-      return { ...label, x, left: x - label.width / 2, right: x + label.width / 2 };
+  const candidates = labels
+    .filter(
+      (label) =>
+        label.text &&
+        Number.isFinite(label.x) &&
+        Number.isFinite(label.width) &&
+        label.width > 0 &&
+        label.width <= available
+    )
+    .map((label) => {
+      const x = Math.max(
+        left + label.width / 2,
+        Math.min(right - label.width / 2, label.x)
+      );
+      return {
+        ...label,
+        x,
+        left: x - label.width / 2,
+        right: x + label.width / 2,
+      };
     });
   if (candidates.length < 2) return candidates;
   const first = candidates[0];
@@ -15,7 +30,10 @@ export function layoutAxisLabels(labels, left, right, gap = 12) {
   if (first.right + gap > last.left) return [last];
   const placed = [first];
   for (const label of candidates.slice(1, -1)) {
-    if (label.left >= placed[placed.length - 1].right + gap && label.right + gap <= last.left) {
+    if (
+      label.left >= placed[placed.length - 1].right + gap &&
+      label.right + gap <= last.left
+    ) {
       placed.push(label);
     }
   }

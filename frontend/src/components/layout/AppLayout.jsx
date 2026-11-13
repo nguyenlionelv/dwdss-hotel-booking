@@ -7,8 +7,14 @@ import { Button } from '@/components/ui/button';
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { health, metadata, loading, demoMode, toggleDemoMode, refreshSystemStatus } =
-    useSystemContext();
+  const {
+    health,
+    metadata,
+    loading,
+    demoMode,
+    toggleDemoMode,
+    refreshSystemStatus,
+  } = useSystemContext();
 
   const isDemo = Boolean(
     demoMode || health?.is_mock || health?.demo_mode || metadata?.is_mock
@@ -17,16 +23,21 @@ export default function AppLayout() {
     !loading &&
     Boolean(
       health?.api_error ||
-        metadata?.api_error ||
-        health?.status === 'offline' ||
-        health?.db_connected === false
+      metadata?.api_error ||
+      health?.status === 'offline' ||
+      health?.db_connected === false
     );
 
   return (
     <div className="min-h-screen bg-surface-workspace text-ink-primary flex flex-col transition-colors">
       <Sidebar open={sidebarOpen} />
-      <div className={`flex-1 flex flex-col min-w-0 ${sidebarOpen ? 'lg:pl-[240px]' : ''}`}>
-        <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen((open) => !open)} />
+      <div
+        className={`flex-1 flex flex-col min-w-0 ${sidebarOpen ? 'lg:pl-[240px]' : ''}`}
+      >
+        <Header
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen((open) => !open)}
+        />
 
         {isOffline && !isDemo && (
           <div

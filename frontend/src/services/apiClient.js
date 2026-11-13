@@ -28,7 +28,10 @@ export function setDemoModeEnabled(enabled) {
  */
 export async function apiRequest(path, options = {}) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), options.timeout || 3500);
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    options.timeout || 3500
+  );
 
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -117,7 +120,9 @@ export async function fetchSystemMetadata(options = {}) {
               const rawName = c.name || c.country_name || code;
               return {
                 code,
-                name: rawName.includes(`(${code})`) ? rawName : `${rawName} (${code})`,
+                name: rawName.includes(`(${code})`)
+                  ? rawName
+                  : `${rawName} (${code})`,
                 booking_count: c.booking_count ?? null,
               };
             }),
@@ -164,7 +169,9 @@ export async function fetchSystemMetadata(options = {}) {
         max_date: null,
         total_days: 0,
       },
-      countries: [{ code: 'ALL', name: 'All Markets (Worldwide)', booking_count: null }],
+      countries: [
+        { code: 'ALL', name: 'All Markets (Worldwide)', booking_count: null },
+      ],
       is_mock: false,
       demo_mode: false,
       api_error: true,

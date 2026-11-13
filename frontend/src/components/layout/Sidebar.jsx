@@ -1,41 +1,41 @@
-import React from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { LockKeyhole } from "lucide-react";
+import React from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { LockKeyhole } from 'lucide-react';
 
 export const MAIN_NAV_ITEMS = [
   {
-    to: "/analytics/operations",
-    label: "Operations Analytics",
-    code: "BI-01",
+    to: '/analytics/operations',
+    label: 'Operations Analytics',
+    code: 'BI-01',
   },
   {
-    to: "/reports/operations",
-    label: "Operations Reporting",
-    code: "DO-R01",
+    to: '/reports/operations',
+    label: 'Operations Reporting',
+    code: 'DO-R01',
   },
   {
-    to: "/dss/demand-forecast",
-    label: "Demand Forecasting",
-    code: "DO-M01",
+    to: '/dss/demand-forecast',
+    label: 'Demand Forecasting',
+    code: 'DO-M01',
   },
 ];
 
 export const PHASE2_NAV_ITEMS = [
   {
-    to: "/analytics/guest-customer",
-    label: "Guest & Customer",
-    code: "BI-02",
+    to: '/analytics/guest-customer',
+    label: 'Guest & Customer',
+    code: 'BI-02',
   },
   {
-    to: "/analytics/revenue-cancellation",
-    label: "Revenue & Cancellation",
-    code: "BI-03",
+    to: '/analytics/revenue-cancellation',
+    label: 'Revenue & Cancellation',
+    code: 'BI-03',
   },
   {
-    to: "/analytics/booking-performance",
-    label: "Booking Channel",
-    code: "BI-04",
+    to: '/analytics/booking-performance',
+    label: 'Booking Channel',
+    code: 'BI-04',
   },
 ];
 
@@ -67,13 +67,13 @@ export function NavigationContent({ onNavClick }) {
           {MAIN_NAV_ITEMS.map((item) => {
             const isActive =
               location.pathname === item.to ||
-              (item.to === "/analytics/operations" &&
-                (location.pathname === "/" ||
-                  location.pathname === "/analytics")) ||
-              (item.to === "/reports/operations" &&
-                location.pathname === "/reports") ||
-              (item.to === "/dss/demand-forecast" &&
-                location.pathname === "/dss");
+              (item.to === '/analytics/operations' &&
+                (location.pathname === '/' ||
+                  location.pathname === '/analytics')) ||
+              (item.to === '/reports/operations' &&
+                location.pathname === '/reports') ||
+              (item.to === '/dss/demand-forecast' &&
+                location.pathname === '/dss');
 
             return (
               <NavLink
@@ -82,10 +82,10 @@ export function NavigationContent({ onNavClick }) {
                 onClick={onNavClick}
                 className={() =>
                   cn(
-                    "flex items-center justify-between px-3 py-2 rounded-[3px] text-[13px] text-ink-primary transition-colors relative",
+                    'flex items-center justify-between px-3 py-2 rounded-[3px] text-[13px] text-ink-primary transition-colors relative',
                     isActive
-                      ? "font-medium bg-surface-subtle"
-                      : "font-normal hover:bg-surface-subtle",
+                      ? 'font-medium bg-surface-subtle'
+                      : 'font-normal hover:bg-surface-subtle'
                   )
                 }
               >
@@ -108,16 +108,19 @@ export function NavigationContent({ onNavClick }) {
 
         <nav className="space-y-0.5" aria-label="Extended Scope Navigation">
           {PHASE2_NAV_ITEMS.map((item) => (
-              <button
-                key={item.to}
-                type="button"
-                disabled
-                title="Available in Phase 2"
-                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left rounded-[3px] text-[13px] text-ink-muted cursor-not-allowed"
-              >
-                <span className="truncate">{item.label}</span>
-                <LockKeyhole aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-              </button>
+            <button
+              key={item.to}
+              type="button"
+              disabled
+              title="Available in Phase 2"
+              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left rounded-[3px] text-[13px] text-ink-muted cursor-not-allowed"
+            >
+              <span className="truncate">{item.label}</span>
+              <LockKeyhole
+                aria-hidden="true"
+                className="h-3.5 w-3.5 shrink-0"
+              />
+            </button>
           ))}
         </nav>
       </div>
@@ -127,7 +130,14 @@ export function NavigationContent({ onNavClick }) {
 
 export default function Sidebar({ open }) {
   return (
-    <aside id="desktop-sidebar" aria-label="Main sidebar" className={cn("fixed left-0 top-0 hidden h-screen w-[240px] bg-surface-primary border-r border-divider flex-col justify-between py-6 px-3 z-40 select-none transition-colors", open && "lg:flex")}>
+    <aside
+      id="desktop-sidebar"
+      aria-label="Main sidebar"
+      className={cn(
+        'fixed left-0 top-0 hidden h-screen w-[240px] bg-surface-primary border-r border-divider flex-col justify-between py-6 px-3 z-40 select-none transition-colors',
+        open && 'lg:flex'
+      )}
+    >
       <NavigationContent />
     </aside>
   );

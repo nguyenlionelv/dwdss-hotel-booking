@@ -12,7 +12,9 @@ export async function fetchWeeklyOperationsReport(params = 'LATEST_4W') {
       const qs = new URLSearchParams(
         Object.entries(apiQueryParams).filter(([, v]) => v != null && v !== '')
       ).toString();
-      const res = await apiRequest(`/api/reports/operations/weekly-demand?${qs}`);
+      const res = await apiRequest(
+        `/api/reports/operations/weekly-demand?${qs}`
+      );
       return { ...res, is_mock: false, demo_mode: false, api_error: false };
     } catch (err) {
       if (!isDemoModeEnabled({ demo })) {
@@ -50,7 +52,8 @@ export async function fetchWeeklyOperationsReport(params = 'LATEST_4W') {
           demo_mode: false,
           api_error: true,
           error_status: err?.status || 503,
-          error_message: err?.message || 'Unable to load weekly report from backend API.',
+          error_message:
+            err?.message || 'Unable to load weekly report from backend API.',
         };
       }
     }
@@ -126,7 +129,8 @@ export async function fetchCapacitySummaryReport(params = 'LATEST_4W') {
           demo_mode: false,
           api_error: true,
           error_status: err?.status || 503,
-          error_message: err?.message || 'Unable to load capacity summary from backend API.',
+          error_message:
+            err?.message || 'Unable to load capacity summary from backend API.',
         };
       }
     }
@@ -139,7 +143,10 @@ export async function fetchCapacitySummaryReport(params = 'LATEST_4W') {
   const totAdults = rows.reduce((a, r) => a + r.observed_total_adults, 0);
   const totChildren = rows.reduce((a, r) => a + r.observed_total_children, 0);
   const totBabies = rows.reduce((a, r) => a + r.observed_total_babies, 0);
-  const totStayNights = rows.reduce((a, r) => a + r.observed_total_stay_nights, 0);
+  const totStayNights = rows.reduce(
+    (a, r) => a + r.observed_total_stay_nights,
+    0
+  );
   const totNonCanceled = rows.reduce((a, r) => a + r.non_canceled_bookings, 0);
 
   const weekdaySN = rows
@@ -166,9 +173,15 @@ export async function fetchCapacitySummaryReport(params = 'LATEST_4W') {
       observed_total_adults: totAdults,
       observed_total_children: totChildren,
       observed_total_babies: totBabies,
-      avg_party_size: totNonCanceled > 0 ? Number((totGuests / totNonCanceled).toFixed(2)) : 1.95,
+      avg_party_size:
+        totNonCanceled > 0
+          ? Number((totGuests / totNonCanceled).toFixed(2))
+          : 1.95,
       observed_total_stay_nights: totStayNights,
-      avg_stay_nights: totNonCanceled > 0 ? Number((totStayNights / totNonCanceled).toFixed(2)) : 3.4,
+      avg_stay_nights:
+        totNonCanceled > 0
+          ? Number((totStayNights / totNonCanceled).toFixed(2))
+          : 3.4,
       stay_nights_by_arrival_group: {
         weekday_arrival_stay_nights: weekdaySN,
         weekend_arrival_stay_nights: weekendSN,
@@ -177,10 +190,13 @@ export async function fetchCapacitySummaryReport(params = 'LATEST_4W') {
     },
     forecast_7d_summary: {
       as_of_date: report.period.end_date,
-      horizon_start: MOCK_DSS_FORECAST.forecast_rows[0]?.forecast_date || '2017-08-25',
-      horizon_end: MOCK_DSS_FORECAST.forecast_rows[6]?.forecast_date || '2017-08-31',
+      horizon_start:
+        MOCK_DSS_FORECAST.forecast_rows[0]?.forecast_date || '2017-08-25',
+      horizon_end:
+        MOCK_DSS_FORECAST.forecast_rows[6]?.forecast_date || '2017-08-31',
       model_version: MOCK_DSS_FORECAST.model_version,
-      predicted_total_guests_7d: MOCK_DSS_FORECAST.summary.total_predicted_guests_7d,
+      predicted_total_guests_7d:
+        MOCK_DSS_FORECAST.summary.total_predicted_guests_7d,
       demand_level_counts: { HIGH: 2, NORMAL: 4, LOW: 1 },
       forecasts: MOCK_DSS_FORECAST.forecast_rows,
     },
@@ -198,7 +214,11 @@ function formatCsvCell(cell) {
   return `"${String(cell).replace(/"/g, '""')}"`;
 }
 
-export function exportWeeklyReportToCsv(reportData, displayedRows = null, dayType = 'ALL') {
+export function exportWeeklyReportToCsv(
+  reportData,
+  displayedRows = null,
+  dayType = 'ALL'
+) {
   const rowsToExport = displayedRows || reportData?.daily_rows || [];
   if (!rowsToExport.length) return;
 
@@ -243,7 +263,7 @@ export function exportWeeklyReportToCsv(reportData, displayedRows = null, dayTyp
     const holidayNamesVal =
       Array.isArray(r.holiday_names) && r.holiday_names.length
         ? r.holiday_names.join('; ')
-        : r.holiday_local_name ?? '';
+        : (r.holiday_local_name ?? '');
     const tempVal = r.temperature_mean ?? r.weather_temp_mean ?? '';
     const precipVal = r.precipitation ?? r.weather_precip_sum ?? '';
     const guestStatus = r.guest_data_status ?? '';
@@ -265,7 +285,9 @@ export function exportWeeklyReportToCsv(reportData, displayedRows = null, dayTyp
       r.total_bookings ?? '',
       r.non_canceled_bookings ?? r.arrivals ?? '',
       r.total_cancellations ?? '',
-      r.cancellation_rate != null ? (r.cancellation_rate * 100).toFixed(2) + '%' : '',
+      r.cancellation_rate != null
+        ? (r.cancellation_rate * 100).toFixed(2) + '%'
+        : '',
       r.observed_total_adults ?? '',
       r.observed_total_children ?? '',
       r.observed_total_babies ?? '',
@@ -287,14 +309,27 @@ export function exportWeeklyReportToCsv(reportData, displayedRows = null, dayTyp
       ...rows.map((row) => row.map(formatCsvCell).join(',')),
     ].join('\n');
 
-  if (typeof document !== 'undefined' && typeof URL !== 'undefined' && URL.createObjectURL) {
+  if (
+    typeof document !== 'undefined' &&
+    typeof URL !== 'undefined' &&
+    URL.createObjectURL
+  ) {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    const start = reportData?.period?.start_date || reportData?.period_summary?.start_date || '2017-08-07';
-    const end = reportData?.period?.end_date || reportData?.period_summary?.end_date || '2017-08-13';
+    const start =
+      reportData?.period?.start_date ||
+      reportData?.period_summary?.start_date ||
+      '2017-08-07';
+    const end =
+      reportData?.period?.end_date ||
+      reportData?.period_summary?.end_date ||
+      '2017-08-13';
     link.href = url;
-    link.setAttribute('download', `city_hotel_demand_${start}_${end}_${dayType}.csv`);
+    link.setAttribute(
+      'download',
+      `city_hotel_demand_${start}_${end}_${dayType}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
