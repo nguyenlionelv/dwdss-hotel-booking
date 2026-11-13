@@ -1,18 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   fetchOperationsTrend,
   fetchOperationsPivot,
   fetchOperationsImpact,
   resolvePresetDates,
-} from "../../../services/analyticsApi";
-import { ANALYTICS_PRESETS } from "../../../data/mockData";
-import { useSystemContext } from "../../../hooks/useSystemContext";
-import KpiCard from "../../../components/kpi/KpiCard";
-import ResponsiveTableContainer from "../../../components/tables/ResponsiveTableContainer";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '../../../services/analyticsApi';
+import { ANALYTICS_PRESETS } from '../../../data/mockData';
+import { useSystemContext } from '../../../hooks/useSystemContext';
+import KpiCard from '../../../components/kpi/KpiCard';
+import CompactFilter from '../../../components/filters/CompactFilter';
+import ResponsiveTableContainer from '../../../components/tables/ResponsiveTableContainer';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableHeader,
@@ -21,50 +22,74 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/ui/table";
-import { ArrowLeftRight, ChevronRight, RotateCcw } from "lucide-react";
+} from '@/components/ui/table';
+import { ArrowLeftRight, ChevronRight, RotateCcw } from 'lucide-react';
 import TrendChart, {
-  CanvasHorizontalBarChart,
-} from "../../../components/charts/TrendChart";
+  HorizontalBarChart,
+} from '../../../components/charts/TrendChart';
 
 const GRAIN_OPTIONS = [
-  { id: "year", label: "Year" },
-  { id: "quarter", label: "Quarter" },
-  { id: "month", label: "Month" },
-  { id: "week", label: "Week" },
-  { id: "day", label: "Day" },
+  { id: 'year', label: 'Year' },
+  { id: 'quarter', label: 'Quarter' },
+  { id: 'month', label: 'Month' },
+  { id: 'week', label: 'Week' },
+  { id: 'day', label: 'Day' },
 ];
 
 const MEASURE_OPTIONS = [
-  { id: "observed_total_guests", label: "Observed guests" },
-  { id: "non_canceled_bookings", label: "Non-canceled bookings" },
-  { id: "total_bookings", label: "Total bookings" },
-  { id: "observed_total_stay_nights", label: "Observed stay nights" },
-  { id: "cancellation_rate", label: "Cancellation rate (%)" },
-  { id: "avg_adr", label: "Average daily rate (€)" },
+  { id: 'observed_total_guests', label: 'Observed guests' },
+  { id: 'non_canceled_bookings', label: 'Non-canceled bookings' },
+  { id: 'total_bookings', label: 'Total bookings' },
+  { id: 'observed_total_stay_nights', label: 'Stay nights' },
+  { id: 'cancellation_rate', label: 'Cancellation rate (%)' },
+  { id: 'avg_adr', label: 'ADR (€)' },
+];
+
+const PERIOD_LABELS = {
+  full_793: 'All dates',
+  year_2016: '2016',
+  year_2017: '2017',
+  summer_peak_2016: 'Summer 2016',
+};
+
+const PIVOT_ROW_OPTIONS = [
+  { value: 'quarter', label: 'Quarter' },
+  { value: 'month', label: 'Month' },
+  { value: 'year', label: 'Year' },
+];
+
+const PIVOT_COLUMN_OPTIONS = [
+  { value: 'country', label: 'Market' },
+  { value: 'day_type', label: 'Day type / holiday' },
+];
+
+const PIVOT_METRIC_OPTIONS = [
+  { value: 'observed_total_guests', label: 'Observed guests' },
+  { value: 'room_nights', label: 'Stay nights' },
+  { value: 'arrivals', label: 'Non-canceled bookings' },
 ];
 
 const CHILD_GRAIN = {
-  year: "quarter",
-  quarter: "month",
-  month: "week",
-  week: "day",
+  year: 'quarter',
+  quarter: 'month',
+  month: 'week',
+  week: 'day',
 };
 
 function getPeriodRange(item, grain) {
   if (item.period_start && item.period_end) {
     return { from: item.period_start, to: item.period_end };
   }
-  const label = String(item.period_label || "");
+  const label = String(item.period_label || '');
 
-  if (grain === "month" && label.includes("-")) {
-    const [y, m] = label.split("-").map(Number);
+  if (grain === 'month' && label.includes('-')) {
+    const [y, m] = label.split('-').map(Number);
     const last = new Date(y, m, 0).getDate();
-    const mm = String(m).padStart(2, "0");
+    const mm = String(m).padStart(2, '0');
     return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${last}` };
   }
 
-  if (grain === "quarter") {
+  if (grain === 'quarter') {
     const match = label.match(/(\d{4})-Q(\d)/);
     if (match) {
       const year = match[1];
@@ -79,7 +104,7 @@ function getPeriodRange(item, grain) {
     }
   }
 
-  if (grain === "year") {
+  if (grain === 'year') {
     const match = label.match(/\b(20\d\d)\b/);
     if (match) {
       const y = match[1];
@@ -87,7 +112,7 @@ function getPeriodRange(item, grain) {
     }
   }
 
-  if (grain === "week") {
+  if (grain === 'week') {
     const match = label.match(/(\d{4})-W(\d{2})/);
     if (match) {
       const y = Number(match[1]);
@@ -114,31 +139,28 @@ export default function OperationsAnalyticsPage() {
   const { metadata, demoMode } = useSystemContext();
 
   // OLAP Filter & Grain State
-  const [preset, setPreset] = useState("full_793");
-  const [grain, setGrain] = useState("month");
-  const [country, setCountry] = useState("ALL");
-  const [dayType, setDayType] = useState("ALL");
-  const [holidayFilter, setHolidayFilter] = useState("ALL");
-  const [chartMeasure, setChartMeasure] = useState("observed_total_guests");
+  const [preset, setPreset] = useState('full_793');
+  const [grain, setGrain] = useState('week');
+  const [country, setCountry] = useState('ALL');
+  const [dayType, setDayType] = useState('ALL');
+  const [holidayFilter, setHolidayFilter] = useState('ALL');
+  const [chartMeasure, setChartMeasure] = useState('observed_total_guests');
   const [drilldownContext, setDrilldownContext] = useState(null);
   const [drilldownRange, setDrilldownRange] = useState(null);
 
   // Pivot Matrix State (DO-A02)
-  const [pivotRowDim, setPivotRowDim] = useState("quarter");
-  const [pivotColDim, setPivotColDim] = useState("country");
-  const [pivotMeasure, setPivotMeasure] = useState("observed_total_guests");
+  const [pivotRowDim, setPivotRowDim] = useState('quarter');
+  const [pivotColDim, setPivotColDim] = useState('country');
+  const [pivotMeasure, setPivotMeasure] = useState('observed_total_guests');
   const [swapAxes, setSwapAxes] = useState(false);
-  const [expandedRows, setExpandedRows] = useState({
-    2016: true,
-    "2016-Q3": true,
-    "2016 - Q3": true,
-  });
+  const [expandedRows, setExpandedRows] = useState({});
 
   // Data State
   const [trendData, setTrendData] = useState(null);
   const [pivotData, setPivotData] = useState(null);
   const [impactData, setImpactData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pivotLoading, setPivotLoading] = useState(true);
 
   const activeRange =
     drilldownRange?.from && drilldownRange?.to
@@ -148,32 +170,17 @@ export default function OperationsAnalyticsPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    Promise.all([
-      fetchOperationsTrend({
-        preset,
-        grain,
-        country,
-        day_type: dayType,
-        is_holiday: holidayFilter,
-        date_from: drilldownRange?.from,
-        date_to: drilldownRange?.to,
-      }),
-      fetchOperationsPivot({
-        row_dim: pivotRowDim,
-        col_dim: pivotColDim,
-        measure: pivotMeasure,
-        start_date: activeRange.start_date,
-        end_date: activeRange.end_date,
-      }),
-      fetchOperationsImpact({
-        start_date: activeRange.start_date,
-        end_date: activeRange.end_date,
-      }),
-    ]).then(([t, p, imp]) => {
+    fetchOperationsTrend({
+      preset,
+      grain,
+      country,
+      day_type: dayType,
+      is_holiday: holidayFilter,
+      date_from: drilldownRange?.from,
+      date_to: drilldownRange?.to,
+    }).then((data) => {
       if (!active) return;
-      setTrendData(t);
-      setPivotData(p);
-      setImpactData(imp);
+      setTrendData(data);
       setLoading(false);
     });
     return () => {
@@ -185,12 +192,50 @@ export default function OperationsAnalyticsPage() {
     country,
     dayType,
     holidayFilter,
+    drilldownRange?.from,
+    drilldownRange?.to,
+    demoMode,
+  ]);
+
+  useEffect(() => {
+    let active = true;
+    setPivotLoading(true);
+    fetchOperationsPivot({
+      row_dim: pivotRowDim,
+      col_dim: pivotColDim,
+      measure: pivotMeasure,
+      start_date: activeRange.start_date,
+      end_date: activeRange.end_date,
+    }).then((data) => {
+      if (!active) return;
+      setPivotData(data);
+      setPivotLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [
     pivotRowDim,
     pivotColDim,
     pivotMeasure,
-    drilldownRange,
+    activeRange.start_date,
+    activeRange.end_date,
     demoMode,
   ]);
+
+  useEffect(() => {
+    let active = true;
+    fetchOperationsImpact({
+      start_date: activeRange.start_date,
+      end_date: activeRange.end_date,
+    }).then((data) => {
+      if (!active) return;
+      setImpactData(data);
+    });
+    return () => {
+      active = false;
+    };
+  }, [activeRange.start_date, activeRange.end_date, demoMode]);
 
   const handleGrainChange = (newGrain) => {
     setGrain(newGrain);
@@ -223,17 +268,17 @@ export default function OperationsAnalyticsPage() {
     setDrilldownContext(
       parent
         ? `${parent.label} → ${parent.parentGrain || drilldownRange.parentGrain}`
-        : null,
+        : null
     );
   };
 
   const handleResetFilters = () => {
-    setPreset("full_793");
-    setGrain("month");
-    setCountry("ALL");
-    setDayType("ALL");
-    setHolidayFilter("ALL");
-    setChartMeasure("observed_total_guests");
+    setPreset('full_793');
+    setGrain('week');
+    setCountry('ALL');
+    setDayType('ALL');
+    setHolidayFilter('ALL');
+    setChartMeasure('observed_total_guests');
     setDrilldownRange(null);
     setDrilldownContext(null);
   };
@@ -246,7 +291,7 @@ export default function OperationsAnalyticsPage() {
   const summary = trendData?.summary || {};
   const coverage = trendData?.coverage || {};
 
-  const guestStatus = coverage.overall_guest_status || "COMPLETE";
+  const guestStatus = coverage.overall_guest_status || 'COMPLETE';
   const partialDaysCount = coverage.guest_partial_days ?? 0;
 
   const totalBookings = summary.total_bookings ?? 0;
@@ -260,7 +305,7 @@ export default function OperationsAnalyticsPage() {
       ? (Number(summary.cancellation_rate) * 100).toFixed(1)
       : totalBookings > 0
         ? ((totalCancellations / totalBookings) * 100).toFixed(1)
-        : "0.0";
+        : '0.0';
 
   const observedGuests = summary.observed_total_guests ?? 0;
   const adults =
@@ -280,49 +325,35 @@ export default function OperationsAnalyticsPage() {
   const avgStayNights =
     summary.avg_stay_nights != null
       ? Number(summary.avg_stay_nights).toFixed(2)
-      : "0.00";
+      : '0.00';
   const avgPartySize =
     summary.avg_party_size != null
       ? Number(summary.avg_party_size).toFixed(2)
-      : "0.00";
+      : '0.00';
   const avgLeadTime =
     summary.avg_lead_time != null
       ? Number(summary.avg_lead_time).toFixed(1)
-      : "0.0";
+      : '0.0';
   const avgAdr =
-    summary.avg_adr != null ? Number(summary.avg_adr).toFixed(2) : "0.00";
+    summary.avg_adr != null ? Number(summary.avg_adr).toFixed(2) : '0.00';
 
   const peakDays = summary.peak_demand_days || [];
   const peakLabel =
     peakDays.length > 0
-      ? peakDays.map((p) => p.full_date).join(", ")
-      : summary.peak_period || "—";
+      ? peakDays.map((p) => p.full_date).join(', ')
+      : summary.peak_period || '—';
   const peakGuestsVal =
     peakDays.length > 0
-      ? `${Number(peakDays[0].observed_total_guests).toLocaleString()} guests`
-      : `${Number(summary.peak_room_nights || 0).toLocaleString()} stay nights`;
-
-  // Roll-up reconciliation verification across series
-  const seriesSumGuests = series.reduce(
-    (s, r) => s + Number(r.observed_total_guests ?? r.active_guests ?? 0),
-    0,
-  );
-  const seriesSumBookings = series.reduce(
-    (s, r) => s + Number(r.non_canceled_bookings ?? r.arrivals ?? 0),
-    0,
-  );
-  const seriesSumStayNights = series.reduce(
-    (s, r) => s + Number(r.observed_total_stay_nights ?? r.room_nights ?? 0),
-    0,
-  );
+      ? `${Number(peakDays[0].observed_total_guests).toLocaleString('en-US')} guests`
+      : `${Number(summary.peak_room_nights || 0).toLocaleString('en-US')} stay nights`;
 
   // Holiday groups (DO-A03)
   const holidayGroups = impactData?.holiday_impact?.groups?.length
     ? impactData.holiday_impact.groups
     : [
         {
-          group_key: "holiday",
-          group_label: "Holiday (National or Lisboa)",
+          group_key: 'holiday',
+          group_label: 'Holiday (National or Lisboa)',
           days_count: impactData?.holiday_impact?.holiday_days_count || 30,
           observed_total_guests: 3560,
           observed_avg_guests_per_day: 118.67,
@@ -330,8 +361,8 @@ export default function OperationsAnalyticsPage() {
           cancellation_rate: 0.3966,
         },
         {
-          group_key: "non_holiday",
-          group_label: "Non-Holiday",
+          group_key: 'non_holiday',
+          group_label: 'Non-Holiday',
           days_count: impactData?.holiday_impact?.non_holiday_days_count || 763,
           observed_total_guests: 84910,
           observed_avg_guests_per_day: 111.28,
@@ -345,7 +376,7 @@ export default function OperationsAnalyticsPage() {
     label: b.band_label,
     value: Number(b.avg_active_guests ?? b.avg_room_nights ?? 0),
     formattedValue: `${Number(b.avg_active_guests ?? b.avg_room_nights ?? 0).toFixed(1)}/d (${b.days_count}d)`,
-    color: idx === 0 ? "#315B52" : idx === 1 ? "#547A9B" : "#92958B",
+    color: idx === 0 ? 'series1' : idx === 1 ? 'series3' : 'series5',
   }));
 
   const precipBuckets = (
@@ -354,15 +385,15 @@ export default function OperationsAnalyticsPage() {
     label: p.bucket_label,
     value: Number(p.observed_avg_guests_per_day || 0),
     formattedValue: `${Number(p.observed_avg_guests_per_day || 0).toFixed(1)}/d (${p.days_count}d)`,
-    color: idx === 0 ? "#315B52" : idx === 1 ? "#C58B55" : "#92958B",
+    color: idx === 0 ? 'series1' : idx === 1 ? 'series2' : 'series5',
   }));
 
   // Country ranking (DO-A05)
   const topCountries = (impactData?.top_countries || []).map((c, idx) => ({
     label: `${c.name} (${c.code})`,
     value: Number(c.guests ?? c.room_nights ?? 0),
-    formattedValue: `${Number(c.guests ?? c.room_nights ?? 0).toLocaleString()} (${c.share_pct}%)`,
-    color: idx === 0 ? "#315B52" : idx < 3 ? "#547A9B" : "#92958B",
+    formattedValue: `${Number(c.guests ?? c.room_nights ?? 0).toLocaleString('en-US')} (${c.share_pct}%)`,
+    color: idx === 0 ? 'series1' : idx < 3 ? 'series3' : 'series5',
   }));
 
   const activeMeasureObj =
@@ -371,30 +402,42 @@ export default function OperationsAnalyticsPage() {
   // Pivot columns & rows (with Swap Axes support for DO-A02)
   const rawPivotCols = pivotData?.columns || [];
   const rawPivotRows = pivotData?.rows || [];
+  const marketOptions = (metadata?.countries || []).map((market) => {
+    const code = market.country_code || market.code;
+    const name = market.country_name || market.name || code;
+    return {
+      value: code,
+      label:
+        code === 'ALL'
+          ? 'All markets'
+          : name.replace(/\s*\([A-Z]{2,3}\)\s*$/, ''),
+    };
+  });
 
   return (
     <div className="space-y-8 lg:space-y-10">
       {/* Page Title & Contextual Navigation */}
-      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-[#E5E5E0] pb-5">
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-divider pb-5">
         <div>
-          <div className="flex items-center gap-2.5 text-[12px] text-[#666666] mb-1">
-            <span>City Hotel — Lisbon, Portugal</span>
-            <span>•</span>
-            <span className="font-mono">
-              {activeRange.start_date} → {activeRange.end_date}
-            </span>
-          </div>
           <h1 className="editorial-page-title">Hotel Operations Analytics</h1>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/reports/operations">Weekly Reports (DO-R01)</Link>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 w-28 border-slate-200 bg-slate-100 text-slate-700 hover:border-slate-300 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            asChild
+          >
+            <Link to="/reports/operations">Reporting</Link>
           </Button>
-          <Button variant="default" size="sm" asChild>
-            <Link to="/dss/demand-forecast">
-              7-Day Demand Forecast (DO-M01)
-            </Link>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 w-28 border-slate-200 bg-slate-100 text-slate-700 hover:border-slate-300 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            asChild
+          >
+            <Link to="/dss/demand-forecast">Forecasting</Link>
           </Button>
         </div>
       </header>
@@ -402,53 +445,59 @@ export default function OperationsAnalyticsPage() {
       {trendData?.api_error && (
         <div
           role="alert"
-          className="rounded-[4px] border border-[#B64C43]/30 bg-[#B64C43]/[0.05] px-4 py-3 text-[12px] text-[#252525]"
+          className="rounded-[4px] border border-status-critical/30 bg-status-critical/[0.05] px-4 py-3 text-[12px] text-ink-primary"
         >
-          <span className="font-semibold text-[#B64C43]">
+          <span className="font-semibold text-status-critical">
             Analytics Data Unavailable:
-          </span>{" "}
+          </span>{' '}
           {trendData.error_message ||
-            "Unable to load OLAP analytics from mart.daily_hotel_ops."}
+            'Unable to load OLAP analytics from mart.daily_hotel_ops.'}
         </div>
       )}
 
       {/* Section 1: Flat OLAP Slice, Dice & Grain Controls (No decorative Card wrapper) */}
       <section
         aria-label="OLAP Controls"
-        className="space-y-4 border-b border-[#E5E5E0] pb-6"
+        className="space-y-6 border-b border-divider pb-6"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[12px] font-medium text-[#666666]">
-              Time grain:
+          <div className="flex items-center gap-4 flex-wrap">
+            <span
+              id="time-grain-label"
+              className="text-[14px] text-ink-secondary"
+            >
+              Time grain
             </span>
-            <div className="inline-flex items-center rounded-[4px] border border-[#E5E5E0] bg-[#FFFFFF] p-0.5">
+            <div
+              className="time-grain-control"
+              role="radiogroup"
+              aria-labelledby="time-grain-label"
+            >
               {GRAIN_OPTIONS.map((g) => (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => handleGrainChange(g.id)}
-                  className={`px-2.5 py-1 rounded-[3px] text-[12px] transition-colors cursor-pointer ${
-                    grain === g.id
-                      ? "bg-[#315B52] text-white font-medium"
-                      : "text-[#666666] hover:text-[#252525]"
-                  }`}
-                >
-                  {g.label}
-                </button>
+                <label key={g.id} className="relative">
+                  <input
+                    type="radio"
+                    name="analytics-time-grain"
+                    value={g.id}
+                    checked={grain === g.id}
+                    onChange={() => handleGrainChange(g.id)}
+                    className="time-grain-input sr-only"
+                  />
+                  <span className="time-grain-option">{g.label}</span>
+                </label>
               ))}
             </div>
 
             {drilldownContext && (
-              <div className="inline-flex items-center gap-2 text-[12px] bg-[#FFFFFF] border border-[#E5E5E0] px-2.5 py-1 rounded-[4px]">
-                <span className="text-[#666666]">Path:</span>
-                <span className="font-mono font-medium text-[#252525]">
+              <div className="inline-flex items-center gap-2 text-[12px] bg-surface-primary border border-divider px-2.5 py-1 rounded-[4px]">
+                <span className="text-ink-secondary">Path:</span>
+                <span className="font-mono font-medium text-ink-primary">
                   {drilldownContext}
                 </span>
                 <button
                   type="button"
                   onClick={handleRollUp}
-                  className="text-[#315B52] font-medium hover:underline ml-1 cursor-pointer"
+                  className="text-brand font-medium hover:underline ml-1 cursor-pointer"
                 >
                   Roll-up ↑
                 </button>
@@ -468,146 +517,84 @@ export default function OperationsAnalyticsPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <div>
-            <label
-              htmlFor="olap-preset"
-              className="block text-[12px] text-[#666666] mb-1"
-            >
-              Date range
-            </label>
-            <select
-              id="olap-preset"
-              value={preset}
-              onChange={(e) => {
-                setPreset(e.target.value);
-                setDrilldownRange(null);
-                setDrilldownContext(null);
-              }}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-[#315B52]"
-            >
-              {ANALYTICS_PRESETS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="olap-country"
-              className="block text-[12px] text-[#666666] mb-1"
-            >
-              Source market (Country)
-            </label>
-            <select
-              id="olap-country"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-[#315B52]"
-            >
-              {(metadata?.countries || []).map((c) => {
-                const code = c.country_code || c.code;
-                const name = c.country_name || c.name;
-                return (
-                  <option key={code} value={code}>
-                    {name} {c.booking_count ? `(${c.booking_count})` : ""}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="olap-daytype"
-              className="block text-[12px] text-[#666666] mb-1"
-            >
-              Day type
-            </label>
-            <select
-              id="olap-daytype"
-              value={dayType}
-              onChange={(e) => setDayType(e.target.value)}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-[#315B52]"
-            >
-              <option value="ALL">All days (Weekday + Weekend)</option>
-              <option value="Weekday">Weekday (Mon–Fri)</option>
-              <option value="Weekend">Weekend (Sat–Sun)</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="olap-holiday"
-              className="block text-[12px] text-[#666666] mb-1"
-            >
-              Holiday scope
-            </label>
-            <select
-              id="olap-holiday"
-              value={holidayFilter}
-              onChange={(e) => setHolidayFilter(e.target.value)}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none focus:border-[#315B52]"
-            >
-              <option value="ALL">All calendar days</option>
-              <option value="HOLIDAY_ONLY">Holidays only (PT / Lisboa)</option>
-              <option value="NON_HOLIDAY">Non-holidays only</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="olap-measure"
-              className="block text-[12px] text-[#666666] mb-1"
-            >
-              Primary chart measure
-            </label>
-            <select
-              id="olap-measure"
-              value={chartMeasure}
-              onChange={(e) => setChartMeasure(e.target.value)}
-              className="w-full h-8 bg-[#FFFFFF] border border-[#315B52] text-[#252525] text-[12px] font-medium rounded-[4px] px-2.5 focus:outline-none"
-            >
-              {MEASURE_OPTIONS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-5">
+          <CompactFilter
+            id="olap-preset"
+            label="Period"
+            value={preset}
+            onChange={(e) => {
+              setPreset(e.target.value);
+              setDrilldownRange(null);
+              setDrilldownContext(null);
+            }}
+            options={ANALYTICS_PRESETS.map((p) => ({
+              value: p.id,
+              label: PERIOD_LABELS[p.id] || p.label,
+            }))}
+          />
+          <CompactFilter
+            id="olap-country"
+            label="Market"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            options={marketOptions}
+          />
+          <CompactFilter
+            id="olap-daytype"
+            label="Day type"
+            value={dayType}
+            onChange={(e) => setDayType(e.target.value)}
+            options={[
+              { value: 'ALL', label: 'All days' },
+              { value: 'Weekday', label: 'Weekdays' },
+              { value: 'Weekend', label: 'Weekends' },
+            ]}
+          />
+          <CompactFilter
+            id="olap-holiday"
+            label="Holidays"
+            value={holidayFilter}
+            onChange={(e) => setHolidayFilter(e.target.value)}
+            options={[
+              { value: 'ALL', label: 'All days' },
+              { value: 'HOLIDAY_ONLY', label: 'Holidays' },
+              { value: 'NON_HOLIDAY', label: 'Non-holidays' },
+            ]}
+          />
+          <CompactFilter
+            id="olap-measure"
+            label="Metric"
+            value={chartMeasure}
+            onChange={(e) => setChartMeasure(e.target.value)}
+            options={MEASURE_OPTIONS.map((m) => ({
+              value: m.id,
+              label: m.label,
+            }))}
+          />
         </div>
       </section>
 
       {/* Section 2: Key Performance Indicators (Typographic Data Groups — DESIGN.md Section 4.3) */}
       <section
         aria-label="Key Performance Indicators"
-        className="space-y-3 border-b border-[#E5E5E0] pb-7"
+        className="space-y-3 border-b border-divider pb-7"
       >
         <div className="flex items-center justify-between">
           <h2 className="editorial-section-title">
             Key Performance Indicators
           </h2>
-          <div className="flex items-center gap-3 text-[12px] text-[#666666]">
+          <div className="flex items-center gap-3 text-[12px] text-ink-secondary">
             <span>
-              Coverage:{" "}
-              <strong className="font-mono text-[#252525]">
+              Coverage:{' '}
+              <strong className="font-mono text-ink-primary">
                 {coverage.calendar_days_count || 732} calendar days
               </strong>
             </span>
-            <span>•</span>
-            <Badge variant={guestStatus === "COMPLETE" ? "emerald" : "amber"}>
-              Guest status: {guestStatus}
-              {partialDaysCount > 0
-                ? ` (${partialDaysCount} partial days)`
-                : ""}
-            </Badge>
           </div>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 pt-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-6 pt-2">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="space-y-2">
                 <Skeleton className="h-3.5 w-24" />
@@ -617,18 +604,18 @@ export default function OperationsAnalyticsPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 pt-1 lg:divide-x lg:divide-[#E5E5E0]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 pt-1 xl:divide-x xl:divide-divider">
             <KpiCard
               label="Observed total guests"
-              value={observedGuests.toLocaleString()}
+              value={observedGuests.toLocaleString('en-US')}
               unit="guests"
               badgeText={guestStatus}
-              statusTone={guestStatus === "COMPLETE" ? "success" : "warning"}
-              subtext={`${adults.toLocaleString()}A · ${children.toLocaleString()}C · ${babies.toLocaleString()}B`}
+              statusTone={guestStatus === 'COMPLETE' ? 'success' : 'warning'}
+              subtext={`${adults.toLocaleString('en-US')}A · ${children.toLocaleString('en-US')}C · ${babies.toLocaleString('en-US')}B`}
             />
 
             <KpiCard
-              className="lg:pl-5"
+              className="xl:pl-5"
               label="Average guests / day"
               value={
                 strictAvgGuests != null
@@ -637,35 +624,35 @@ export default function OperationsAnalyticsPage() {
               }
               unit="guests/d"
               badgeText={
-                strictAvgGuests != null ? "Strict avg" : "Observed avg"
+                strictAvgGuests != null ? 'Strict avg' : 'Observed avg'
               }
-              statusTone={strictAvgGuests != null ? "success" : "warning"}
+              statusTone={strictAvgGuests != null ? 'success' : 'warning'}
               subtext={`Over ${coverage.calendar_days_count || 732} calendar days`}
             />
 
             <KpiCard
-              className="lg:pl-5"
+              className="xl:pl-5"
               label="Non-canceled bookings"
-              value={nonCanceledBookings.toLocaleString()}
+              value={nonCanceledBookings.toLocaleString('en-US')}
               unit="arrivals"
-              badgeText={`Total: ${totalBookings.toLocaleString()}`}
+              badgeText={`Total: ${totalBookings.toLocaleString('en-US')}`}
               statusTone="accent"
               subtext="Valid arrival bookings"
             />
 
             <KpiCard
-              className="lg:pl-5"
+              className="xl:pl-5"
               label="Cancellation rate"
               value={`${cancelRatePct}%`}
-              badgeText={`${totalCancellations.toLocaleString()} canceled`}
-              statusTone={Number(cancelRatePct) > 40 ? "warning" : "neutral"}
+              badgeText={`${totalCancellations.toLocaleString('en-US')} canceled`}
+              statusTone={Number(cancelRatePct) > 40 ? 'warning' : 'neutral'}
               subtext="Of total bookings"
             />
 
             <KpiCard
-              className="lg:pl-5"
+              className="xl:pl-5"
               label="Observed stay nights"
-              value={stayNights.toLocaleString()}
+              value={stayNights.toLocaleString('en-US')}
               unit="nights"
               badgeText={`Avg ${avgStayNights} nights/stay`}
               statusTone="neutral"
@@ -673,7 +660,7 @@ export default function OperationsAnalyticsPage() {
             />
 
             <KpiCard
-              className="lg:pl-5"
+              className="xl:pl-5"
               label="Avg ADR & Peak period"
               value={`€${avgAdr}`}
               badgeText={`Peak: ${peakLabel}`}
@@ -687,142 +674,97 @@ export default function OperationsAnalyticsPage() {
       {/* Section 3: Demand Trend Canvas Visualization (DO-A01) */}
       <section
         aria-label="Demand Trend Analysis"
-        className="space-y-4 border-b border-[#E5E5E0] pb-8"
+        className="analytics-reading-section space-y-4 border-b border-divider pb-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 className="editorial-section-title">
               {activeMeasureObj.label} by {grain}
             </h2>
-            <p className="text-[12px] text-[#666666]">
+            <p className="text-[12px] text-ink-secondary">
               {CHILD_GRAIN[grain]
                 ? `Click any period bar/point on the canvas to drill down (${grain} → ${CHILD_GRAIN[grain]}).`
-                : "Leaf daily grain reached. Click Roll-up above to return to coarser aggregation."}
+                : 'Leaf daily grain reached. Click Roll-up above to return to coarser aggregation.'}
             </p>
           </div>
 
-          <div className="flex items-center gap-4 text-[12px] text-[#666666]">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-ink-secondary">
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 bg-[#315B52] inline-block" />
+              <span className="w-2.5 h-2.5 bg-brand inline-block" />
               <span>Standard period</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 bg-[#C58B55] inline-block" />
+              <span className="w-2.5 h-2.5 bg-series-2 inline-block" />
               <span>Holiday / Peak period</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 border-t border-dashed border-[#92958B] inline-block" />
+              <span className="w-3 border-t border-dashed border-series-5 inline-block" />
               <span>Period mean</span>
             </span>
           </div>
         </div>
 
-        <div className="bg-[#FFFFFF] border border-[#E5E5E0] p-4">
+        <div className="w-full bg-surface-primary border border-divider p-4">
           {loading ? (
-            <Skeleton className="h-[290px] w-full" />
+            <Skeleton className="h-[580px] w-full" />
           ) : (
             <TrendChart
               series={series}
               grain={grain}
               measure={chartMeasure}
               measureLabel={activeMeasureObj.label}
+              height={580}
+              fontSize={13}
               canDrill={Boolean(CHILD_GRAIN[grain])}
               onDrill={handleBarDrilldown}
             />
           )}
         </div>
-
-        {/* Roll-up Reconciliation Bar (Proving Drill-down / Roll-up invariance) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-[12px] text-[#666666]">
-          <div>
-            Roll-up verification across{" "}
-            <strong className="font-mono text-[#252525]">
-              {series.length}
-            </strong>{" "}
-            {grain} periods:
-          </div>
-          <div className="flex flex-wrap items-center gap-4 font-mono text-[12px] text-[#252525]">
-            <span>
-              Σ Guests: <strong>{seriesSumGuests.toLocaleString()}</strong>
-            </span>
-            <span className="text-[#E5E5E0]">|</span>
-            <span>
-              Σ Non-Canceled Bookings:{" "}
-              <strong>{seriesSumBookings.toLocaleString()}</strong>
-            </span>
-            <span className="text-[#E5E5E0]">|</span>
-            <span>
-              Σ Stay Nights:{" "}
-              <strong>{seriesSumStayNights.toLocaleString()}</strong>
-            </span>
-            <span className="text-[#477A61] font-sans font-medium">
-              ✓ Reconciled with Summary KPIs
-            </span>
-          </div>
-        </div>
       </section>
 
       {/* Section 4: Multi-Dimensional OLAP Pivot Matrix (DO-A02) */}
       <section
-        aria-label="OLAP Pivot Matrix"
-        className="space-y-4 border-b border-[#E5E5E0] pb-8"
+        aria-label="Operations breakdown"
+        aria-busy={pivotLoading}
+        className="analytics-reading-section space-y-4 border-b border-divider pb-8"
       >
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div>
-            <h2 id="olap-pivot-heading" className="editorial-section-title">
-              Multi-Dimensional OLAP Pivot Matrix
-            </h2>
-            <p className="text-[12px] text-[#666666]">
-              Cross-tabulate operational measures across time dimensions, source
-              markets, and day types.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              aria-label="Pivot Row Dimension"
+        <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
+          <h2 id="olap-pivot-heading" className="editorial-section-title">
+            Operations breakdown
+          </h2>
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-5">
+            <CompactFilter
+              id="pivot-rows"
+              label="Rows"
               value={pivotRowDim}
               onChange={(e) => setPivotRowDim(e.target.value)}
-              className="h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none"
-            >
-              <option value="quarter">Rows: Quarter</option>
-              <option value="month">Rows: Month</option>
-              <option value="year">Rows: Year</option>
-            </select>
-
-            <select
-              aria-label="Pivot Column Dimension"
+              options={PIVOT_ROW_OPTIONS}
+            />
+            <CompactFilter
+              id="pivot-columns"
+              label="Columns"
               value={pivotColDim}
               onChange={(e) => setPivotColDim(e.target.value)}
-              className="h-8 bg-[#FFFFFF] border border-[#E5E5E0] text-[#252525] text-[12px] rounded-[4px] px-2.5 focus:outline-none"
-            >
-              <option value="country">Columns: Source Country</option>
-              <option value="day_type">Columns: Day Type / Holiday</option>
-            </select>
-
+              options={PIVOT_COLUMN_OPTIONS}
+            />
+            <CompactFilter
+              id="pivot-metric"
+              label="Metric"
+              value={pivotMeasure}
+              onChange={(e) => setPivotMeasure(e.target.value)}
+              options={PIVOT_METRIC_OPTIONS}
+            />
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setSwapAxes((prev) => !prev)}
-              title="Transpose Rows and Columns"
+              aria-label="Swap rows and columns"
+              className="h-9 px-3 text-[13px] font-normal"
             >
               <ArrowLeftRight className="h-3.5 w-3.5" />
-              <span>Swap rows ↔ columns</span>
+              <span>Swap axes</span>
             </Button>
-
-            <select
-              aria-label="Pivot Measure"
-              value={pivotMeasure}
-              onChange={(e) => setPivotMeasure(e.target.value)}
-              className="h-8 bg-[#FFFFFF] border border-[#315B52] text-[#315B52] text-[12px] font-medium rounded-[4px] px-2.5 focus:outline-none"
-            >
-              <option value="observed_total_guests">
-                Measure: Observed guests
-              </option>
-              <option value="room_nights">Measure: Stay nights</option>
-              <option value="arrivals">Measure: Non-canceled bookings</option>
-            </select>
           </div>
         </div>
 
@@ -837,7 +779,7 @@ export default function OperationsAnalyticsPage() {
                       {col}
                     </TableHead>
                   ))}
-                  <TableHead className="text-right text-[#252525]">
+                  <TableHead className="text-right text-ink-primary">
                     Row total
                   </TableHead>
                 </TableRow>
@@ -849,23 +791,17 @@ export default function OperationsAnalyticsPage() {
                   const rowTotal = row.total ?? row.row_total ?? 0;
                   return (
                     <React.Fragment key={row.row_key}>
-                      <TableRow
-                        className={
-                          row.is_highlighted
-                            ? "bg-[#315B52]/[0.04] font-medium"
-                            : ""
-                        }
-                      >
+                      <TableRow>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             {row.children ? (
                               <button
                                 type="button"
                                 onClick={() => togglePivotRow(row.row_key)}
-                                className="w-4 h-4 rounded-[2px] border border-[#E5E5E0] bg-[#FAFAF8] text-[#252525] flex items-center justify-center text-[11px] font-mono cursor-pointer"
+                                className="w-4 h-4 rounded-[2px] border border-divider bg-surface-workspace text-ink-primary flex items-center justify-center text-[11px] font-mono cursor-pointer"
                                 aria-label={`Toggle ${row.row_key} details`}
                               >
-                                {isExpanded ? "−" : "+"}
+                                {isExpanded ? '−' : '+'}
                               </button>
                             ) : (
                               <span className="w-4 h-4 inline-block" />
@@ -876,13 +812,13 @@ export default function OperationsAnalyticsPage() {
                         {rawPivotCols.map((col) => (
                           <TableCell
                             key={col}
-                            className="text-right font-mono tabular-nums text-[#666666]"
+                            className="text-right font-sans tabular-nums text-ink-secondary"
                           >
-                            {Number(rowMap[col] || 0).toLocaleString()}
+                            {Number(rowMap[col] || 0).toLocaleString('en-US')}
                           </TableCell>
                         ))}
-                        <TableCell className="text-right font-mono tabular-nums font-semibold text-[#252525] bg-[#FAFAF8]">
-                          {Number(rowTotal).toLocaleString()}
+                        <TableCell className="text-right font-sans tabular-nums font-semibold text-ink-primary bg-surface-workspace">
+                          {Number(rowTotal).toLocaleString('en-US')}
                         </TableCell>
                       </TableRow>
 
@@ -895,11 +831,11 @@ export default function OperationsAnalyticsPage() {
                           return (
                             <TableRow
                               key={child.row_key}
-                              className="bg-[#FAFAF8]/60 text-[12px]"
+                              className="bg-surface-workspace/60 text-[12px]"
                             >
-                              <TableCell className="pl-9 text-[#666666]">
+                              <TableCell className="pl-9 text-ink-secondary">
                                 <span className="inline-flex items-center gap-1">
-                                  <ChevronRight className="h-3 w-3 text-[#999999]" />
+                                  <ChevronRight className="h-3 w-3 text-ink-muted" />
                                   <span>
                                     {child.row_label || child.row_key}
                                   </span>
@@ -908,13 +844,15 @@ export default function OperationsAnalyticsPage() {
                               {rawPivotCols.map((col) => (
                                 <TableCell
                                   key={col}
-                                  className="text-right font-mono tabular-nums text-[#666666]"
+                                  className="text-right font-sans tabular-nums text-ink-secondary"
                                 >
-                                  {Number(childMap[col] || 0).toLocaleString()}
+                                  {Number(childMap[col] || 0).toLocaleString(
+                                    'en-US'
+                                  )}
                                 </TableCell>
                               ))}
-                              <TableCell className="text-right font-mono tabular-nums font-medium text-[#252525] bg-[#FAFAF8]">
-                                {Number(childTotal).toLocaleString()}
+                              <TableCell className="text-right font-sans tabular-nums font-medium text-ink-primary bg-surface-workspace">
+                                {Number(childTotal).toLocaleString('en-US')}
                               </TableCell>
                             </TableRow>
                           );
@@ -929,15 +867,17 @@ export default function OperationsAnalyticsPage() {
                   {rawPivotCols.map((col) => (
                     <TableCell
                       key={col}
-                      className="text-right font-mono tabular-nums"
+                      className="text-right font-sans tabular-nums"
                     >
                       {Number(
-                        pivotData?.column_totals?.[col] || 0,
-                      ).toLocaleString()}
+                        pivotData?.column_totals?.[col] || 0
+                      ).toLocaleString('en-US')}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-mono tabular-nums font-bold text-[#315B52]">
-                    {Number(pivotData?.grand_total || 0).toLocaleString()}
+                  <TableCell className="text-right font-sans tabular-nums font-bold text-brand">
+                    {Number(pivotData?.grand_total || 0).toLocaleString(
+                      'en-US'
+                    )}
                   </TableCell>
                 </TableRow>
               </TableFooter>
@@ -948,14 +888,14 @@ export default function OperationsAnalyticsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    {pivotColDim === "country" ? "Source country" : "Day type"}
+                    {pivotColDim === 'country' ? 'Source country' : 'Day type'}
                   </TableHead>
                   {rawPivotRows.map((r) => (
                     <TableHead key={r.row_key} className="text-right">
                       {r.row_key}
                     </TableHead>
                   ))}
-                  <TableHead className="text-right text-[#252525]">
+                  <TableHead className="text-right text-ink-primary">
                     Row total
                   </TableHead>
                 </TableRow>
@@ -969,16 +909,16 @@ export default function OperationsAnalyticsPage() {
                       return (
                         <TableCell
                           key={r.row_key}
-                          className="text-right font-mono tabular-nums text-[#666666]"
+                          className="text-right font-sans tabular-nums text-ink-secondary"
                         >
-                          {Number(val).toLocaleString()}
+                          {Number(val).toLocaleString('en-US')}
                         </TableCell>
                       );
                     })}
-                    <TableCell className="text-right font-mono tabular-nums font-semibold text-[#252525] bg-[#FAFAF8]">
+                    <TableCell className="text-right font-sans tabular-nums font-semibold text-ink-primary bg-surface-workspace">
                       {Number(
-                        pivotData?.column_totals?.[col] || 0,
-                      ).toLocaleString()}
+                        pivotData?.column_totals?.[col] || 0
+                      ).toLocaleString('en-US')}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -989,13 +929,17 @@ export default function OperationsAnalyticsPage() {
                   {rawPivotRows.map((r) => (
                     <TableCell
                       key={r.row_key}
-                      className="text-right font-mono tabular-nums"
+                      className="text-right font-sans tabular-nums"
                     >
-                      {Number(r.total ?? r.row_total ?? 0).toLocaleString()}
+                      {Number(r.total ?? r.row_total ?? 0).toLocaleString(
+                        'en-US'
+                      )}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-mono tabular-nums font-bold text-[#315B52]">
-                    {Number(pivotData?.grand_total || 0).toLocaleString()}
+                  <TableCell className="text-right font-sans tabular-nums font-bold text-brand">
+                    {Number(pivotData?.grand_total || 0).toLocaleString(
+                      'en-US'
+                    )}
                   </TableCell>
                 </TableRow>
               </TableFooter>
@@ -1007,66 +951,68 @@ export default function OperationsAnalyticsPage() {
       {/* Section 5: Asymmetric Contextual Analysis — Holiday, Weather & Source Markets (DO-A03, DO-A04, DO-A05) */}
       <section
         aria-label="Holiday, Weather and Source Market Analysis"
-        className="grid grid-cols-1 lg:grid-cols-12 gap-8"
+        className="analytics-reading-section grid grid-cols-1 lg:grid-cols-12 gap-8"
       >
         {/* Left 7 Columns: Holiday Comparison (DO-A03) & Lisbon Weather Correlation (DO-A04) */}
-        <div className="lg:col-span-7 space-y-8">
+        <div className="min-w-0 lg:col-span-7 space-y-8">
           {/* DO-A03: Holiday vs Non-Holiday */}
           <div className="space-y-3">
-            <div className="flex items-baseline justify-between border-b border-[#E5E5E0] pb-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-divider pb-2">
               <h2 className="editorial-section-title">
-                Holiday vs. Non-Holiday Demand
+                Demand by holiday status
               </h2>
-              <span className="text-[12px] font-mono text-[#315B52] font-medium">
+              <span className="text-[12px] font-mono text-brand font-medium">
                 +{impactData?.holiday_impact?.lift_pct ?? 11.5}% daily demand
                 lift
               </span>
             </div>
-            <p className="text-[12px] text-[#666666]">
-              Reports both cumulative observed guests and normalized daily
-              averages to account for calendar day count differences.
-            </p>
 
-            <div className="divide-y divide-[#E5E5E0] border-y border-[#E5E5E0] bg-[#FFFFFF]">
+            <div className="divide-y divide-divider border-y border-divider bg-surface-primary">
               {holidayGroups.map((g) => (
                 <div
                   key={g.group_key}
-                  className="py-3 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                  className="min-h-[104px] py-5 px-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-4"
                 >
                   <div>
-                    <div className="text-[13px] font-semibold text-[#252525]">
-                      {g.group_label}
+                    <div className="text-[13px] font-semibold text-ink-primary">
+                      {g.group_key === 'holiday'
+                        ? 'Holidays'
+                        : g.group_key === 'non_holiday'
+                          ? 'Non-holidays'
+                          : g.group_label}
                     </div>
-                    <div className="text-[12px] text-[#666666] font-mono">
-                      {g.days_count} calendar days • Cancel rate:{" "}
+                    <div className="text-[12px] text-ink-secondary font-mono">
+                      {g.days_count} calendar days • Cancel rate:{' '}
                       {g.cancellation_rate != null
                         ? `${(g.cancellation_rate * 100).toFixed(1)}%`
-                        : "—"}
+                        : '—'}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6 text-right font-mono">
+                  <div className="flex flex-wrap items-center gap-4 text-right font-sans">
                     <div>
-                      <div className="text-[11px] font-sans text-[#666666]">
+                      <div className="text-[11px] font-sans text-ink-secondary">
                         Total guests
                       </div>
-                      <div className="text-[14px] font-semibold text-[#252525] tabular-nums">
-                        {Number(g.observed_total_guests || 0).toLocaleString()}
+                      <div className="text-[14px] font-semibold text-ink-primary tabular-nums">
+                        {Number(g.observed_total_guests || 0).toLocaleString(
+                          'en-US'
+                        )}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[11px] font-sans text-[#666666]">
+                      <div className="text-[11px] font-sans text-ink-secondary">
                         Avg guests / day
                       </div>
-                      <div className="text-[14px] font-semibold text-[#315B52] tabular-nums">
+                      <div className="text-[14px] font-semibold text-brand tabular-nums">
                         {Number(g.observed_avg_guests_per_day || 0).toFixed(1)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[11px] font-sans text-[#666666]">
+                      <div className="text-[11px] font-sans text-ink-secondary">
                         Avg stay
                       </div>
-                      <div className="text-[14px] text-[#252525] tabular-nums">
+                      <div className="text-[14px] text-ink-primary tabular-nums">
                         {Number(g.avg_stay_nights || 3.0).toFixed(2)}n
                       </div>
                     </div>
@@ -1078,103 +1024,95 @@ export default function OperationsAnalyticsPage() {
 
           {/* DO-A04: Weather & Demand Correlation */}
           <div className="space-y-4">
-            <div className="flex items-baseline justify-between border-b border-[#E5E5E0] pb-2">
+            <div className="flex items-baseline justify-between border-b border-divider pb-2">
               <h2 className="editorial-section-title">
                 Lisbon Weather &amp; Demand Correlation
               </h2>
-              <span className="text-[12px] font-mono text-[#666666]">
-                ERA5 Lisbon •{" "}
-                {(
-                  (impactData?.weather_impact?.completeness_ratio ?? 1) * 100
-                ).toFixed(1)}
-                % complete
-              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-              <div className="bg-[#FFFFFF] border border-[#E5E5E0] p-4 space-y-2">
-                <div className="text-[12px] font-semibold text-[#252525]">
+              <div className="bg-surface-primary border border-divider p-4 space-y-2">
+                <div className="text-[12px] font-semibold text-ink-primary">
                   By mean temperature (°C) — Avg daily demand
                 </div>
-                <CanvasHorizontalBarChart
+                <HorizontalBarChart
                   items={tempBands}
                   ariaLabel="Demand by Lisbon temperature band"
                 />
               </div>
 
               {precipBuckets.length > 0 && (
-                <div className="bg-[#FFFFFF] border border-[#E5E5E0] p-4 space-y-2">
-                  <div className="text-[12px] font-semibold text-[#252525]">
+                <div className="bg-surface-primary border border-divider p-4 space-y-2">
+                  <div className="text-[12px] font-semibold text-ink-primary">
                     By precipitation (mm) — Avg guests / day
                   </div>
-                  <CanvasHorizontalBarChart
+                  <HorizontalBarChart
                     items={precipBuckets}
                     ariaLabel="Demand by Lisbon precipitation bucket"
                   />
                 </div>
               )}
             </div>
-
-            <p className="text-[12px] text-[#666666] italic">
-              Note:{" "}
-              {impactData?.weather_impact?.insight ||
-                "Descriptive historical correlation only; does not imply a causal relationship."}
-            </p>
           </div>
         </div>
 
         {/* Right 5 Columns: Source Country Ranking (DO-A05) */}
-        <div className="lg:col-span-5 lg:border-l lg:border-[#E5E5E0] lg:pl-8 space-y-4">
-          <div className="flex items-baseline justify-between border-b border-[#E5E5E0] pb-2">
+        <div className="min-w-0 lg:col-span-5 lg:border-l lg:border-divider lg:pl-8 space-y-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-divider pb-2">
             <h2 className="editorial-section-title">Source Market Breakdown</h2>
-            <span className="text-[12px] text-[#666666]">
+            <span className="text-[12px] text-ink-secondary">
               Includes <code className="font-mono">UNK</code>
             </span>
           </div>
 
-          <div className="bg-[#FFFFFF] border border-[#E5E5E0] p-4 space-y-3">
-            <div className="text-[12px] font-semibold text-[#252525]">
+          <div className="bg-surface-primary border border-divider p-4 space-y-3">
+            <div className="text-[12px] font-semibold text-ink-primary">
               Top origin markets by guest volume &amp; share
             </div>
-            <CanvasHorizontalBarChart
+            <HorizontalBarChart
               items={topCountries}
               ariaLabel="Top guest origin markets horizontal bar chart"
             />
           </div>
 
           {/* Aligned typographic rows for exact country metrics */}
-          <div className="divide-y divide-[#E5E5E0] border-y border-[#E5E5E0] bg-[#FFFFFF] text-[12px]">
-            <div className="py-2 px-3 grid grid-cols-12 font-semibold text-[#666666] bg-[#FAFAF8]">
-              <span className="col-span-4">Market</span>
-              <span className="col-span-3 text-right">Bookings</span>
-              <span className="col-span-3 text-right">Cancel %</span>
-              <span className="col-span-2 text-right">Share</span>
-            </div>
-            {(impactData?.top_countries || []).map((c) => (
-              <div
-                key={c.code}
-                className="py-2 px-3 grid grid-cols-12 items-center"
-              >
-                <span className="col-span-4 font-medium text-[#252525] truncate">
-                  {c.name}{" "}
-                  <span className="font-mono text-[11px] text-[#666666]">
-                    ({c.code})
-                  </span>
-                </span>
-                <span className="col-span-3 text-right font-mono tabular-nums text-[#666666]">
-                  {Number(c.bookings ?? c.room_nights ?? 0).toLocaleString()}
-                </span>
-                <span className="col-span-3 text-right font-mono tabular-nums text-[#666666]">
-                  {c.cancellation_rate != null
-                    ? `${(c.cancellation_rate * 100).toFixed(1)}%`
-                    : c.yoy_growth || "—"}
-                </span>
-                <span className="col-span-2 text-right font-mono tabular-nums font-semibold text-[#315B52]">
-                  {c.share_pct}%
-                </span>
-              </div>
-            ))}
-          </div>
+          <ResponsiveTableContainer ariaLabel="Source market metrics">
+            <Table className="min-w-[400px] text-[12px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[140px]">Market</TableHead>
+                  <TableHead className="text-right">Bookings</TableHead>
+                  <TableHead className="text-right">Cancel %</TableHead>
+                  <TableHead className="text-right">Share</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(impactData?.top_countries || []).map((c) => (
+                  <TableRow key={c.code}>
+                    <TableCell className="font-medium text-ink-primary">
+                      {c.name}{' '}
+                      <span className="block text-[11px] text-ink-secondary">
+                        ({c.code})
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-ink-secondary">
+                      {Number(c.bookings ?? c.room_nights ?? 0).toLocaleString(
+                        'en-US'
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-ink-secondary">
+                      {c.cancellation_rate != null
+                        ? `${(c.cancellation_rate * 100).toFixed(1)}%`
+                        : c.yoy_growth || '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold text-brand">
+                      {c.share_pct}%
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ResponsiveTableContainer>
         </div>
       </section>
     </div>

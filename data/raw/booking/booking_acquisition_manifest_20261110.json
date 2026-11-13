@@ -1,0 +1,35 @@
+{
+  "dataset_slug": "mathsian/hotel-bookings",
+  "metadata_url": "https://www.kaggle.com/api/v1/datasets/view/mathsian/hotel-bookings",
+  "download_url": "https://www.kaggle.com/api/v1/datasets/download/mathsian/hotel-bookings",
+  "retrieved_at_utc": "2026-11-10T12:52:25.033596+00:00",
+  "kaggle_version": 5,
+  "kaggle_last_updated": "2025-03-27T06:52:39.11Z",
+  "license": "Attribution 4.0 International (CC BY 4.0)",
+  "metadata_file": "data\\raw\\booking\\kaggle_metadata_mathsian_hotel-bookings_20261110.json",
+  "metadata_sha256": "dda1a174d26b8708c139f73a29c91df81dfaf15e81bbb8bfa3ed4c61c5bfb038",
+  "archive_file": "data\\raw\\booking\\hotel-bookings_mathsian_20261110.zip",
+  "archive_sha256": "4510b096847f95275d980e012bc12850b78d3137dc16d62f27bc98baeffafe5b",
+  "extracted_files": [
+    {
+      "path": "data\\raw\\booking\\mathsian_hotel-bookings_20261110\\bookings.csv",
+      "bytes": 5724742,
+      "sha256": "445dc16e4b0e45537611cbf47b16f10b2fda85af9e80ae5597a4638710feea94"
+    },
+    {
+      "path": "data\\raw\\booking\\mathsian_hotel-bookings_20261110\\bookings_2023.csv",
+      "bytes": 11245747,
+      "sha256": "ddd4a7dc579143940d655d76dd1a777a12ac431270790a2828fd00a55bdd3dd6"
+    },
+    {
+      "path": "data\\raw\\booking\\mathsian_hotel-bookings_20261110\\bookings_2025.csv",
+      "bytes": 6861287,
+      "sha256": "b72bb1221c2de0a629c4f86bdc0afd682be94b3ac4b1bfd5393da58211a60c80"
+    },
+    {
+      "path": "data\\raw\\booking\\mathsian_hotel-bookings_20261110\\hotel_bookings.csv",
+      "bytes": 16855599,
+      "sha256": "7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06"
+    }
+  ]
+}

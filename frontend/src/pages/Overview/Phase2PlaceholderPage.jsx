@@ -32,42 +32,42 @@ export default function Phase2PlaceholderPage() {
 
   return (
     <div className="max-w-3xl py-8 space-y-8">
-      <header className="border-b border-[#E5E5E0] pb-6 space-y-3">
+      <header className="border-b border-divider pb-6 space-y-3">
         <div className="flex items-center gap-2.5">
           <Badge variant="amber" className="font-mono">
             {info.code} • Phase 2 Roadmap (Out of MVP Scope)
           </Badge>
-          <span className="font-mono text-[11px] text-[#666666]">
+          <span className="font-mono text-[11px] text-ink-secondary">
             route: {location.pathname}
           </span>
         </div>
 
         <h1 className="editorial-page-title">{info.title}</h1>
 
-        <p className="text-[14px] text-[#666666] leading-relaxed">
+        <p className="text-[14px] text-ink-secondary leading-relaxed">
           {info.desc}
         </p>
       </header>
 
-      <section className="border-b border-[#E5E5E0] pb-6 space-y-3 text-[13px] text-[#666666] leading-relaxed">
+      <section className="border-b border-divider pb-6 space-y-3 text-[13px] text-ink-secondary leading-relaxed">
         <h2 className="editorial-section-title">
           MVP Architectural Scope Boundary
         </h2>
         <p>
           In accordance with{' '}
-          <code className="font-mono text-[12px] text-[#252525]">
+          <code className="font-mono text-[12px] text-ink-primary">
             docs/scope_assessment.md
           </code>{' '}
           and{' '}
-          <code className="font-mono text-[12px] text-[#252525]">
+          <code className="font-mono text-[12px] text-ink-primary">
             docs/detailed_plan.md
           </code>
           , the active MVP release focuses exclusively on{' '}
-          <strong className="text-[#252525] font-medium">
+          <strong className="text-ink-primary font-medium">
             Daily Hotel Operations (City Hotel — Lisbon, Portugal)
           </strong>{' '}
           powered by the unified{' '}
-          <code className="font-mono text-[12px] text-[#315B52]">
+          <code className="font-mono text-[12px] text-brand">
             mart.daily_hotel_ops
           </code>{' '}
           table (732 continuous days, 2015-08-31 → 2017-08-31).
@@ -75,7 +75,7 @@ export default function Phase2PlaceholderPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-[12px] font-semibold text-[#666666]">
+        <h2 className="text-[12px] font-semibold text-ink-secondary">
           Active MVP Operational Views
         </h2>
         <div className="flex flex-wrap items-center gap-3">

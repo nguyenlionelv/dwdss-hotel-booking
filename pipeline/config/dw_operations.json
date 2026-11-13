@@ -1,5 +1,5 @@
 {
-  "config_version": "dw-inputs-v2",
+  "config_version": "dw-inputs-v3-20261110",
   "contract_version": "dw-operations-6dim-v1",
   "rule_version": "D01-D08-20261026-v1",
   "source_manifest": "docs/data_dictionary/operations_source_set.json",
@@ -52,6 +52,6 @@
   },
   "coverage": {
     "file": "pipeline/config/coverage_selected_source_set.json",
-    "sha256": "7d2c242539ad27dbf5003ece43a7cb9e0b155a03f955fce4b60e290452ebf109"
+    "sha256": "bf90f206de5d4544ab89fa19ee8208af130af1eb5bf9626d528cf8c7b02146e2"
   }
 }

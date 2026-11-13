@@ -7,7 +7,7 @@ import io
 import re
 import psycopg
 
-from backend.app.repositories.operations_repository import DAY_NAMES_VI, OperationsRepository
+from backend.app.repositories.operations_repository import DAY_NAMES_EN, OperationsRepository
 from backend.app.schemas.reports import (
     CapacityGroupBreakdown,
     CapacityShiftSummary,
@@ -180,7 +180,7 @@ class ReportingService:
             fdate_iso = fdate.isoformat()
             fdate_disp = fdate.strftime("%d/%m/%Y")
             dow_num = int(r["day_of_week"])
-            dow_name = DAY_NAMES_VI.get(dow_num, f"Thứ {dow_num}")
+            dow_name = DAY_NAMES_EN.get(dow_num, "Unknown")
             is_wknd = bool(r["is_weekend"])
             day_type_str = "Weekend" if is_wknd else "Weekday"
             is_hol = bool(r["is_holiday"])
@@ -364,9 +364,9 @@ class ReportingService:
             weekend_surge_pct=surge_str,
             weekday_avg_guests=wkday_avg_g,
             weekend_avg_guests=wkend_avg_g,
-            front_desk_directive=f"Tăng cường quầy Check-in nhanh (Express Desk) vào ngày cao điểm ({peak_date_str}).",
-            housekeeping_directive=f"Bố trí ca buồng phòng theo tải {tot_room_nights} đêm phòng/tuần để đảm bảo bàn giao trước 14:00.",
-            fb_directive=f"Chuẩn bị định lượng buffet sáng tối đa cho {peak_guests_val} khách vào ngày đỉnh tuần.",
+            front_desk_directive=f"Increase Express Desk coverage on the peak day ({peak_date_str}).",
+            housekeeping_directive=f"Schedule housekeeping shifts for {tot_room_nights} stay nights in the period, with handover before 14:00.",
+            fb_directive=f"Prepare breakfast buffet provisions for up to {peak_guests_val} guests on the peak day.",
         )
 
         return WeeklyDemandResponse(

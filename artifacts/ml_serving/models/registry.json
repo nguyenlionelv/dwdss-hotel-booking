@@ -1,0 +1,28 @@
+{
+  "models": [
+    {
+      "model_id": "imputed_canonical_history",
+      "kind": "daily",
+      "folder": "imputed_canonical_history",
+      "metadata_sha256": "e23d3e228c98f0c104ee31029478b9dced2a847a9aa6b4b61225932f17a71ec1"
+    },
+    {
+      "model_id": "imputed_imputed_history",
+      "kind": "daily",
+      "folder": "imputed_imputed_history",
+      "metadata_sha256": "c67eca0ad469dbeaa365b9fc597743ffa070158a3bb2fa9ff1098690127ddb1c"
+    },
+    {
+      "model_id": "causal_causal_history",
+      "kind": "daily",
+      "folder": "causal_causal_history",
+      "metadata_sha256": "2cc0b707cd6ac187eef76d7ccf821a0d8473235fb93efab1ddf4a5f3acefc026"
+    },
+    {
+      "model_id": "monthly_last_month_rate",
+      "kind": "monthly",
+      "folder": "monthly_last_month_rate",
+      "metadata_sha256": "f3481b40fdcd0f2a70b6af1c192f3178ab49ed58e3a7ee0fbfed380b6f483142"
+    }
+  ]
+}

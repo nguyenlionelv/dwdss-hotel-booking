@@ -1,0 +1,69 @@
+{
+  "passed": true,
+  "checks": {
+    "exact_dates": true,
+    "aligned_arrays": true,
+    "finite_temperature": true,
+    "finite_nonnegative_precipitation": true,
+    "grid": true,
+    "timezone": true,
+    "units": true,
+    "request_coordinate": true,
+    "model": true,
+    "metadata_checksum": true,
+    "booking_checksum": true,
+    "booking_rows": true,
+    "booking_columns": true,
+    "booking_scope": true,
+    "holiday_checksum": true,
+    "holiday_scope": true
+  },
+  "weather_sha256": "fccc24f4ba84849005154e31aee6ff7b307ce0d2a8f6556ae44c1e1f28f3339a",
+  "previous_weather_sha256": "741efa5393acb0c0df3c434051bdeb4b11fe2c9fdaebe6ea19da1954ca5be2c3",
+  "weather_business_value_differences_vs_preserved_snapshot": {
+    "temperature_2m_mean": 334,
+    "precipitation_sum": 0
+  },
+  "weather_top_level_fields": {
+    "latitude": 38.75,
+    "longitude": -9.25,
+    "generationtime_ms": 3.160238265991211,
+    "utc_offset_seconds": 0,
+    "timezone": "Europe/Lisbon",
+    "timezone_abbreviation": "GMT",
+    "elevation": 54.0,
+    "daily_units": {
+      "time": "iso8601",
+      "temperature_2m_mean": "°C",
+      "precipitation_sum": "mm"
+    }
+  },
+  "comparison_limit": "Previous raw response unavailable. Full daily values compared against the preserved published Staging snapshot; old response bytes cannot be reconstructed or full top-level equivalence asserted. API generationtime_ms is volatile.",
+  "booking_rows": 119390,
+  "holiday_rows": 38,
+  "weather_rows": 793,
+  "preserved_snapshot_weather_sha256": "3ffb2abf731ae6df9c562c063ff070b08ae26615331a985e998f1306f57be781",
+  "temperature_delta_celsius_counts": {
+    "-0.2": 20,
+    "-0.1": 141,
+    "0.0": 459,
+    "0.1": 162,
+    "0.2": 10,
+    "0.3": 1
+  },
+  "checksum_investigation": "Booking archive and CSV and Holiday CSV reproduce exactly. Weather response from identical API parameters has changed bytes and temperatures versus the preserved 2026-10-17 snapshot; precipitation unchanged. The selected 2026-10-27 raw response is unavailable for full comparison. generationtime_ms is volatile but does not explain the measured temperature changes. Upstream cause cannot be established; selected as a new validated acquisition, without asserting value equivalence.",
+  "acquisition_metadata": {
+    "booking": {
+      "file": "data/raw/booking/booking_acquisition_manifest_20261110.json",
+      "sha256": "445f3f77777860f65b7331266f5ae74499cf74dcab84d34909bbe955b5ec4774"
+    },
+    "holiday": {
+      "file": "data/raw/holiday/pt_lisboa_holidays_2015_2017_20261110.metadata.json",
+      "sha256": "30f5e2a3792702d8a0eeba55db21e2409071df5c42094ef0472834e36692af84"
+    },
+    "weather": {
+      "file": "data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261110.metadata.json",
+      "sha256": "2d74fe475470a94003b113856338dfb28b5f8fbfd20c292b80b7796e6ef3b8a2"
+    }
+  }
+}

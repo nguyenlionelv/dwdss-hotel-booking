@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "python_tests": 22,
+  "failures": 0,
+  "errors": 0,
+  "frontend_client": {
+    "passed": true,
+    "live_http": true,
+    "client": "frontend/src/services/dssApi.js",
+    "exit_code": 0
+  },
+  "frontend_build": "passed",
+  "data_version": "9963548d-c0fc-44b4-92dc-55f139447ea7"
+}
