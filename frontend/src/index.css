@@ -202,11 +202,100 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Editorial Section Headings & Typography Helpers (DESIGN.md Section 3.2) */
+.comparison-chart {
+  container-type: inline-size;
+}
+
+.comparison-chart-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.comparison-chart-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.comparison-chart-track {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.comparison-chart-value {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+@container (min-width: 560px) {
+  .comparison-chart-row {
+    grid-template-columns: minmax(0, 1.4fr) minmax(80px, 2fr) auto;
+    min-height: 36px;
+  }
+
+  .comparison-chart-track {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .comparison-chart-value {
+    grid-column: 3;
+  }
+}
+
+/* Compact, flat Time grain selector with neutral selection. */
+.time-grain-control {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid rgb(var(--divider-rgb));
+  border-radius: 4px;
+  background: rgb(var(--surface-primary-rgb));
+}
+
+.time-grain-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 3px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  color: rgb(var(--ink-secondary-rgb));
+  cursor: pointer;
+  transition: color 150ms, background-color 150ms;
+}
+
+.time-grain-option:hover {
+  color: rgb(var(--ink-primary-rgb));
+}
+
+.time-grain-input:checked + .time-grain-option {
+  color: rgb(var(--ink-primary-rgb));
+  background: rgb(var(--surface-subtle-rgb));
+  font-weight: 500;
+}
+
+.time-grain-input:focus-visible + .time-grain-option {
+  outline: 2px solid rgb(var(--ink-primary-rgb));
+  outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+  .time-grain-option {
+    padding-inline: 7px;
+  }
+}
+
+/* Dashboard typography: bold Inter headlines/metrics and quieter supporting text. */
 .editorial-page-title {
   font-size: clamp(1.75rem, 2vw, 2rem);
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   line-height: 1.2;
   color: rgb(var(--ink-primary-rgb));
 }
@@ -219,13 +308,134 @@
   color: rgb(var(--ink-primary-rgb));
 }
 
+.kpi-data-group {
+  container-type: inline-size;
+}
+
 .editorial-metric-value {
-  font-size: clamp(1.75rem, 2.2vw, 2.125rem);
-  font-weight: 600;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 2rem;
+  font-size: clamp(1.25rem, 25cqi, 2rem);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   line-height: 1.15;
   color: rgb(var(--ink-primary-rgb));
+}
+
+.editorial-metric-date {
+  font-size: 1.5rem;
+  font-size: clamp(0.875rem, 17cqi, 1.5rem);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Readable detail sections on Analytics; other dashboards keep their sizing. */
+.analytics-reading-section .editorial-section-title {
+  font-size: 20px;
+}
+
+.analytics-reading-section [class~="text-[11px]"] {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.analytics-reading-section [class~="text-[12px]"],
+.analytics-reading-section [class~="text-[13px]"] {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.analytics-reading-section [class~="text-[14px]"] {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.analytics-reading-section table {
+  font-size: 14px;
+}
+
+.analytics-reading-section th {
+  font-size: 13px;
+}
+
+/* Larger supporting text in Forecasting, preserving its header and KPI scale. */
+.forecast-reading-section .editorial-section-title {
+  font-size: 20px;
+}
+
+.forecast-reading-section [class~="text-[15px]"] {
+  font-size: 16px;
+}
+
+.forecast-reading-section [class~="text-[10px]"] {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.forecast-reading-section [class~="text-[11px]"] {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.forecast-reading-section [class~="text-[12px]"],
+.forecast-reading-section [class~="text-[13px]"] {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.forecast-reading-section [class~="text-[14px]"] {
+  font-size: 15px;
+}
+
+.forecast-reading-section table {
+  font-size: 14px;
+}
+
+.forecast-reading-section thead th {
+  font-size: 13px;
+}
+
+/* Reporting keeps document metadata in the printed report only. */
+.report-page .report-peak-date .editorial-metric-date {
+  font-size: clamp(1.125rem, 19cqi, 2rem);
+}
+
+@media (min-width: 1280px) {
+  .report-page .report-period-kpis {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.25fr);
+  }
+}
+
+.report-page .report-print-only {
+  display: none;
+}
+
+.report-reading-section .editorial-section-title {
+  font-size: 20px;
+}
+
+.report-reading-section [class~="text-[15px]"] {
+  font-size: 16px;
+}
+
+.report-reading-section [class~="text-[11px]"] {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.report-reading-section [class~="text-[12px]"],
+.report-reading-section [class~="text-[13px]"] {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.report-reading-section table {
+  font-size: 14px;
+}
+
+.report-reading-section th {
+  font-size: 13px;
 }
 
 /* Accessible Scrollable Data Table Container (modern-web-guidance: responsive-table) */
@@ -240,6 +450,45 @@
 .table-scroll-region:focus-visible {
   outline: 2px solid rgb(var(--brand-rgb));
   outline-offset: -2px;
+}
+
+@media print {
+  @page operations-report { size: A4 landscape; margin: 12mm; }
+  .report-page { page: operations-report; }
+  .report-page .report-print-only { display: block; }
+  :root:has(.report-page) {
+    color-scheme: light;
+    --surface-workspace-rgb: 255 255 255;
+    --surface-primary-rgb: 255 255 255;
+    --surface-subtle-rgb: 245 245 245;
+    --ink-primary-rgb: 20 20 20;
+    --ink-secondary-rgb: 70 70 70;
+    --ink-muted-rgb: 90 90 90;
+    --divider-rgb: 200 200 200;
+    --color-surface-primary: #fff;
+    --color-ink-primary: #141414;
+    --color-ink-secondary: #464646;
+    --color-divider: #ccc;
+  }
+  body:has(.report-page) {
+    background: white !important;
+    color: #141414 !important;
+  }
+  body:has(.report-page) #desktop-sidebar,
+  body:has(.report-page) #root header:not(.dashboard-page-header),
+  .report-page .dashboard-screen-only { display: none !important; }
+  body:has(.report-page) #root > div > div { padding-left: 0 !important; }
+  body:has(.report-page) main { max-width: none !important; padding: 0 !important; }
+  .report-page :is(.report-context, .kpi-data-group, canvas) { break-inside: avoid; }
+  .report-page .report-context details[open] { font-size: 9px; }
+  .report-page .table-scroll-region { overflow: visible !important; max-width: none; container-type: normal; }
+  .report-page .table-scroll-region table { min-width: 0 !important; width: 100%; font-size: 9px; }
+  .report-page .table-scroll-region :is(th, td) { white-space: normal !important; min-width: 0 !important; padding: 5px; font-size: 9px; }
+  .report-page .table-scroll-region thead { display: table-header-group; position: static; }
+  .report-page .table-scroll-region tfoot { display: table-row-group; }
+  .report-page .table-scroll-region tr { break-inside: avoid; }
+  .report-page :is(h1, h2, h3) { break-after: avoid; }
+  .report-page a { color: inherit; text-decoration: none; }
 }
 
 .table-scroll-region thead {

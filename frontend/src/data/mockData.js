@@ -497,7 +497,8 @@ function enrichReportDailyRow(r) {
   return {
     ...r,
     full_date: r.full_date || r.stay_date,
-    is_weekend: r.day_type === "Weekend",
+    is_weekend: [0, 6].includes(new Date(`${r.full_date || r.stay_date}T00:00:00Z`).getUTCDay()),
+    day_type: [0, 6].includes(new Date(`${r.full_date || r.stay_date}T00:00:00Z`).getUTCDay()) ? "Weekend" : "Weekday",
     is_holiday: Boolean(r.is_pt_holiday),
     holiday_names: r.holiday_local_name ? [r.holiday_local_name] : [],
     temperature_mean: r.weather_temp_mean,
@@ -1323,10 +1324,10 @@ MOCK_REPORTS_BY_WEEK["LATEST_4W"] = {
 };
 
 export const DSS_ACTION_RULES = {
-  HIGH: "Rà soát khả năng tiếp nhận, chuẩn bị nhân lực và workload housekeeping/F&B",
-  NORMAL: "Duy trì kế hoạch vận hành, theo dõi thay đổi",
-  LOW: "Rà soát phân bổ ca và lượng chuẩn bị theo nhu cầu thấp",
-  INSUFFICIENT_HISTORY: "Chưa đủ dữ liệu lịch sử (56 ngày COMPLETE) để phân mức cảnh báo",
+  HIGH: "Review arrival capacity and prepare staffing and housekeeping/F&B workloads",
+  NORMAL: "Maintain the operating plan and monitor changes",
+  LOW: "Review shift allocation and provisions for lower demand",
+  INSUFFICIENT_HISTORY: "Insufficient history to assign alert levels; 56 COMPLETE days are required",
 };
 
 export const MOCK_DSS_FORECAST = {

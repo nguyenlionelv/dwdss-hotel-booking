@@ -22,10 +22,11 @@ export default function ModelDecisionEvaluation({ modelComparison = [], allocati
   const canShowMrr = evaluation?.availability === 'available' && results?.status === 'available' && policyRows.length > 0;
 
   return (
-    <details data-testid="model-decision-evaluation" className="group border border-divider rounded-[4px] bg-surface-primary">
+    <details data-testid="model-decision-evaluation" className="forecast-reading-section group border border-divider rounded-[4px] bg-surface-primary">
       <summary className="cursor-pointer p-5 sm:p-6 flex flex-wrap items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
-        <div>
-          <h2 className="editorial-section-title">Model &amp; Decision Evaluation</h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="editorial-section-title">Model and policy evaluation</h2>
+          <p className="break-words text-[12px] text-ink-primary mt-1">{modelComparison.length} benchmark models · {selectedModel?.metric_protocol ?? 'Protocol unavailable'}</p>
           <p className="text-[12px] text-ink-secondary mt-1">Forecast error and allocation mismatch use different metrics and populations.</p>
         </div>
         <span className="text-[12px] text-brand font-medium group-open:rotate-90 transition-transform" aria-hidden="true">▸</span>
@@ -33,15 +34,16 @@ export default function ModelDecisionEvaluation({ modelComparison = [], allocati
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 p-5 sm:p-6 pt-0 sm:pt-0">
         <section aria-labelledby="ml-evaluation-heading" className="min-w-0 border-t border-divider pt-5">
-          <h3 id="ml-evaluation-heading" className="text-[15px] font-semibold text-ink-primary">ML Forecast Evaluation</h3>
+          <h3 id="ml-evaluation-heading" className="text-[15px] font-semibold text-ink-primary">Forecast accuracy</h3>
+          <p className="text-[12px] text-ink-secondary mt-2">The selected history protocol determines this model list. Canonical and imputed history have separate benchmarks from causal history.</p>
           <p className="text-[11px] text-ink-secondary mt-1">Validation MAE/RMSE · {selectedModel?.population ?? 'population unavailable'} · {selectedModel?.metric_protocol ?? 'protocol unavailable'}</p>
 
           <div className="grid grid-cols-2 gap-4 mt-4">
-            <div className="bg-surface-workspace p-3"><span className="block text-[11px] text-ink-secondary">Selected model MAE</span><strong className="font-mono text-[19px] tabular-nums text-ink-primary">{formatMetric(selectedModel?.overall_mae)}</strong><span className="block text-[11px] text-ink-secondary">guests/day</span></div>
-            <div className="bg-surface-workspace p-3"><span className="block text-[11px] text-ink-secondary">Selected model RMSE</span><strong className="font-mono text-[19px] tabular-nums text-ink-primary">{formatMetric(selectedModel?.overall_rmse)}</strong><span className="block text-[11px] text-ink-secondary">guests/day</span></div>
+            <div className="bg-surface-workspace p-3"><span className="block text-[11px] text-ink-secondary">Selected model MAE</span><strong className="font-sans text-[19px] tabular-nums text-ink-primary">{formatMetric(selectedModel?.overall_mae)}</strong><span className="block text-[11px] text-ink-secondary">guests/day</span></div>
+            <div className="bg-surface-workspace p-3"><span className="block text-[11px] text-ink-secondary">Selected model RMSE</span><strong className="font-sans text-[19px] tabular-nums text-ink-primary">{formatMetric(selectedModel?.overall_rmse)}</strong><span className="block text-[11px] text-ink-secondary">guests/day</span></div>
           </div>
 
-          <div className="overflow-x-auto mt-4">
+          <div role="region" aria-label="Forecast model comparison" tabIndex={0} className="overflow-x-auto mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <table className="w-full min-w-[660px] text-[12px] tabular-nums text-ink-primary">
               <caption className="text-left font-medium text-ink-primary pb-2">Model comparison and horizon MAE (guests/day)</caption>
               <thead><tr className="border-b border-divider text-left">
@@ -62,15 +64,15 @@ export default function ModelDecisionEvaluation({ modelComparison = [], allocati
         </section>
 
         <section aria-labelledby="dss-evaluation-heading" className="min-w-0 border-t border-divider pt-5">
-          <h3 id="dss-evaluation-heading" className="text-[15px] font-semibold text-ink-primary">DSS Allocation Evaluation</h3>
+          <h3 id="dss-evaluation-heading" className="text-[15px] font-semibold text-ink-primary">Allocation quality</h3>
           <p className="text-[11px] text-ink-secondary mt-1">Development validation · causal proxy forecasts, not saved-model validation. Lower MRR is better; overlapping origins are dependent.</p>
           {canShowMrr ? <>
             <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="bg-surface-workspace p-3"><span className="block text-[11px] text-ink-secondary">Selected mean MRR</span><strong className="font-mono text-[19px] tabular-nums text-ink-primary">{formatMrr(selectedMetrics?.mean_mrr)}</strong></div>
-              <div className="bg-surface-workspace p-3"><span className="block text-[11px] text-ink-secondary">Selected median MRR</span><strong className="font-mono text-[19px] tabular-nums text-ink-primary">{formatMrr(selectedMetrics?.median_mrr)}</strong></div>
+              <div className="bg-surface-workspace p-3"><span className="block text-[11px] text-ink-secondary">Selected mean MRR</span><strong className="font-sans text-[19px] tabular-nums text-ink-primary">{formatMrr(selectedMetrics?.mean_mrr)}</strong></div>
+              <div className="bg-surface-workspace p-3"><span className="block text-[11px] text-ink-secondary">Selected median MRR</span><strong className="font-sans text-[19px] tabular-nums text-ink-primary">{formatMrr(selectedMetrics?.median_mrr)}</strong></div>
             </div>
             <p className="text-[11px] text-ink-secondary mt-3">{results.eligible_origins} shared eligible seven-day origins · MRR is allocation mismatch, not cost.</p>
-            <div className="overflow-x-auto mt-4">
+            <div role="region" aria-label="Allocation policy comparison" tabIndex={0} className="overflow-x-auto mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <table className="w-full min-w-[380px] text-[12px] tabular-nums text-ink-primary">
                 <caption className="text-left font-medium text-ink-primary pb-2">Policy comparison</caption>
                 <thead><tr className="border-b border-divider text-left"><th className="py-2 pr-3">Policy</th><th className="py-2 text-right">Mean MRR</th><th className="py-2 text-right">Median MRR</th></tr></thead>
@@ -88,7 +90,7 @@ export default function ModelDecisionEvaluation({ modelComparison = [], allocati
                 const winRate = selectedKey === baseline ? null : selectedMetrics?.[`win_rate_vs_${baseline}`];
                 return <div key={baseline} className="border border-divider p-3">
                   <span className="block text-ink-secondary">vs {POLICY_NAMES[baseline]}</span>
-                  <strong className="block mt-1 font-mono tabular-nums text-ink-primary">{formatRelativeImprovement(difference, policies[baseline]?.mean_mrr)} relative MRR improvement</strong>
+                  <strong className="block mt-1 font-sans tabular-nums text-ink-primary">{formatRelativeImprovement(difference, policies[baseline]?.mean_mrr)} relative MRR improvement</strong>
                   {finiteNumber(winRate) !== null && <span className="block mt-1 text-ink-secondary">Win rate: {formatRate(winRate)}</span>}
                 </div>;
               })}

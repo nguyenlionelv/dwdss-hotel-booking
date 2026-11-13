@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -6,6 +6,7 @@ import { useSystemContext } from '../../hooks/useSystemContext';
 import { Button } from '@/components/ui/button';
 
 export default function AppLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { health, metadata, loading, demoMode, toggleDemoMode, refreshSystemStatus } =
     useSystemContext();
 
@@ -23,9 +24,9 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-surface-workspace text-ink-primary flex flex-col transition-colors">
-      <Sidebar />
-      <div className="lg:pl-[240px] flex-1 flex flex-col min-w-0">
-        <Header />
+      <Sidebar open={sidebarOpen} />
+      <div className={`flex-1 flex flex-col min-w-0 ${sidebarOpen ? 'lg:pl-[240px]' : ''}`}>
+        <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen((open) => !open)} />
 
         {isOffline && !isDemo && (
           <div

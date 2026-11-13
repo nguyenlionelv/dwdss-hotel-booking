@@ -72,7 +72,7 @@ export async function fetchWeeklyOperationsReport(params = 'LATEST_4W') {
         (r.full_date || r.stay_date) >= apiQueryParams.start_date &&
         (r.full_date || r.stay_date) <= apiQueryParams.end_date
     );
-    const rows = filtered.length > 0 ? filtered : baseReport.daily_rows;
+    const rows = filtered;
     return {
       ...baseReport,
       period: {
@@ -198,7 +198,7 @@ function formatCsvCell(cell) {
   return `"${String(cell).replace(/"/g, '""')}"`;
 }
 
-export function exportWeeklyReportToCsv(reportData, displayedRows = null) {
+export function exportWeeklyReportToCsv(reportData, displayedRows = null, dayType = 'ALL') {
   const rowsToExport = displayedRows || reportData?.daily_rows || [];
   if (!rowsToExport.length) return;
 
@@ -294,7 +294,7 @@ export function exportWeeklyReportToCsv(reportData, displayedRows = null) {
     const start = reportData?.period?.start_date || reportData?.period_summary?.start_date || '2017-08-07';
     const end = reportData?.period?.end_date || reportData?.period_summary?.end_date || '2017-08-13';
     link.href = url;
-    link.setAttribute('download', `city_hotel_DO-R01_${start}_${end}.csv`);
+    link.setAttribute('download', `city_hotel_demand_${start}_${end}_${dayType}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

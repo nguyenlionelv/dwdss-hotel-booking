@@ -1,984 +1,213 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  fetchWeeklyOperationsReport,
-  fetchCapacitySummaryReport,
-  exportWeeklyReportToCsv,
-} from "../../../services/reportingApi";
-import { useSystemContext } from "../../../hooks/useSystemContext";
-import KpiCard from "../../../components/kpi/KpiCard";
-import {
-  CanvasWeeklyWorkloadChart,
-  CanvasHorizontalBarChart,
-} from "../../../components/charts/TrendChart";
-import ResponsiveTableContainer from "../../../components/tables/ResponsiveTableContainer";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableFooter,
-} from "@/components/ui/table";
-import { Printer, Download, ArrowRight } from "lucide-react";
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Printer, Download, RotateCcw } from 'lucide-react';
+import { fetchWeeklyOperationsReport, exportWeeklyReportToCsv } from '../../../services/reportingApi';
+import { fetchDemandForecast } from '../../../services/dssApi';
+import { useSystemContext } from '../../../hooks/useSystemContext';
+import DashboardHeader from '../../../components/layout/DashboardHeader';
+import DataContext from '../../../components/layout/DataContext';
+import CompactFilter from '../../../components/filters/CompactFilter';
+import SegmentedControl from '../../../components/filters/SegmentedControl';
+import KpiCard from '../../../components/kpi/KpiCard';
+import ReportKpi from './ReportKpi';
+import { CanvasWeeklyWorkloadChart, HorizontalBarChart } from '../../../components/charts/TrendChart';
+import ResponsiveTableContainer from '../../../components/tables/ResponsiveTableContainer';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableFooter } from '@/components/ui/table';
+import { formatDate, formatWeekday, formatGuests, formatReference, formatMetric, formatRate, formatSignedPercent } from '../../../lib/dssFormat.mjs';
+import { filterReportRows, summarizeReportRows, arrivalGroups, validateReportRange, nextSevenDays,
+  reportDate, isWeekend, isHoliday, guests, arrivals, stayNights, capacityCsv, downloadCsv } from '../../../lib/reporting.mjs';
 
-const AVAILABLE_WEEKS = [
-  {
-    id: "LATEST_4W",
-    label: "Latest 4 Weeks Combined (2017-08-04 → 2017-08-31 • 28 days)",
-    start_date: "2017-08-04",
-    end_date: "2017-08-31",
-  },
-  {
-    id: "2017-W35",
-    label: "2017 — Week 35 (2017-08-28 → 2017-08-31 • 4 days to cutoff)",
-    start_date: "2017-08-28",
-    end_date: "2017-08-31",
-  },
-  {
-    id: "2017-W34",
-    label: "2017 — Week 34 (2017-08-21 → 2017-08-27)",
-    start_date: "2017-08-21",
-    end_date: "2017-08-27",
-  },
-  {
-    id: "2017-W33",
-    label: "2017 — Week 33 (2017-08-14 → 2017-08-20) [National Holiday]",
-    start_date: "2017-08-14",
-    end_date: "2017-08-20",
-  },
-  {
-    id: "2017-W32",
-    label: "2017 — Week 32 (2017-08-07 → 2017-08-13)",
-    start_date: "2017-08-07",
-    end_date: "2017-08-13",
-  },
+const WEEKS = [
+  { value: 'LATEST_4W', label: 'Latest 4 weeks', start: '2017-08-04', end: '2017-08-31' },
+  { value: '2017-W35', label: 'Week 35 · 2017', start: '2017-08-28', end: '2017-08-31' },
+  { value: '2017-W34', label: 'Week 34 · 2017', start: '2017-08-21', end: '2017-08-27' },
+  { value: '2017-W33', label: 'Week 33 · 2017', start: '2017-08-14', end: '2017-08-20' },
+  { value: '2017-W32', label: 'Week 32 · 2017', start: '2017-08-07', end: '2017-08-13' },
 ];
+const DAY_TYPES = [{ value: 'ALL', label: 'All days' }, { value: 'Weekday', label: 'Weekdays' }, { value: 'Weekend', label: 'Weekends' }];
+const dateInputClass = 'h-9 w-full min-w-0 rounded-[4px] border border-divider bg-surface-primary px-3 text-[13px] text-ink-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const euro = value => value == null ? '—' : `€${formatMetric(value)}`;
+const demandLabel = level => ({ HIGH: 'High', NORMAL: 'Normal', LOW: 'Low', INSUFFICIENT_HISTORY: 'Insufficient history' }[level] || 'Unavailable');
 
 export default function OperationsReportsPage() {
   const { demoMode } = useSystemContext();
-  const [reportMode, setReportMode] = useState("ALL"); // 'ALL' | 'DO-R01' | 'DO-R02'
-  const [periodMode, setPeriodMode] = useState("ISO_WEEK"); // 'ISO_WEEK' | 'CUSTOM_RANGE'
-  const [selectedWeek, setSelectedWeek] = useState("LATEST_4W");
-  const [customStartDate, setCustomStartDate] = useState("2017-08-04");
-  const [customEndDate, setCustomEndDate] = useState("2017-08-31");
-  const [dayTypeFilter, setDayTypeFilter] = useState("ALL");
+  const [reportMode, setReportMode] = useState('ALL');
+  const [periodMode, setPeriodMode] = useState('ISO_WEEK');
+  const [selectedWeek, setSelectedWeek] = useState('LATEST_4W');
+  const [customStart, setCustomStart] = useState('2017-08-04');
+  const [customEnd, setCustomEnd] = useState('2017-08-31');
+  const [dayType, setDayType] = useState('ALL');
+  const [metric, setMetric] = useState('guests');
+  const [showDetails, setShowDetails] = useState(false);
   const [reportData, setReportData] = useState(null);
-  const [capacityReport, setCapacityReport] = useState(null);
+  const [forecastData, setForecastData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [forecastLoading, setForecastLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [forecastError, setForecastError] = useState(null);
+  const [retry, setRetry] = useState(0);
+  const week = WEEKS.find(option => option.value === selectedWeek) || WEEKS[0];
+  const start = periodMode === 'CUSTOM_RANGE' ? customStart : week.start;
+  const end = periodMode === 'CUSTOM_RANGE' ? customEnd : week.end;
+  const rangeError = validateReportRange(start, end);
+  const showDemand = reportMode !== 'DO-R02';
+  const showCapacity = reportMode !== 'DO-R01';
 
   useEffect(() => {
     let active = true;
+    setReportData(null);
+    setError(null);
+    if (rangeError) { setLoading(false); return; }
     setLoading(true);
+    fetchWeeklyOperationsReport({ week: selectedWeek, start_date: start, end_date: end })
+      .then(data => {
+        if (!active) return;
+        if (data.api_error) setError(data.error_message || 'The report could not be loaded.');
+        else setReportData(data);
+      })
+      .catch(err => { if (active) setError(err.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [selectedWeek, start, end, rangeError, demoMode, retry]);
 
-    const selectedWeekObj =
-      AVAILABLE_WEEKS.find((w) => w.id === selectedWeek) || AVAILABLE_WEEKS[0];
+  useEffect(() => {
+    let active = true;
+    setForecastData(null);
+    setForecastError(null);
+    if (!showCapacity || rangeError) { setForecastLoading(false); return; }
+    setForecastLoading(true);
+    fetchDemandForecast({ as_of_date: end, horizon: 7 })
+      .then(data => {
+        if (!active) return;
+        if (!nextSevenDays(data, end)) setForecastError('Seven consecutive forecast dates after this period are not available.');
+        else setForecastData(data);
+      })
+      .catch(err => { if (active) setForecastError(err.message); })
+      .finally(() => { if (active) setForecastLoading(false); });
+    return () => { active = false; };
+  }, [end, rangeError, showCapacity, demoMode, retry]);
 
-    const queryParams =
-      periodMode === "CUSTOM_RANGE"
-        ? {
-            week: selectedWeek,
-            start_date: customStartDate,
-            end_date: customEndDate,
-          }
-        : selectedWeek === "LATEST_4W"
-          ? {
-              week: "LATEST_4W",
-              start_date: selectedWeekObj.start_date,
-              end_date: selectedWeekObj.end_date,
-            }
-          : {
-              week: selectedWeek,
-            };
-
-    Promise.all([
-      fetchWeeklyOperationsReport(queryParams),
-      fetchCapacitySummaryReport(
-        periodMode === "CUSTOM_RANGE"
-          ? queryParams
-          : {
-              week: selectedWeek,
-              start_date: selectedWeekObj.start_date,
-              end_date: selectedWeekObj.end_date,
-            },
-      ),
-    ]).then(([weeklyRes, capacityRes]) => {
-      if (!active) return;
-      setReportData(weeklyRes);
-      setCapacityReport(capacityRes);
-      setLoading(false);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [periodMode, selectedWeek, customStartDate, customEndDate, demoMode]);
-
-  const handleWeekChange = (weekId) => {
-    setSelectedWeek(weekId);
-    const found = AVAILABLE_WEEKS.find((w) => w.id === weekId);
-    if (found) {
-      setCustomStartDate(found.start_date);
-      setCustomEndDate(found.end_date);
-    }
-  };
-
-  const dailyRows = useMemo(() => {
-    return (reportData?.daily_rows || []).filter((row) => {
-      if (dayTypeFilter === "ALL") return true;
-      const isWeekend = row.is_weekend ?? row.day_type === "Weekend";
-      return dayTypeFilter === "Weekend" ? isWeekend : !isWeekend;
-    });
-  }, [reportData, dayTypeFilter]);
-
-  // BI-05 Reconciled KPIs computed from displayed rows using exact Mart numerators and valid counts
-  const reconciled = useMemo(() => {
-    const totals = dailyRows.reduce(
-      (acc, r) => {
-        const totalBookings = r.total_bookings ?? r.arrivals ?? 0;
-        const nonCanceled = r.non_canceled_bookings ?? r.arrivals ?? 0;
-        const canceled =
-          r.total_cancellations ?? Math.max(0, totalBookings - nonCanceled);
-        const guests = r.observed_total_guests ?? r.active_guests ?? 0;
-        const adults = r.observed_total_adults ?? 0;
-        const children = r.observed_total_children ?? 0;
-        const babies = r.observed_total_babies ?? 0;
-        const stayNights = r.observed_total_stay_nights ?? r.room_nights ?? 0;
-        const adr = r.avg_adr ?? r.adr ?? 0;
-        const leadTime = r.avg_lead_time ?? 0;
-        const departures = r.departures ?? 0;
-
-        const adrValidCount = r.adr_valid_count ?? nonCanceled;
-        const leadValidCount = r.lead_time_valid_count ?? totalBookings;
-        const guestValidCount = r.guest_valid_booking_count ?? nonCanceled;
-        const stayValidCount = r.stay_valid_booking_count ?? nonCanceled;
-        const sumAdr = r.sum_adr ?? adr * adrValidCount;
-        const sumLead = r.sum_lead_time ?? leadTime * leadValidCount;
-
-        return {
-          total_bookings: acc.total_bookings + totalBookings,
-          non_canceled_bookings: acc.non_canceled_bookings + nonCanceled,
-          total_cancellations: acc.total_cancellations + canceled,
-          observed_total_guests: acc.observed_total_guests + guests,
-          observed_total_adults: acc.observed_total_adults + adults,
-          observed_total_children: acc.observed_total_children + children,
-          observed_total_babies: acc.observed_total_babies + babies,
-          observed_total_stay_nights:
-            acc.observed_total_stay_nights + stayNights,
-          departures: acc.departures + departures,
-          sum_adr: acc.sum_adr + sumAdr,
-          adr_valid_count: acc.adr_valid_count + adrValidCount,
-          sum_lead_time: acc.sum_lead_time + sumLead,
-          lead_time_valid_count: acc.lead_time_valid_count + leadValidCount,
-          guest_valid_booking_count:
-            acc.guest_valid_booking_count + guestValidCount,
-          stay_valid_booking_count:
-            acc.stay_valid_booking_count + stayValidCount,
-        };
-      },
-      {
-        total_bookings: 0,
-        non_canceled_bookings: 0,
-        total_cancellations: 0,
-        observed_total_guests: 0,
-        observed_total_adults: 0,
-        observed_total_children: 0,
-        observed_total_babies: 0,
-        observed_total_stay_nights: 0,
-        departures: 0,
-        sum_adr: 0,
-        adr_valid_count: 0,
-        sum_lead_time: 0,
-        lead_time_valid_count: 0,
-        guest_valid_booking_count: 0,
-        stay_valid_booking_count: 0,
-      },
-    );
-
-    const nDays = dailyRows.length;
-    const avgGuestsPerDay =
-      nDays > 0 ? Number((totals.observed_total_guests / nDays).toFixed(1)) : 0;
-    const cancellationRate =
-      totals.total_bookings > 0
-        ? totals.total_cancellations / totals.total_bookings
-        : 0;
-    const avgAdr =
-      totals.adr_valid_count > 0
-        ? Number((totals.sum_adr / totals.adr_valid_count).toFixed(2))
-        : 0;
-    const avgPartySize =
-      totals.guest_valid_booking_count > 0
-        ? Number(
-            (
-              totals.observed_total_guests / totals.guest_valid_booking_count
-            ).toFixed(2),
-          )
-        : 0;
-    const avgStayNights =
-      totals.stay_valid_booking_count > 0
-        ? Number(
-            (
-              totals.observed_total_stay_nights /
-              totals.stay_valid_booking_count
-            ).toFixed(2),
-          )
-        : 0;
-    const avgLeadTime =
-      totals.lead_time_valid_count > 0
-        ? Number(
-            (totals.sum_lead_time / totals.lead_time_valid_count).toFixed(1),
-          )
-        : 0;
-
-    const peakRow =
-      dailyRows.reduce((max, r) => {
-        const g = r.observed_total_guests ?? r.active_guests ?? 0;
-        const maxG = max
-          ? (max.observed_total_guests ?? max.active_guests ?? 0)
-          : -1;
-        return g > maxG ? r : max;
-      }, null) || {};
-
-    return {
-      ...totals,
-      days_count: nDays,
-      avg_guests_per_day: avgGuestsPerDay,
-      cancellation_rate: cancellationRate,
-      avg_adr: avgAdr,
-      avg_party_size: avgPartySize,
-      avg_stay_nights: avgStayNights,
-      avg_lead_time: avgLeadTime,
-      peak_row: peakRow,
-    };
-  }, [dailyRows]);
-
+  const dailyRows = useMemo(() => filterReportRows(reportData?.daily_rows || [], dayType), [reportData, dayType]);
+  const summary = useMemo(() => summarizeReportRows(dailyRows), [dailyRows]);
+  const groups = useMemo(() => arrivalGroups(dailyRows), [dailyRows]);
+  const weekdayAverage = groups[0].days && groups[0].nonCanceled !== null ? groups[0].nonCanceled / groups[0].days : null;
+  const weekendAverage = groups[1].days && groups[1].nonCanceled !== null ? groups[1].nonCanceled / groups[1].days : null;
+  const weekendChange = weekdayAverage > 0 && weekendAverage !== null ? (weekendAverage / weekdayAverage - 1) * 100 : null;
+  const forecast = useMemo(() => forecastData ? nextSevenDays(forecastData, end) : null, [forecastData, end]);
   const period = reportData?.period || reportData?.period_summary || {};
-  const capacity =
-    reportData?.capacity_summary || capacityReport?.capacity_summary || {};
-  const histCap = capacityReport?.historical_period || {};
-  const forecastCap = capacityReport?.forecast_7d_summary || {};
-
-  const stayNightBreakdownItems = useMemo(() => {
-    const groups = histCap.stay_nights_by_arrival_group || {
-      weekday_arrival_stay_nights: dailyRows
-        .filter((r) => !(r.is_weekend ?? r.day_type === "Weekend"))
-        .reduce(
-          (s, r) => s + (r.observed_total_stay_nights ?? r.room_nights ?? 0),
-          0,
-        ),
-      weekend_arrival_stay_nights: dailyRows
-        .filter((r) => r.is_weekend ?? r.day_type === "Weekend")
-        .reduce(
-          (s, r) => s + (r.observed_total_stay_nights ?? r.room_nights ?? 0),
-          0,
-        ),
-      holiday_arrival_stay_nights: dailyRows
-        .filter((r) => r.is_holiday ?? r.is_pt_holiday)
-        .reduce(
-          (s, r) => s + (r.observed_total_stay_nights ?? r.room_nights ?? 0),
-          0,
-        ),
-    };
-    return [
-      {
-        label: "Weekday Arrivals (Mon–Fri)",
-        value: groups.weekday_arrival_stay_nights || 0,
-        color: "series1",
-        sublabel: "stay-nights",
-      },
-      {
-        label: "Weekend Arrivals (Sat–Sun)",
-        value: groups.weekend_arrival_stay_nights || 0,
-        color: "series2",
-        sublabel: "stay-nights",
-      },
-      {
-        label: "PT National Holiday Arrivals",
-        value: groups.holiday_arrival_stay_nights || 0,
-        color: "series3",
-        sublabel: "stay-nights",
-      },
-    ];
-  }, [histCap, dailyRows]);
+  const ready = !loading && !rangeError && !error && dailyRows.length > 0;
+  const selectedDayLabel = DAY_TYPES.find(option => option.value === dayType).label;
+  const incomplete = periodMode === 'ISO_WEEK' && selectedWeek !== 'LATEST_4W' && period.is_complete_week === false;
+  const reset = () => {
+    setReportMode('ALL'); setPeriodMode('ISO_WEEK'); setSelectedWeek('LATEST_4W');
+    setCustomStart('2017-08-04'); setCustomEnd('2017-08-31'); setDayType('ALL'); setMetric('guests');
+  };
+  const exportCapacity = () => downloadCsv(capacityCsv(dailyRows, {
+    start: period.start_date || start, end: period.end_date || end, dayType: selectedDayLabel, version: reportData?.data_version,
+  }, forecast), `city_hotel_capacity_${start}_${end}_${dayType}.csv`);
 
   return (
-    <div className="space-y-8 lg:space-y-10">
-      {/* Editorial Page Header */}
-      <header className="border-b border-divider pb-6">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="editorial-page-title">
-              Operations Reports — Weekly Demand &amp; Capacity Summary
-            </h1>
+    <div className="report-page space-y-8 lg:space-y-10">
+      <DashboardHeader page="reporting" title="Hotel Operations Reporting" actions={<>
+        <Button variant="outline" size="sm" disabled={!ready} onClick={() => window.print()}><Printer aria-hidden="true" className="h-3.5 w-3.5" />Print report</Button>
+        {showDemand && <Button variant="outline" size="sm" disabled={!ready} onClick={() => exportWeeklyReportToCsv(reportData, dailyRows, dayType)}><Download aria-hidden="true" className="h-3.5 w-3.5" />Export demand CSV</Button>}
+        {showCapacity && <Button variant="outline" size="sm" disabled={!ready || forecastLoading} onClick={exportCapacity}><Download aria-hidden="true" className="h-3.5 w-3.5" />Export capacity CSV</Button>}
+      </>}>
+        <div className="space-y-6">
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-5">
+            <SegmentedControl label="Report" value={reportMode} onChange={setReportMode} options={[
+              { value: 'ALL', label: 'Combined' }, { value: 'DO-R01', label: 'Weekly demand' }, { value: 'DO-R02', label: 'Capacity summary' },
+            ]} />
+            <SegmentedControl label="Period mode" value={periodMode} onChange={setPeriodMode} options={[
+              { value: 'ISO_WEEK', label: 'Week / preset' }, { value: 'CUSTOM_RANGE', label: 'Custom range' },
+            ]} />
           </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => window.print()}
-              className="gap-1.5"
-            >
-              <Printer className="h-3.5 w-3.5" />
-              <span>Print Report</span>
-            </Button>
-            <Button
-              type="button"
-              variant="emerald"
-              size="sm"
-              onClick={() => exportWeeklyReportToCsv(reportData, dailyRows)}
-              className="gap-1.5"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span>Export CSV (22 Columns)</span>
-            </Button>
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-5">
+            {periodMode === 'ISO_WEEK' ? <CompactFilter id="report-week-select" label="Period" value={selectedWeek} options={WEEKS}
+              onChange={event => {
+                const option = WEEKS.find(item => item.value === event.target.value);
+                setSelectedWeek(option.value); setCustomStart(option.start); setCustomEnd(option.end);
+              }} /> : <>
+              <div className="flex w-full flex-col gap-2.5 sm:w-48"><label htmlFor="report-custom-start" className="text-[12px] text-ink-secondary">Start date</label>
+                <input id="report-custom-start" type="date" min="2015-07-01" max={customEnd || '2017-08-31'} value={customStart} onChange={event => setCustomStart(event.target.value)} onInput={event => setCustomStart(event.currentTarget.value)} className={dateInputClass} aria-invalid={Boolean(rangeError)} aria-describedby={rangeError ? 'report-range-error' : undefined} /></div>
+              <div className="flex w-full flex-col gap-2.5 sm:w-48"><label htmlFor="report-custom-end" className="text-[12px] text-ink-secondary">End date</label>
+                <input id="report-custom-end" type="date" min={customStart || '2015-07-01'} max="2017-08-31" value={customEnd} onChange={event => setCustomEnd(event.target.value)} onInput={event => setCustomEnd(event.currentTarget.value)} className={dateInputClass} aria-invalid={Boolean(rangeError)} aria-describedby={rangeError ? 'report-range-error' : undefined} /></div>
+            </>}
+            <CompactFilter id="report-day-type" label="Arrival day type" value={dayType} onChange={event => setDayType(event.target.value)} options={DAY_TYPES} />
+            <Button variant="ghost" size="sm" className="h-9" onClick={reset}><RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />Reset filters</Button>
           </div>
         </div>
+      </DashboardHeader>
 
-        {/* Flat Parameter & Period Filter Bar */}
-        <div className="mt-6 pt-5 border-t border-divider flex flex-col xl:flex-row xl:items-end justify-between gap-4">
-          <div className="flex flex-wrap items-end gap-4">
-            {/* Report Template Switcher */}
-            <div>
-              <span className="block text-[12px] font-medium text-ink-secondary mb-1.5">
-                Report Template View
-              </span>
-              <div className="inline-flex rounded-[4px] border border-divider bg-surface-primary p-0.5">
-                {[
-                  { id: "ALL", label: "Combined (DO-R01 + DO-R02)" },
-                  { id: "DO-R01", label: "DO-R01 Weekly Demand" },
-                  { id: "DO-R02", label: "DO-R02 Capacity Summary" },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setReportMode(tab.id)}
-                    className={`px-2.5 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
-                      reportMode === tab.id
-                        ? "bg-brand text-white font-medium"
-                        : "text-ink-secondary hover:text-ink-primary"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+      <div className="report-print-only">
+      <DataContext status={loading ? 'Loading report…' : error || rangeError ? 'Report unavailable' : summary.status}
+        demo={reportData?.is_mock} version={reportData?.data_version} publishedAt={reportData?.published_at}>
+        <p className="font-medium text-ink-primary">City Hotel · {reportMode === 'ALL' ? 'Combined operations report' : showDemand ? 'Weekly demand report' : 'Capacity summary'}</p>
+        <p>{formatDate(period.start_date || start)} – {formatDate(period.end_date || end)} · Europe/Lisbon</p>
+        <p>{selectedDayLabel} · {loading ? 'Loading available dates…' : `${summary.days} displayed days`}</p>
+      </DataContext>
+      </div>
+      {incomplete && <p role="status" className="rounded-[4px] border border-status-warning/40 bg-status-warning/5 p-4 text-[13px] text-ink-primary">Incomplete week: {period.calendar_days_count ?? reportData?.daily_rows?.length ?? 0} of 7 days available. Totals cover available dates only.</p>}
+      {rangeError && <p id="report-range-error" role="alert" className="text-[13px] text-status-critical">{rangeError}</p>}
+      {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-status-critical/30 p-4 text-[13px] text-status-critical"><span>Report unavailable: {error}</span><Button variant="outline" size="sm" onClick={() => setRetry(value => value + 1)}>Retry</Button></div>}
+      {loading && <div role="status" aria-label="Loading report" className="space-y-6"><Skeleton className="h-32 w-full" /><Skeleton className="h-64 w-full" /></div>}
+      {!loading && !error && !rangeError && !dailyRows.length && <p role="status" className="border border-divider rounded-[4px] p-6 text-[13px] text-ink-secondary">No report rows match this period and arrival day type. Choose another period or reset filters.</p>}
 
-            {/* Period Mode Selector */}
-            <div>
-              <span className="block text-[12px] font-medium text-ink-secondary mb-1.5">
-                Period Selection Mode
-              </span>
-              <div className="inline-flex rounded-[4px] border border-divider bg-surface-primary p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setPeriodMode("ISO_WEEK")}
-                  className={`px-2.5 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
-                    periodMode === "ISO_WEEK"
-                      ? "bg-ink-primary text-surface-primary font-medium"
-                      : "text-ink-secondary hover:text-ink-primary"
-                  }`}
-                >
-                  ISO Week
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPeriodMode("CUSTOM_RANGE")}
-                  className={`px-2.5 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
-                    periodMode === "CUSTOM_RANGE"
-                      ? "bg-ink-primary text-surface-primary font-medium"
-                      : "text-ink-secondary hover:text-ink-primary"
-                  }`}
-                >
-                  Custom Range
-                </button>
-              </div>
-            </div>
-
-            {periodMode === "ISO_WEEK" ? (
-              <div>
-                <label
-                  htmlFor="report-week-select"
-                  className="block text-[12px] font-medium text-ink-secondary mb-1.5"
-                >
-                  Reporting Week (Europe/Lisbon)
-                </label>
-                <select
-                  id="report-week-select"
-                  value={selectedWeek}
-                  onChange={(e) => handleWeekChange(e.target.value)}
-                  className="h-8 rounded-[4px] border border-divider bg-surface-primary px-2.5 text-[12px] font-medium text-ink-primary focus:outline-none focus:border-brand"
-                >
-                  {AVAILABLE_WEEKS.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div className="flex items-end gap-2">
-                <div>
-                  <label
-                    htmlFor="report-custom-start"
-                    className="block text-[12px] font-medium text-ink-secondary mb-1.5"
-                  >
-                    Start Date
-                  </label>
-                  <input
-                    id="report-custom-start"
-                    type="date"
-                    min="2015-07-01"
-                    max="2017-08-31"
-                    value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="h-8 rounded-[4px] border border-divider bg-surface-primary px-2.5 font-mono text-[12px] text-ink-primary"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="report-custom-end"
-                    className="block text-[12px] font-medium text-ink-secondary mb-1.5"
-                  >
-                    End Date
-                  </label>
-                  <input
-                    id="report-custom-end"
-                    type="date"
-                    min="2015-07-01"
-                    max="2017-08-31"
-                    value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="h-8 rounded-[4px] border border-divider bg-surface-primary px-2.5 font-mono text-[12px] text-ink-primary"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Day Type Filter */}
-            <div>
-              <span className="block text-[12px] font-medium text-ink-secondary mb-1.5">
-                Arrival Day Type
-              </span>
-              <div className="inline-flex rounded-[4px] border border-divider bg-surface-primary p-0.5">
-                {[
-                  { id: "ALL", label: "All Days" },
-                  { id: "Weekday", label: "Weekdays" },
-                  { id: "Weekend", label: "Weekend" },
-                ].map((type) => (
-                  <button
-                    key={type.id}
-                    type="button"
-                    onClick={() => setDayTypeFilter(type.id)}
-                    className={`px-2.5 py-1 text-[12px] rounded-[3px] transition-colors cursor-pointer ${
-                      dayTypeFilter === type.id
-                        ? "bg-brand text-white font-medium"
-                        : "text-ink-secondary hover:text-ink-primary"
-                    }`}
-                  >
-                    {type.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {reportData?.api_error && (
-        <div
-          role="alert"
-          className="rounded-[4px] border border-status-critical/30 bg-status-critical/[0.05] px-4 py-3 text-[12px] text-ink-primary"
-        >
-          <span className="font-semibold text-status-critical">
-            Report Data Unavailable ({reportData.status_code || "Error"}):
-          </span>{" "}
-          {reportData.error_message ||
-            "Unable to load the requested reporting period from mart.daily_hotel_ops."}
-        </div>
-      )}
-
-      {/* Section 1: BI-05 Reconciled Typographic KPI Strip */}
-      <section
-        aria-label="Weekly Report Reconciled KPIs"
-        className="border-b border-divider pb-8"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
-          <div>
-            <h2 className="editorial-section-title">
-              Executive Period Summary
-            </h2>
-          </div>
-          <span className="font-mono text-[11px] text-status-success">
-            ● Reconciled against mart.daily_hotel_ops
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-7 w-28" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
-            <KpiCard
-              label="Observed Total Guests"
-              value={reconciled.observed_total_guests.toLocaleString()}
-              unit="guests"
-              badgeText={`Avg ${reconciled.avg_guests_per_day}/day`}
-              statusTone="accent"
-              subtext={`Adults: ${reconciled.observed_total_adults.toLocaleString()} · Child/Babies: ${(reconciled.observed_total_children + reconciled.observed_total_babies).toLocaleString()}`}
-              emphasize
-            />
-            <KpiCard
-              label="Non-Canceled Arrivals"
-              value={reconciled.non_canceled_bookings.toLocaleString()}
-              unit="check-ins"
-              badgeText={period.yoy_arrivals_delta || "Verified"}
-              statusTone="success"
-              subtext={`Total bookings: ${reconciled.total_bookings.toLocaleString()}`}
-            />
-            <KpiCard
-              label="Period Cancellation Rate"
-              value={`${(reconciled.cancellation_rate * 100).toFixed(1)}%`}
-              badgeText={`${reconciled.total_cancellations.toLocaleString()} canceled`}
-              statusTone={
-                reconciled.cancellation_rate > 0.38 ? "warning" : "neutral"
-              }
-              subtext={`Avg lead time: ${reconciled.avg_lead_time} days`}
-            />
-            <KpiCard
-              label="Observed Stay Nights"
-              value={reconciled.observed_total_stay_nights.toLocaleString()}
-              unit="nights"
-              badgeText={period.yoy_room_nights_delta || "In-house load"}
-              statusTone="neutral"
-              subtext={`Avg stay: ${reconciled.avg_stay_nights} nights · Party: ${reconciled.avg_party_size}`}
-            />
-            <KpiCard
-              label="Weighted Average ADR"
-              value={`€${reconciled.avg_adr.toFixed(2)}`}
-              badgeText="Non-canceled"
-              statusTone="neutral"
-              subtext="Weighted by non-canceled check-ins"
-            />
-            <KpiCard
-              label="Peak Demand Date"
-              value={
-                reconciled.peak_row.full_date ||
-                reconciled.peak_row.stay_date ||
-                "—"
-              }
-              badgeText={`${(reconciled.peak_row.observed_total_guests ?? reconciled.peak_row.active_guests ?? 0).toLocaleString()} guests`}
-              statusTone="critical"
-              subtext={`${reconciled.peak_row.day_of_week || ""} · ${reconciled.peak_row.non_canceled_bookings ?? reconciled.peak_row.arrivals ?? 0} check-ins`}
-            />
-          </div>
-        )}
-      </section>
-
-      {/* Section 2: DO-R02 Operations Capacity Summary & 7-Day Workload Canvas */}
-      {(reportMode === "ALL" || reportMode === "DO-R02") && (
-        <section
-          aria-label="DO-R02 Operations Capacity Summary"
-          className="border-b border-divider pb-8 space-y-6"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="editorial-section-title">
-                  Operations Capacity &amp; Workload Summary
-                </h2>
-              </div>
-            </div>
-            <Link
-              to="/analytics/operations"
-              className="text-[12px] font-medium text-brand hover:underline inline-flex items-center gap-1"
-            >
-              <span>Inspect period in OLAP Analytics</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Pure HTML5 Canvas Weekly Workload Chart + Group A Breakdown */}
-            <div className="lg:col-span-12 space-y-6 w-full">
-              <div className="border border-divider rounded-[4px] bg-surface-primary p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                  <div>
-                    <h3 className="text-[14px] font-semibold text-ink-primary">
-                      Daily Observed Guests, Non-Canceled Arrivals &amp;
-                      Stay-Night Trajectory
-                    </h3>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-ink-secondary">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 bg-brand inline-block" />
-                      Observed Guests (guests)
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 bg-series-2 inline-block" />
-                      Peak / Holiday Guests
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 bg-series-3 inline-block" />
-                      Non-Canceled Bookings (check-ins)
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-3 border-t-2 border-series-4 inline-block" />
-                      Stay Nights (nights)
-                    </span>
-                  </div>
-                </div>
-
-                <CanvasWeeklyWorkloadChart dailyRows={dailyRows} height={250} />
-              </div>
-
-              {/* Group A: Historical Stay-Nights by Arrival Group (Canvas Horizontal Bars) */}
-              <div className="border border-divider rounded-[4px] bg-surface-primary p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <span className="font-mono text-[11px] text-ink-secondary">
-                      GROUP A • HISTORICAL WORKLOAD
-                    </span>
-                    <h3 className="text-[14px] font-semibold text-ink-primary">
-                      Stay-Nights Distribution by Arrival Segment
-                    </h3>
-                  </div>
-                  <span className="font-mono text-[12px] text-ink-primary">
-                    Weekend surge: {capacity.weekend_surge_pct || "0.0%"}
-                  </span>
-                </div>
-
-                <CanvasHorizontalBarChart
-                  items={stayNightBreakdownItems}
-                  height={135}
-                />
-              </div>
-            </div>
-
-            {/* Group B Upcoming 7-Day Forecast Signal & Operational Directives */}
-            <div className="lg:col-span-12 space-y-5 border border-divider rounded-[4px] bg-surface-primary p-5 w-full">
-              <div className="border-b border-divider pb-3">
-                <h3 className="text-[15px] font-semibold text-ink-primary mt-0.5">
-                  Departmental Workload &amp; Action Directives
-                </h3>
-              </div>
-
-              {/* Weekday vs Weekend Typographic Comparison */}
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-divider">
-                <div>
-                  <div className="text-[11px] text-ink-secondary">
-                    Weekday Avg (Mon–Fri)
-                  </div>
-                  <div className="font-mono text-[20px] font-semibold text-ink-primary tabular-nums mt-0.5">
-                    {capacity.weekday_avg_arrivals ?? "—"}{" "}
-                    <span className="text-[12px] font-normal text-ink-secondary">
-                      check-ins
-                    </span>
-                  </div>
-                  <div className="font-mono text-[11px] text-ink-secondary mt-0.5">
-                    ~{capacity.weekday_avg_guests ?? "—"} guests/day
-                  </div>
-                </div>
-
-                <div className="border-l border-divider pl-4">
-                  <div className="text-[11px] text-ink-secondary">
-                    Weekend Avg (Sat–Sun)
-                  </div>
-                  <div className="font-mono text-[20px] font-semibold text-brand tabular-nums mt-0.5">
-                    {capacity.weekend_avg_arrivals ?? "—"}{" "}
-                    <span className="text-[12px] font-normal text-ink-secondary">
-                      check-ins
-                    </span>
-                  </div>
-                  <div className="font-mono text-[11px] text-ink-secondary mt-0.5">
-                    ~{capacity.weekend_avg_guests ?? "—"} guests/day
-                  </div>
-                </div>
-              </div>
-
-              {/* Forward 7-Day Signal Summary */}
-              {forecastCap.predicted_total_guests_7d && (
-                <div className="pb-4 border-b border-divider space-y-2">
-                  <div className="flex items-center justify-between text-[12px]">
-                    <span className="font-medium text-ink-primary">
-                      Forward 7-Day Forecast ({forecastCap.horizon_start} →{" "}
-                      {forecastCap.horizon_end})
-                    </span>
-                    <Link
-                      to="/dss/demand-forecast"
-                      className="font-mono text-[11px] text-brand hover:underline"
-                    >
-                      DO-M01 →
-                    </Link>
-                  </div>
-                  <div className="flex items-center justify-between text-[12px] font-mono bg-surface-subtle px-3 py-2 rounded-[3px]">
-                    <span>
-                      7d Guests:{" "}
-                      <strong>
-                        {Math.round(
-                          forecastCap.predicted_total_guests_7d,
-                        ).toLocaleString()}
-                      </strong>
-                    </span>
-                    <span className="text-status-critical">
-                      HIGH: {forecastCap.demand_level_counts?.HIGH ?? 2}d
-                    </span>
-                    <span className="text-status-success">
-                      NORMAL: {forecastCap.demand_level_counts?.NORMAL ?? 4}d
-                    </span>
-                    <span className="text-status-warning">
-                      LOW: {forecastCap.demand_level_counts?.LOW ?? 1}d
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Departmental Directives (No Hallucinated Room/Staff Counts) */}
-              <div className="space-y-3 text-[12px]">
-                <div className="border-l-2 border-brand pl-3 py-0.5">
-                  <div className="font-semibold text-ink-primary">
-                    Front Office &amp; Check-in Windows
-                  </div>
-                  <p className="text-ink-secondary mt-0.5 leading-relaxed">
-                    {capacity.front_desk_directive}
-                  </p>
-                </div>
-
-                <div className="border-l-2 border-series-3 pl-3 py-0.5">
-                  <div className="font-semibold text-ink-primary">
-                    Housekeeping &amp; Room Turnover
-                  </div>
-                  <p className="text-ink-secondary mt-0.5 leading-relaxed">
-                    {capacity.housekeeping_directive}
-                  </p>
-                </div>
-
-                <div className="border-l-2 border-series-2 pl-3 py-0.5">
-                  <div className="font-semibold text-ink-primary">
-                    Food &amp; Beverage Provisioning
-                  </div>
-                  <p className="text-ink-secondary mt-0.5 leading-relaxed">
-                    {capacity.fb_directive}
-                  </p>
-                </div>
-              </div>
-            </div>
+      {ready && <>
+        <section aria-labelledby="report-summary-heading" className="space-y-5 border-b border-divider pb-8">
+          <h2 id="report-summary-heading" className="editorial-section-title">Period summary</h2>
+          <div className="report-period-kpis grid grid-cols-1 gap-6 pt-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 xl:divide-x xl:divide-divider">
+            <KpiCard label="Observed guests" value={formatGuests(summary.totalGuests)} unit="guests" />
+            <KpiCard className="xl:pl-5" label="Non-canceled bookings" value={formatGuests(summary.nonCanceled)} unit="bookings" />
+            <KpiCard className="xl:pl-5" label="Cancellation rate" value={formatRate(summary.cancellationRate)} />
+            <KpiCard className="xl:pl-5" label="Observed stay nights" value={formatGuests(summary.stayNights)} unit="nights" />
+            <KpiCard className="xl:pl-5" label="Average ADR" value={euro(summary.avgAdr)} />
+            <KpiCard className="report-peak-date pr-0 xl:pl-5" label="Peak arrival date" valueType="date" value={formatDate(summary.peakDays[0])} />
           </div>
         </section>
-      )}
 
-      {/* Section 3: DO-R01 Standardized Daily Operations Log Table */}
-      {(reportMode === "ALL" || reportMode === "DO-R01") && (
-        <section aria-label="DO-R01 Daily Operations Log" className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2
-                  id="daily-operations-log-heading"
-                  className="editorial-section-title"
-                >
-                  Daily Operations Demand Log ({reconciled.days_count} Days)
-                </h2>
-              </div>
-            </div>
-            <span className="font-mono text-[11px] text-ink-secondary">
-              Sorted chronologically: full_date ASC
-            </span>
+        {showDemand && <section aria-labelledby="daily-report-heading" className="report-reading-section space-y-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-3"><h2 id="daily-report-heading" className="editorial-section-title">Daily demand</h2><Button variant="outline" size="sm" className="dashboard-screen-only" aria-expanded={showDetails} aria-controls="report-daily-table" onClick={() => setShowDetails(value => !value)}>{showDetails ? 'Hide supporting columns' : 'Show supporting columns'}</Button></div>
+          <ResponsiveTableContainer ariaLabelledBy="daily-report-heading"><Table id="report-daily-table" className="min-w-[820px]">
+            <TableHeader><TableRow><TableHead>Arrival date</TableHead><TableHead>Day</TableHead><TableHead className="text-right">Bookings</TableHead><TableHead className="text-right">Non-canceled</TableHead><TableHead className="text-right">Canceled (%)</TableHead><TableHead className="text-right">Guests</TableHead><TableHead className="text-right">Stay nights</TableHead><TableHead className="text-right">ADR (€)</TableHead>{showDetails && <><TableHead className="text-right">Avg party</TableHead><TableHead className="text-right">Avg stay</TableHead><TableHead className="text-right">Lead (days)</TableHead><TableHead>Adults / children / babies</TableHead><TableHead>Holiday / Lisbon weather</TableHead><TableHead>Guest coverage</TableHead></>}</TableRow></TableHeader>
+            <TableBody>{dailyRows.map(row => <TableRow key={reportDate(row)} className={summary.peakDays.includes(reportDate(row)) ? 'bg-status-critical/5' : isHoliday(row) ? 'bg-status-warning/5' : undefined}>
+              <TableCell className="whitespace-nowrap font-medium">{formatDate(reportDate(row))}{summary.peakDays.includes(reportDate(row)) && <span className="ml-2 text-[11px] text-status-critical">Peak</span>}</TableCell>
+              <TableCell className="whitespace-nowrap">{formatWeekday(reportDate(row)).slice(0, 3)}<span className="block text-[12px] text-ink-secondary">{isWeekend(row) ? 'Weekend' : 'Weekday'}{isHoliday(row) ? ' · Holiday' : ''}</span></TableCell>
+              <TableCell className="text-right">{formatGuests(row.total_bookings)}</TableCell><TableCell className="text-right">{formatGuests(arrivals(row))}</TableCell><TableCell className="text-right whitespace-nowrap">{formatGuests(row.total_cancellations)} ({formatRate(row.cancellation_rate)})</TableCell><TableCell className="text-right font-semibold">{formatGuests(guests(row))}</TableCell><TableCell className="text-right">{formatGuests(stayNights(row))}</TableCell><TableCell className="text-right">{formatMetric(row.avg_adr ?? row.adr)}</TableCell>
+              {showDetails && <><TableCell className="text-right">{formatReference(row.avg_party_size)}</TableCell><TableCell className="text-right">{formatReference(row.avg_stay_nights)}</TableCell><TableCell className="text-right">{formatReference(row.avg_lead_time)}</TableCell><TableCell className="whitespace-nowrap">{formatGuests(row.observed_total_adults)} / {formatGuests(row.observed_total_children)} / {formatGuests(row.observed_total_babies)}</TableCell><TableCell className="min-w-48 text-[12px]">{(row.holiday_names || []).join(', ') || row.holiday_local_name || (isHoliday(row) ? 'Holiday' : 'No holiday')}<span className="block text-ink-secondary">{formatReference(row.temperature_mean ?? row.weather_temp_mean)} °C · {formatReference(row.precipitation ?? row.weather_precip_sum)} mm · {row.weather_status || 'Weather status unavailable'}</span></TableCell><TableCell>{row.guest_data_status || 'Unknown'}</TableCell></>}
+            </TableRow>)}</TableBody>
+            <TableFooter><TableRow><TableCell colSpan={2}>Totals · {summary.days} days</TableCell><TableCell className="text-right">{formatGuests(summary.totalBookings)}</TableCell><TableCell className="text-right">{formatGuests(summary.nonCanceled)}</TableCell><TableCell className="text-right">{formatGuests(summary.canceled)} ({formatRate(summary.cancellationRate)})</TableCell><TableCell className="text-right">{formatGuests(summary.totalGuests)}</TableCell><TableCell className="text-right">{formatGuests(summary.stayNights)}</TableCell><TableCell className="text-right">{formatMetric(summary.avgAdr)}</TableCell>{showDetails && <TableCell colSpan={6}>Averages and coverage shown in the period summary</TableCell>}</TableRow></TableFooter>
+          </Table></ResponsiveTableContainer>
+          <p className="text-[12px] text-ink-secondary">Dates in ascending order. The demand CSV includes all 22 data columns for these displayed days.</p>
+        </section>}
+
+        {showCapacity && <section aria-labelledby="capacity-heading" className="report-reading-section space-y-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-3"><h2 id="capacity-heading" className="editorial-section-title">Historical workload</h2><p className="text-[12px] text-ink-secondary">{selectedDayLabel} · {summary.days} displayed days</p></div>
+          <div className="rounded-[4px] border border-divider bg-surface-primary p-4 sm:p-5 space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-4"><h3 className="text-[15px] font-semibold">Daily workload</h3><div className="dashboard-screen-only"><CompactFilter id="report-chart-metric" label="Metric" value={metric} onChange={event => setMetric(event.target.value)} options={[{ value: 'guests', label: 'Observed guests' }, { value: 'bookings', label: 'Non-canceled bookings' }, { value: 'nights', label: 'Stay nights' }]} /></div></div>
+            <p className="text-[12px] text-ink-secondary">{metric === 'nights' ? 'Stay nights associated with each arrival date' : metric === 'bookings' ? 'Non-canceled bookings by arrival date' : 'Observed guests by arrival date'}</p>
+            <CanvasWeeklyWorkloadChart dailyRows={dailyRows} height={260} metric={metric} />
           </div>
-
-          <ResponsiveTableContainer ariaLabelledBy="daily-operations-log-heading">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Stay Date</TableHead>
-                  <TableHead>Day / Type</TableHead>
-                  <TableHead className="text-right">Total Bookings</TableHead>
-                  <TableHead className="text-right">Non-Canceled</TableHead>
-                  <TableHead className="text-right">Canceled (Rate)</TableHead>
-                  <TableHead className="text-right">Observed Guests</TableHead>
-                  <TableHead className="text-right">Stay Nights</TableHead>
-                  <TableHead className="text-right">Party / Stay</TableHead>
-                  <TableHead className="text-right">Lead Time</TableHead>
-                  <TableHead className="text-right">Avg ADR</TableHead>
-                  <TableHead>Holiday &amp; Lisbon Weather</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dailyRows.map((row) => {
-                  const fullDate = row.full_date || row.stay_date;
-                  const isWeekend =
-                    row.is_weekend ?? row.day_type === "Weekend";
-                  const isHoliday = row.is_holiday ?? row.is_pt_holiday;
-                  const totalBookings = row.total_bookings ?? row.arrivals ?? 0;
-                  const nonCanceled =
-                    row.non_canceled_bookings ?? row.arrivals ?? 0;
-                  const canceled =
-                    row.total_cancellations ??
-                    Math.max(0, totalBookings - nonCanceled);
-                  const cancelRate =
-                    row.cancellation_rate != null
-                      ? row.cancellation_rate * 100
-                      : totalBookings > 0
-                        ? (canceled / totalBookings) * 100
-                        : 0;
-                  const guests =
-                    row.observed_total_guests ?? row.active_guests ?? 0;
-                  const stayNights =
-                    row.observed_total_stay_nights ?? row.room_nights ?? 0;
-                  const avgParty = row.avg_party_size ?? 1.95;
-                  const avgStay = row.avg_stay_nights ?? 3.4;
-                  const avgLead = row.avg_lead_time ?? 98;
-                  const adr = row.avg_adr ?? row.adr ?? 0;
-                  const temp = row.temperature_mean ?? row.weather_temp_mean;
-                  const precip = row.precipitation ?? row.weather_precip_sum;
-                  const guestStatus = row.guest_data_status || "COMPLETE";
-
-                  return (
-                    <TableRow
-                      key={fullDate}
-                      className={
-                        row.is_peak_day
-                          ? "bg-status-critical/[0.15]"
-                          : isHoliday
-                            ? "bg-status-warning/[0.15]"
-                            : undefined
-                      }
-                    >
-                      <TableCell className="font-mono font-medium text-ink-primary whitespace-nowrap">
-                        {fullDate}
-                        {row.is_peak_day ? (
-                          <span className="ml-1.5 text-[10px] font-sans font-semibold text-status-critical">
-                            PEAK
-                          </span>
-                        ) : (
-                          isHoliday && (
-                            <span className="ml-1.5 text-[10px] font-sans font-semibold text-status-warning">
-                              Holiday
-                            </span>
-                          )
-                        )}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <span className="text-ink-primary font-medium">
-                          {row.day_of_week}
-                        </span>
-                        <span className="ml-1.5 text-[11px] text-ink-secondary">
-                          (
-                          {isWeekend
-                            ? "Weekend"
-                            : isHoliday
-                              ? "Holiday"
-                              : "Weekday"}
-                          )
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-ink-primary">
-                        {totalBookings.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums font-semibold text-brand">
-                        {nonCanceled.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
-                        {canceled} ({cancelRate.toFixed(1)}%)
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">
-                        <span className="font-semibold text-ink-primary">
-                          {guests.toLocaleString()}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-ink-primary">
-                        {stayNights.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
-                        {Number(avgParty).toFixed(2)} /{" "}
-                        {Number(avgStay).toFixed(1)}n
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
-                        {Math.round(avgLead)}d
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-ink-primary">
-                        €{Number(adr).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-[12px] text-ink-secondary whitespace-nowrap">
-                        <span className="font-mono text-[11px]">
-                          {temp != null ? `${temp}°C` : "—"} ·{" "}
-                          {precip != null ? `${precip}mm` : "—"} (
-                          {row.weather_status || "Clear"})
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right whitespace-nowrap">
-                        <Badge
-                          variant={
-                            guestStatus === "COMPLETE" ? "emerald" : "amber"
-                          }
-                        >
-                          {guestStatus}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TableCell
-                    colSpan={2}
-                    className="font-semibold text-ink-primary"
-                  >
-                    Reconciled Period Totals ({reconciled.days_count} days)
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary">
-                    {reconciled.total_bookings.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-brand">
-                    {reconciled.non_canceled_bookings.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
-                    {reconciled.total_cancellations.toLocaleString()} (
-                    {(reconciled.cancellation_rate * 100).toFixed(1)}%)
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary">
-                    {reconciled.observed_total_guests.toLocaleString()} (Avg{" "}
-                    {reconciled.avg_guests_per_day}/d)
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary">
-                    {reconciled.observed_total_stay_nights.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
-                    {reconciled.avg_party_size} / {reconciled.avg_stay_nights}n
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-ink-secondary">
-                    {reconciled.avg_lead_time}d
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold text-ink-primary">
-                    €{reconciled.avg_adr.toFixed(2)}
-                  </TableCell>
-                  <TableCell
-                    colSpan={2}
-                    className="text-right font-mono text-[11px] text-status-success"
-                  >
-                    100% BI-05 Reconciled
-                  </TableCell>
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </ResponsiveTableContainer>
-        </section>
-      )}
+          <div className="grid min-w-0 gap-6 xl:grid-cols-2">
+            <div className="rounded-[4px] border border-divider bg-surface-primary p-4 sm:p-5 space-y-4"><h3 className="text-[15px] font-semibold">Stay nights by arrival day</h3><HorizontalBarChart items={groups.map((group, index) => ({ label: group.label, value: group.stayNights ?? 0, formattedValue: group.days ? formatGuests(group.stayNights) : 'No dates', color: `series${index + 1}` }))} ariaLabel="Stay nights by arrival day group" /><p className="text-[12px] text-ink-secondary">Holidays are also counted within weekdays or weekends. Do not add all three groups.</p></div>
+            <div className="rounded-[4px] border border-divider bg-surface-primary p-4 sm:p-5 space-y-4"><h3 className="text-[15px] font-semibold">Planning considerations</h3><dl className="space-y-4 text-[13px] leading-6"><div><dt className="font-medium">Front office</dt><dd className="text-ink-secondary">Review arrival coverage for {summary.peakDays.map(date => formatDate(date)).join(', ')}: {formatGuests(summary.peakGuests)} observed guests on each peak date.</dd></div><div><dt className="font-medium">Housekeeping</dt><dd className="text-ink-secondary">Review stay patterns associated with {formatGuests(summary.stayNights)} stay nights across the displayed arrival dates.</dd></div><div><dt className="font-medium">Food and beverage</dt><dd className="text-ink-secondary">Use the observed arrival average of {formatReference(summary.avgGuests)} guests/day alongside in-house guest and meal-plan records.</dd></div></dl><p className="text-[12px] text-ink-secondary">Historical planning signals only. Room inventory, occupancy and fixed staff requirements are not calculated.</p></div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2"><h3 id="arrival-comparison-heading" className="text-[15px] font-semibold">Daily averages by arrival day</h3><p className="text-[12px] text-ink-secondary">{weekendChange === null ? 'Weekend comparison requires both day types' : `Weekend bookings: ${formatSignedPercent(weekendChange)} vs weekdays`}</p></div>
+            <ResponsiveTableContainer ariaLabelledBy="arrival-comparison-heading"><Table><TableHeader><TableRow><TableHead>Day type</TableHead><TableHead className="text-right">Days</TableHead><TableHead className="text-right">Bookings / day</TableHead><TableHead className="text-right">Guests / day</TableHead></TableRow></TableHeader><TableBody>{groups.map(group => <TableRow key={group.label}><TableCell>{group.label}</TableCell><TableCell className="text-right">{group.days}</TableCell><TableCell className="text-right">{formatReference(group.days && group.nonCanceled !== null ? group.nonCanceled / group.days : null)}</TableCell><TableCell className="text-right">{formatReference(group.avgGuests)}</TableCell></TableRow>)}</TableBody></Table></ResponsiveTableContainer>
+          </div>
+          <section aria-labelledby="report-forecast-heading" aria-busy={forecastLoading} className="space-y-4 border-t border-divider pt-6">
+            <div className="flex flex-wrap items-baseline justify-between gap-3"><h3 id="report-forecast-heading" className="editorial-section-title">Next 7 days · forecast</h3><Link to="/dss/demand-forecast" className="dashboard-screen-only text-[13px] text-brand hover:underline">Open forecasting →</Link></div>
+            <p className="text-[12px] text-ink-secondary">Cutoff: {formatDate(end)}. Forecast covers all arrival days; the historical arrival day filter does not apply.</p>
+            {forecastLoading ? <Skeleton className="h-24 w-full" /> : forecast ? <>
+              <div className="grid grid-cols-2 gap-6"><ReportKpi label="Predicted guests" value={formatGuests(forecast.total)} unit="guests" subtext={`${formatDate(forecast.rows[0].forecast_date)} – ${formatDate(forecast.rows[6].forecast_date)}`} /><ReportKpi label="Forecast peak" valueType="date" value={formatDate(forecast.peakDays[0])} subtext={forecast.peakDays.length > 1 ? `${forecast.peakDays.length} tied peak dates` : 'Predicted arrival demand'} /></div>
+              <ResponsiveTableContainer ariaLabel="Next seven days forecast"><Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead className="text-right">Predicted guests</TableHead><TableHead>Demand level</TableHead></TableRow></TableHeader><TableBody>{forecast.rows.map(row => <TableRow key={row.forecast_date}><TableCell className="whitespace-nowrap">{formatDate(row.forecast_date)}</TableCell><TableCell className="text-right">{formatGuests(row.predicted_guest_count ?? row.predicted_arrivals)}</TableCell><TableCell>{demandLabel(row.demand_level)}</TableCell></TableRow>)}</TableBody></Table></ResponsiveTableContainer>
+            </> : <p role="status" className="rounded-[4px] border border-divider p-4 text-[13px] text-ink-secondary">Forecast unavailable for this cutoff. {forecastError || 'No supported forecast was returned.'} Historical figures remain available.</p>}
+          </section>
+        </section>}
+      </>}
     </div>
   );
 }

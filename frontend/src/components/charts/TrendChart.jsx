@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { forecastDomain, forecastLabelPosition, forecastNumber } from './forecastGeometry.js';
+import { layoutAxisLabels } from './axisLabels.js';
 import { formatChartAxis, formatDate, formatGuests, formatReference } from '../../lib/dssFormat.mjs';
 
 /**
@@ -115,6 +116,7 @@ export default function TrendChart({
   measure = "observed_total_guests",
   measureLabel = "Observed Guests",
   height: customHeight = 580,
+  fontSize = 11,
   onDrill,
   canDrill = false,
 }) {
@@ -167,7 +169,7 @@ export default function TrendChart({
       return;
     }
 
-    const pad = { top: 20, right: 6, bottom: 38, left: 44 };
+    const pad = { top: 20, right: 6, bottom: 38 + (fontSize - 11) * 2, left: 44 + (fontSize - 11) * 3 };
     const plotW = Math.max(100, width - pad.left - pad.right);
     const plotH = Math.max(80, height - pad.top - pad.bottom);
 
@@ -178,7 +180,7 @@ export default function TrendChart({
 
     // Draw horizontal gridlines & Y-axis labels
     const ticks = height >= 500 ? 6 : 4;
-    ctx.font = "11px 'JetBrains Mono', monospace";
+    ctx.font = `${fontSize}px Inter, sans-serif`;
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
 
@@ -301,7 +303,7 @@ export default function TrendChart({
       ctx.restore();
 
       ctx.fillStyle = PALETTE.inkSecondary;
-      ctx.font = "11px 'JetBrains Mono', monospace";
+      ctx.font = `${fontSize}px Inter, sans-serif`;
       ctx.textAlign = "right";
       ctx.fillText(
         `Mean: ${fmtNum(avgVal, measure === "cancellation_rate" || measure === "avg_adr" ? 1 : 0)}`,
@@ -312,18 +314,17 @@ export default function TrendChart({
 
     // X-axis labels
     ctx.fillStyle = PALETTE.inkSecondary;
-    ctx.font = "11px Inter, sans-serif";
+    ctx.font = `${fontSize}px Inter, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    const maxLabels = Math.max(4, Math.floor(plotW / 68));
-    const stride = Math.max(1, Math.ceil(series.length / maxLabels));
-
-    series.forEach((item, idx) => {
-      if (idx % stride !== 0 && idx !== series.length - 1) return;
-      const cx = pad.left + idx * stepX + stepX / 2;
-      ctx.fillText(String(item.period_label || ""), cx, pad.top + plotH + 10);
+    const labels = series.map((item, idx) => {
+      const text = String(item.period_label || "");
+      return { text, x: pad.left + idx * stepX + stepX / 2, width: ctx.measureText(text).width };
     });
-  }, [series, width, height, grain, measure, hovered, PALETTE]);
+    layoutAxisLabels(labels, pad.left, pad.left + plotW).forEach(label => {
+      ctx.fillText(label.text, label.x, pad.top + plotH + 10);
+    });
+  }, [series, width, height, grain, measure, hovered, PALETTE, fontSize]);
 
   const handleMouseMove = (e) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -375,33 +376,33 @@ export default function TrendChart({
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Observed guests</span>
-            <span className="font-mono font-semibold tabular-nums">
+            <span className="font-sans font-semibold tabular-nums">
               {fmtNum(hovered.item.observed_total_guests ?? hovered.item.active_guests)}
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Non-canceled bookings</span>
-            <span className="font-mono font-semibold tabular-nums">
+            <span className="font-sans font-semibold tabular-nums">
               {fmtNum(hovered.item.non_canceled_bookings ?? hovered.item.arrivals)}
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Stay nights</span>
-            <span className="font-mono tabular-nums">
+            <span className="font-sans tabular-nums">
               {fmtNum(hovered.item.observed_total_stay_nights ?? hovered.item.room_nights)}
             </span>
           </div>
           {hovered.item.cancellation_rate != null && (
             <div className="flex justify-between gap-4">
               <span className="text-ink-secondary">Cancellation rate</span>
-              <span className="font-mono tabular-nums">
+              <span className="font-sans tabular-nums">
                 {(Number(hovered.item.cancellation_rate) * 100).toFixed(1)}%
               </span>
             </div>
           )}
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Avg ADR</span>
-            <span className="font-mono tabular-nums">
+            <span className="font-sans tabular-nums">
               €{fmtNum(hovered.item.avg_adr ?? hovered.item.adr, 2)}
             </span>
           </div>
@@ -417,91 +418,56 @@ export default function TrendChart({
 }
 
 /**
- * 2. Canvas Horizontal Bar Chart (DESIGN.md Section 5.2 & 5.4)
+ * 2. Responsive horizontal comparisons with readable, wrapping HTML labels.
  * Used for Geographic Markets (DO-A05), Weather Bands (DO-A04),
  * Holiday Comparison (DO-A03), and Model MAE Benchmark (ML-03).
  */
-export function CanvasHorizontalBarChart({
+export function HorizontalBarChart({
   items = [],
+  scaleMax = 0,
   height: customHeight,
   valueFormatter = (v) => fmtNum(v),
   ariaLabel = "Horizontal bar comparison chart",
 }) {
-  const containerRef = useRef(null);
-  const canvasRef = useRef(null);
-  const rowHeight = 36;
-  const computedHeight = customHeight || Math.max(120, items.length * rowHeight + 24);
-  const { width, height } = useCanvasSize(containerRef, computedHeight);
-  const PALETTE = useThemePalette();
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    const ctx = canvas.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, width, height);
-
-    if (!items.length) return;
-
-    const labelColW = Math.min(180, Math.max(110, Math.floor(width * 0.24)));
-    const rightValW = 105;
-    const barAreaW = Math.max(80, width - labelColW - rightValW - 16);
-    const maxVal = Math.max(...items.map((x) => Number(x.value || 0)), 1);
-
-    items.forEach((item, idx) => {
-      const yCenter = 16 + idx * rowHeight + rowHeight / 2;
-      const barH = 14;
-      const barY = yCenter - barH / 2;
-      const val = Number(item.value || 0);
-      const barW = Math.max(3, (val / maxVal) * barAreaW);
-
-      // Category label
-      ctx.fillStyle = PALETTE.inkPrimary;
-      ctx.font = item.highlight ? "600 12px Inter, sans-serif" : "400 12px Inter, sans-serif";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      const labelText =
-        item.label.length > 26 ? `${item.label.slice(0, 25)}…` : item.label;
-      ctx.fillText(labelText, 4, yCenter);
-
-      // Background track
-      ctx.fillStyle = PALETTE.surfaceSubtle;
-      ctx.fillRect(labelColW, barY, barAreaW, barH);
-
-      // Bar fill (resolves semantic token key like 'series1' or falls back to positional series)
-      const resolvedItemColor = item.color ? PALETTE[item.color] || item.color : null;
-      ctx.fillStyle =
-        resolvedItemColor ||
-        (item.highlight
-          ? PALETTE.series1
-          : idx === 0
-            ? PALETTE.series1
-            : idx === 1
-              ? PALETTE.series3
-              : PALETTE.series5);
-      ctx.fillRect(labelColW, barY, barW, barH);
-
-      // Direct value label on the right
-      ctx.fillStyle = PALETTE.inkPrimary;
-      ctx.font = "500 12px 'JetBrains Mono', monospace";
-      ctx.textAlign = "right";
-      const formatted = item.formattedValue || valueFormatter(val);
-      ctx.fillText(formatted, width - 4, yCenter);
-    });
-  }, [items, width, height, valueFormatter, PALETTE]);
+  const numericValue = (item) => Number.isFinite(Number(item.value)) ? Number(item.value) : 0;
+  const maxValue = Math.max(Number(scaleMax) || 0, ...items.map(numericValue), 1);
+  const colors = {
+    series1: "var(--color-series-1)",
+    series2: "var(--color-series-2)",
+    series3: "var(--color-series-3)",
+    series4: "var(--color-series-4)",
+    series5: "var(--color-series-5)",
+  };
 
   return (
-    <div ref={containerRef} className="w-full select-none">
-      <canvas
-        className="block w-full"
-        ref={canvasRef}
-        style={{ width: `${width}px`, height: `${height}px` }}
-        role="img"
-        aria-label={ariaLabel}
-      />
+    <div className="comparison-chart min-w-0 w-full" role="group" aria-label={ariaLabel}>
+      {items.length === 0 ? (
+        <p className="py-4 text-[12px] text-ink-secondary">No data for the selected period.</p>
+      ) : (
+        <ul className="space-y-4 py-3" style={{ minHeight: customHeight }}>
+          {items.map((item, index) => {
+            const value = numericValue(item);
+            const defaultColor = item.highlight || index === 0 ? colors.series1 : index === 1 ? colors.series3 : colors.series5;
+            return (
+              <li key={`${item.label}-${index}`} className="comparison-chart-row text-[12px]">
+                <span className={`comparison-chart-label text-ink-primary ${item.highlight ? "font-semibold" : "font-normal"}`}>
+                  {item.label}
+                </span>
+                <div className="comparison-chart-track h-3.5 min-w-0 bg-surface-subtle" aria-hidden="true">
+                  <div className="h-full" style={{
+                    width: `${Math.max(0, Math.min(100, value / maxValue * 100))}%`,
+                    minWidth: value > 0 ? 2 : 0,
+                    backgroundColor: colors[item.color] || item.color || defaultColor,
+                  }} />
+                </div>
+                <span className="comparison-chart-value whitespace-nowrap text-right font-medium tabular-nums text-ink-primary">
+                  {item.formattedValue || valueFormatter(value)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
@@ -510,7 +476,7 @@ export function CanvasHorizontalBarChart({
  * 3. Canvas Weekly Workload Profile Chart for OperationsReportsPage (DO-R01 / DO-R02)
  * Renders 7-day grouped bars (Observed Guests & Non-Canceled Bookings) + Stay Nights line on HTML5 Canvas.
  */
-export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight = 240 }) {
+export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight = 240, metric = "guests" }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const hitBoxesRef = useRef([]);
@@ -531,108 +497,51 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
     hitBoxesRef.current = [];
     if (!dailyRows.length) return;
 
-    const pad = { top: 24, right: 6, bottom: 16, left: 40 };
-    const plotW = Math.max(100, width - pad.left - pad.right);
-    const plotH = Math.max(80, height - pad.top - pad.bottom);
-
-    const guestsArr = dailyRows.map((r) => Number(r.observed_total_guests ?? r.active_guests ?? 0));
-    const bookingsArr = dailyRows.map((r) => Number(r.non_canceled_bookings ?? r.arrivals ?? 0));
-    const stayNightsArr = dailyRows.map((r) => Number(r.observed_total_stay_nights ?? r.room_nights ?? 0));
-    const maxVal = Math.max(...guestsArr, ...stayNightsArr, 1) * 1.15;
-
-    // Grid lines
-    ctx.font = "11px 'JetBrains Mono', monospace";
+    const pad = { top: 24, right: 16, bottom: 46, left: 54 };
+    const plotW = Math.max(1, width - pad.left - pad.right);
+    const plotH = Math.max(1, height - pad.top - pad.bottom);
+    const values = dailyRows.map(row => metric === "nights"
+      ? Number(row.observed_total_stay_nights ?? row.room_nights ?? 0)
+      : metric === "bookings" ? Number(row.non_canceled_bookings ?? row.arrivals ?? 0)
+      : Number(row.observed_total_guests ?? row.active_guests ?? 0));
+    const maxVal = Math.max(...values, 1) * 1.15;
+    ctx.font = "13px Inter, sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     for (let i = 0; i <= 3; i++) {
-      const ratio = i / 3;
-      const y = pad.top + plotH - ratio * plotH;
+      const y = pad.top + plotH - (i / 3) * plotH;
       ctx.strokeStyle = PALETTE.divider;
-      ctx.beginPath();
-      ctx.moveTo(pad.left, y);
-      ctx.lineTo(pad.left + plotW, y);
-      ctx.stroke();
-
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + plotW, y); ctx.stroke();
       ctx.fillStyle = PALETTE.inkSecondary;
-      ctx.fillText(Math.round(maxVal * ratio).toString(), pad.left - 8, y);
+      ctx.fillText(formatChartAxis(maxVal * i / 3), pad.left - 8, y);
     }
-
+    ctx.textAlign = "left";
+    ctx.fillText(metric === "nights" ? "Nights" : metric === "bookings" ? "Bookings" : "Guests", pad.left, 10);
     const stepX = plotW / dailyRows.length;
-    const barW = Math.max(4, Math.floor(stepX * 0.42));
-    const barGap = stepX < 18 ? 1 : 2;
-
-    // Grouped bars: Observed Guests (Series 1) & Non-canceled bookings (Series 3)
+    const barW = Math.max(1, stepX * 0.64);
+    const labelStep = Math.max(1, Math.ceil(dailyRows.length / Math.max(1, Math.floor(plotW / 96))));
     dailyRows.forEach((row, idx) => {
       const cx = pad.left + idx * stepX + stepX / 2;
-      const gVal = guestsArr[idx];
-      const bVal = bookingsArr[idx];
-      const snVal = stayNightsArr[idx];
-      const gH = Math.max(2, (gVal / maxVal) * plotH);
-      const bH = Math.max(2, (bVal / maxVal) * plotH);
-      const topY = pad.top + plotH - Math.max(gH, bH, (snVal / maxVal) * plotH);
-
-      const isPeakOrHoliday = row.is_peak_day || row.is_holiday || row.is_pt_holiday;
-      const isHovered = hovered?.idx === idx;
-
-      if (isHovered) {
-        ctx.fillStyle = PALETTE.hoverFill;
-        ctx.fillRect(pad.left + idx * stepX, pad.top, stepX, plotH);
-      }
-
-      // Bar 1: Observed Guests
-      ctx.fillStyle = isPeakOrHoliday ? PALETTE.series2 : PALETTE.series1;
-      ctx.globalAlpha = isHovered ? 0.85 : 1.0;
-      ctx.fillRect(cx - barW - barGap, pad.top + plotH - gH, barW, gH);
-
-      // Bar 2: Non-Canceled Bookings
-      ctx.fillStyle = PALETTE.series3;
-      ctx.fillRect(cx + barGap, pad.top + plotH - bH, barW, bH);
-      ctx.globalAlpha = 1.0;
-
-      // Value label above guest bar (only when sparse or hovered to prevent crowding)
-      if (dailyRows.length <= 10 || isHovered) {
-        ctx.fillStyle = PALETTE.inkPrimary;
-        ctx.font = "600 10px 'JetBrains Mono', monospace";
+      const barH = values[idx] / maxVal * plotH;
+      const cy = pad.top + plotH - barH;
+      ctx.fillStyle = hovered?.idx === idx ? PALETTE.series3 : PALETTE.series1;
+      ctx.fillRect(cx - barW / 2, cy, barW, barH);
+      if (dailyRows.length <= 10) {
+        ctx.font = "600 13px Inter, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(gVal.toString(), cx - barW / 2 - barGap, pad.top + plotH - gH - 8);
+        ctx.fillStyle = PALETTE.inkPrimary;
+        ctx.fillText(formatGuests(values[idx]), cx, cy - 9);
       }
-
-      hitBoxesRef.current.push({
-        x: pad.left + idx * stepX,
-        y: pad.top,
-        w: stepX,
-        h: plotH,
-        row,
-        idx,
-        cx,
-        cy: topY,
-      });
+      if (idx % labelStep === 0) {
+        ctx.font = "13px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = PALETTE.inkSecondary;
+        const labelX = Math.min(width - 28, Math.max(28, cx));
+        ctx.fillText(formatDate(row.full_date || row.stay_date, true), labelX, pad.top + plotH + 22);
+      }
+      hitBoxesRef.current.push({ x: pad.left + idx * stepX, y: pad.top, w: stepX, h: plotH, row, idx, cx, cy });
     });
-
-    // Overlay line for Stay Nights (Series 4)
-    ctx.beginPath();
-    dailyRows.forEach((_, idx) => {
-      const cx = pad.left + idx * stepX + stepX / 2;
-      const snVal = stayNightsArr[idx];
-      const y = pad.top + plotH - (snVal / maxVal) * plotH;
-      if (idx === 0) ctx.moveTo(cx, y);
-      else ctx.lineTo(cx, y);
-    });
-    ctx.strokeStyle = PALETTE.series4;
-    ctx.lineWidth = 1.75;
-    ctx.stroke();
-
-    dailyRows.forEach((_, idx) => {
-      const cx = pad.left + idx * stepX + stepX / 2;
-      const snVal = stayNightsArr[idx];
-      const y = pad.top + plotH - (snVal / maxVal) * plotH;
-      const isHovered = hovered?.idx === idx;
-      ctx.beginPath();
-      ctx.arc(cx, y, isHovered ? 4.5 : 3, 0, Math.PI * 2);
-      ctx.fillStyle = PALETTE.series4;
-      ctx.fill();
-    });
-  }, [dailyRows, width, height, hovered, PALETTE]);
+  }, [dailyRows, width, height, hovered, PALETTE, metric]);
 
   const handleMouseMove = (e) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -659,7 +568,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHovered(null)}
         role="img"
-        aria-label="Daily observed guests, non-canceled bookings, and stay-nights trajectory chart"
+        aria-label={`Daily ${metric === "nights" ? "stay nights" : metric === "bookings" ? "non-canceled bookings" : "observed guests"} by arrival date. Exact values are available in the daily demand table.`}
       />
 
       {hovered?.row && (
@@ -676,7 +585,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
               {hovered.row.day_of_week ? ` (${String(hovered.row.day_of_week).slice(0, 3)})` : ""}
             </span>
             <span className="font-mono text-[11px] text-ink-secondary">
-              {hovered.row.guest_data_status || "COMPLETE"}
+              {hovered.row.guest_data_status || "Unknown coverage"}
             </span>
           </div>
           {(hovered.row.is_peak_day || hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName) && (
@@ -690,33 +599,33 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
           )}
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Observed guests</span>
-            <span className="font-mono font-semibold tabular-nums">
+            <span className="font-sans font-semibold tabular-nums">
               {fmtNum(hovered.row.observed_total_guests ?? hovered.row.active_guests)}
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Non-canceled bookings</span>
-            <span className="font-mono font-semibold tabular-nums">
+            <span className="font-sans font-semibold tabular-nums">
               {fmtNum(hovered.row.non_canceled_bookings ?? hovered.row.arrivals)}
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Stay nights</span>
-            <span className="font-mono tabular-nums">
+            <span className="font-sans tabular-nums">
               {fmtNum(hovered.row.observed_total_stay_nights ?? hovered.row.room_nights)}
             </span>
           </div>
           {hovered.row.cancellation_rate != null && (
             <div className="flex justify-between gap-4">
               <span className="text-ink-secondary">Cancellation rate</span>
-              <span className="font-mono tabular-nums">
+              <span className="font-sans tabular-nums">
                 {(Number(hovered.row.cancellation_rate) * 100).toFixed(1)}%
               </span>
             </div>
           )}
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Avg ADR</span>
-            <span className="font-mono tabular-nums">
+            <span className="font-sans tabular-nums">
               €{fmtNum(hovered.row.avg_adr ?? hovered.row.adr, 2)}
             </span>
           </div>
@@ -792,7 +701,7 @@ export function CanvasForecastChart({
     };
 
     // Grid lines & Y-axis labels
-    ctx.font = "11px 'JetBrains Mono', monospace";
+    ctx.font = "12px Inter, sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     for (let i = 0; i <= 4; i++) {
@@ -825,7 +734,7 @@ export function CanvasForecastChart({
       ctx.restore();
 
       ctx.fillStyle = PALETTE.inkSecondary;
-      ctx.font = "500 10px 'JetBrains Mono', monospace";
+      ctx.font = "500 11px Inter, sans-serif";
       ctx.textAlign = "left";
       ctx.fillText("Cutoff T", cutoffX + 5, pad.top + 8);
     }
@@ -845,7 +754,7 @@ export function CanvasForecastChart({
       ctx.restore();
 
       ctx.fillStyle = color;
-      ctx.font = "500 10px 'JetBrains Mono', monospace";
+      ctx.font = "500 11px Inter, sans-serif";
       drawDataLabel(label, pad.left + plotW - ctx.measureText(label).width / 2 - 4, y);
     };
 
@@ -955,7 +864,7 @@ export function CanvasForecastChart({
         ctx.stroke();
 
         ctx.fillStyle = isHigh ? PALETTE.critical : PALETTE.inkPrimary;
-        ctx.font = "600 11px 'JetBrains Mono', monospace";
+        ctx.font = "600 12px Inter, sans-serif";
         drawDataLabel(formatGuests(val), x, y);
       });
     }
@@ -972,20 +881,20 @@ export function CanvasForecastChart({
       })),
     ];
 
-    const stride = allDates.length > 12 ? 2 : 1;
-    allDates.forEach((d, idx) => {
-      if (idx % stride !== 0 && idx !== allDates.length - 1 && idx !== historySlice.length - 1) {
-        return;
-      }
-      const x = toX(idx);
-      ctx.fillStyle = idx >= historySlice.length ? PALETTE.inkPrimary : PALETTE.inkSecondary;
-      ctx.font = "500 11px 'JetBrains Mono', monospace";
+    ctx.font = "500 12px Inter, sans-serif";
+    const dateLabels = allDates.map((date, index) => ({
+      text: date.date, sub: date.sub, index,
+      x: toX(index), width: ctx.measureText(date.date).width,
+    }));
+    layoutAxisLabels(dateLabels, plot.left, plot.right).forEach(label => {
+      ctx.fillStyle = label.index >= historySlice.length ? PALETTE.inkPrimary : PALETTE.inkSecondary;
+      ctx.font = "500 12px Inter, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(d.date, x, pad.top + plotH + 14);
+      ctx.fillText(label.text, label.x, pad.top + plotH + 14);
 
       ctx.fillStyle = PALETTE.inkMuted;
-      ctx.font = "400 10px Inter, sans-serif";
-      ctx.fillText(d.sub, x, pad.top + plotH + 28);
+      ctx.font = "400 11px Inter, sans-serif";
+      ctx.fillText(label.sub, label.x, pad.top + plotH + 30);
     });
   }, [recentHistory, forecasts, thresholdRule, targetMetric, width, height, PALETTE]);
 
