@@ -1,7 +1,16 @@
-import React, { useEffect, useRef, useState } from "react";
-import { forecastDomain, forecastLabelPosition, forecastNumber } from './forecastGeometry.js';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  forecastDomain,
+  forecastLabelPosition,
+  forecastNumber,
+} from './forecastGeometry.js';
 import { layoutAxisLabels } from './axisLabels.js';
-import { formatChartAxis, formatDate, formatGuests, formatReference } from '../../lib/dssFormat.mjs';
+import {
+  formatChartAxis,
+  formatDate,
+  formatGuests,
+  formatReference,
+} from '../../lib/dssFormat.mjs';
 
 /**
  * Lumina Analytics Color System (DESIGN.md Section 2.2 & 5.3)
@@ -9,30 +18,33 @@ import { formatChartAxis, formatDate, formatGuests, formatReference } from '../.
  * adapt seamlessly between Light Mode and Dark Mode without hardcoded hex literals.
  */
 function readThemePalette() {
-  if (typeof window === "undefined" || typeof document === "undefined") {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
     return {};
   }
   const styles = window.getComputedStyle(document.documentElement);
   const token = (name) => styles.getPropertyValue(name).trim();
-  const brandRgbRaw = token("--brand-rgb").split(/\s+/).filter(Boolean).join(", ");
+  const brandRgbRaw = token('--brand-rgb')
+    .split(/\s+/)
+    .filter(Boolean)
+    .join(', ');
 
   return {
-    series1: token("--color-series-1"),
-    series2: token("--color-series-2"),
-    series3: token("--color-series-3"),
-    series4: token("--color-series-4"),
-    series5: token("--color-series-5"),
-    success: token("--color-status-success"),
-    warning: token("--color-status-warning"),
-    critical: token("--color-status-critical"),
-    inkPrimary: token("--color-ink-primary"),
-    inkSecondary: token("--color-ink-secondary"),
-    inkMuted: token("--color-ink-muted"),
-    divider: token("--color-divider"),
-    surface: token("--color-surface-primary"),
-    surfaceSubtle: token("--color-surface-subtle"),
-    areaFill: brandRgbRaw ? `rgba(${brandRgbRaw}, 0.10)` : "transparent",
-    hoverFill: brandRgbRaw ? `rgba(${brandRgbRaw}, 0.08)` : "transparent",
+    series1: token('--color-series-1'),
+    series2: token('--color-series-2'),
+    series3: token('--color-series-3'),
+    series4: token('--color-series-4'),
+    series5: token('--color-series-5'),
+    success: token('--color-status-success'),
+    warning: token('--color-status-warning'),
+    critical: token('--color-status-critical'),
+    inkPrimary: token('--color-ink-primary'),
+    inkSecondary: token('--color-ink-secondary'),
+    inkMuted: token('--color-ink-muted'),
+    divider: token('--color-divider'),
+    surface: token('--color-surface-primary'),
+    surfaceSubtle: token('--color-surface-subtle'),
+    areaFill: brandRgbRaw ? `rgba(${brandRgbRaw}, 0.10)` : 'transparent',
+    hoverFill: brandRgbRaw ? `rgba(${brandRgbRaw}, 0.08)` : 'transparent',
   };
 }
 
@@ -45,27 +57,27 @@ function useThemePalette() {
 
     const root = document.documentElement;
     const observer =
-      typeof MutationObserver !== "undefined"
+      typeof MutationObserver !== 'undefined'
         ? new MutationObserver(update)
         : null;
     if (observer && root) {
       observer.observe(root, {
         attributes: true,
-        attributeFilter: ["class", "style"],
+        attributeFilter: ['class', 'style'],
       });
     }
 
     const mql =
-      typeof window !== "undefined" && window.matchMedia
-        ? window.matchMedia("(prefers-color-scheme: dark)")
+      typeof window !== 'undefined' && window.matchMedia
+        ? window.matchMedia('(prefers-color-scheme: dark)')
         : null;
     if (mql) {
-      mql.addEventListener("change", update);
+      mql.addEventListener('change', update);
     }
 
     return () => {
       if (observer) observer.disconnect();
-      if (mql) mql.removeEventListener("change", update);
+      if (mql) mql.removeEventListener('change', update);
     };
   }, []);
 
@@ -73,7 +85,7 @@ function useThemePalette() {
 }
 
 const fmtNum = (n, decimals = 0) => {
-  if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+  if (n === null || n === undefined || Number.isNaN(Number(n))) return '—';
   return Number(n).toLocaleString(undefined, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -89,17 +101,20 @@ function useCanvasSize(containerRef, defaultHeight = 280) {
     const update = () => {
       const rect = el.getBoundingClientRect();
       if (rect.width > 0) {
-        setSize({ width: Math.floor(el.clientWidth || rect.width), height: defaultHeight });
+        setSize({
+          width: Math.floor(el.clientWidth || rect.width),
+          height: defaultHeight,
+        });
       }
     };
     update();
-    if (typeof ResizeObserver !== "undefined") {
+    if (typeof ResizeObserver !== 'undefined') {
       const observer = new ResizeObserver(update);
       observer.observe(el);
       return () => observer.disconnect();
     }
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, [containerRef, defaultHeight]);
 
   return size;
@@ -112,9 +127,9 @@ function useCanvasSize(containerRef, defaultHeight = 280) {
  */
 export default function TrendChart({
   series = [],
-  grain = "month",
-  measure = "observed_total_guests",
-  measureLabel = "Observed Guests",
+  grain = 'month',
+  measure = 'observed_total_guests',
+  measureLabel = 'Observed Guests',
   height: customHeight = 580,
   fontSize = 11,
   onDrill,
@@ -129,22 +144,22 @@ export default function TrendChart({
 
   const getVal = (item) => {
     if (!item) return 0;
-    if (measure === "cancellation_rate") {
+    if (measure === 'cancellation_rate') {
       return Number(((item.cancellation_rate ?? 0) * 100).toFixed(2));
     }
     if (item[measure] !== undefined && item[measure] !== null) {
       return Number(item[measure]);
     }
-    if (measure === "observed_total_guests") {
+    if (measure === 'observed_total_guests') {
       return Number(item.observed_total_guests ?? item.active_guests ?? 0);
     }
-    if (measure === "observed_total_stay_nights" || measure === "room_nights") {
+    if (measure === 'observed_total_stay_nights' || measure === 'room_nights') {
       return Number(item.observed_total_stay_nights ?? item.room_nights ?? 0);
     }
-    if (measure === "non_canceled_bookings" || measure === "arrivals") {
+    if (measure === 'non_canceled_bookings' || measure === 'arrivals') {
       return Number(item.non_canceled_bookings ?? item.arrivals ?? 0);
     }
-    if (measure === "avg_adr" || measure === "adr") {
+    if (measure === 'avg_adr' || measure === 'adr') {
       return Number(item.avg_adr ?? item.adr ?? 0);
     }
     return Number(item.observed_total_guests ?? item.room_nights ?? 0);
@@ -156,20 +171,29 @@ export default function TrendChart({
     const dpr = window.devicePixelRatio || 1;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
     hitBoxesRef.current = [];
     if (!series.length) {
       ctx.fillStyle = PALETTE.inkSecondary;
-      ctx.font = "13px Inter, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("No time-series data for the selected slice.", width / 2, height / 2);
+      ctx.font = '13px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(
+        'No time-series data for the selected slice.',
+        width / 2,
+        height / 2
+      );
       return;
     }
 
-    const pad = { top: 20, right: 6, bottom: 38 + (fontSize - 11) * 2, left: 44 + (fontSize - 11) * 3 };
+    const pad = {
+      top: 20,
+      right: 6,
+      bottom: 38 + (fontSize - 11) * 2,
+      left: 44 + (fontSize - 11) * 3,
+    };
     const plotW = Math.max(100, width - pad.left - pad.right);
     const plotH = Math.max(80, height - pad.top - pad.bottom);
 
@@ -181,8 +205,8 @@ export default function TrendChart({
     // Draw horizontal gridlines & Y-axis labels
     const ticks = height >= 500 ? 6 : 4;
     ctx.font = `${fontSize}px Inter, sans-serif`;
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
 
     for (let i = 0; i <= ticks; i++) {
       const ratio = i / ticks;
@@ -198,9 +222,9 @@ export default function TrendChart({
 
       ctx.fillStyle = PALETTE.inkSecondary;
       const labelStr =
-        measure === "cancellation_rate"
+        measure === 'cancellation_rate'
           ? `${val.toFixed(0)}%`
-          : measure === "avg_adr"
+          : measure === 'avg_adr'
             ? `€${val.toFixed(0)}`
             : val >= 1000
               ? `${(val / 1000).toFixed(1)}k`
@@ -208,7 +232,7 @@ export default function TrendChart({
       ctx.fillText(labelStr, pad.left - 8, y);
     }
 
-    const isLineMode = series.length > 28 || grain === "day";
+    const isLineMode = series.length > 28 || grain === 'day';
     const stepX = plotW / series.length;
 
     if (isLineMode) {
@@ -231,7 +255,9 @@ export default function TrendChart({
 
       // Main line
       ctx.beginPath();
-      pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+      pts.forEach((p, i) =>
+        i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)
+      );
       ctx.strokeStyle = PALETTE.series1;
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -242,7 +268,13 @@ export default function TrendChart({
         const isHovered = hovered?.idx === p.idx;
         if (isHighlighted || isHovered || series.length <= 45) {
           ctx.beginPath();
-          ctx.arc(p.x, p.y, isHovered ? 4.5 : isHighlighted ? 3.5 : 2.5, 0, Math.PI * 2);
+          ctx.arc(
+            p.x,
+            p.y,
+            isHovered ? 4.5 : isHighlighted ? 3.5 : 2.5,
+            0,
+            Math.PI * 2
+          );
           ctx.fillStyle = isHighlighted ? PALETTE.series2 : PALETTE.series1;
           ctx.fill();
         }
@@ -304,9 +336,9 @@ export default function TrendChart({
 
       ctx.fillStyle = PALETTE.inkSecondary;
       ctx.font = `${fontSize}px Inter, sans-serif`;
-      ctx.textAlign = "right";
+      ctx.textAlign = 'right';
       ctx.fillText(
-        `Mean: ${fmtNum(avgVal, measure === "cancellation_rate" || measure === "avg_adr" ? 1 : 0)}`,
+        `Mean: ${fmtNum(avgVal, measure === 'cancellation_rate' || measure === 'avg_adr' ? 1 : 0)}`,
         pad.left + plotW - 4,
         Math.max(pad.top + 10, avgY - 7)
       );
@@ -315,13 +347,17 @@ export default function TrendChart({
     // X-axis labels
     ctx.fillStyle = PALETTE.inkSecondary;
     ctx.font = `${fontSize}px Inter, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
     const labels = series.map((item, idx) => {
-      const text = String(item.period_label || "");
-      return { text, x: pad.left + idx * stepX + stepX / 2, width: ctx.measureText(text).width };
+      const text = String(item.period_label || '');
+      return {
+        text,
+        x: pad.left + idx * stepX + stepX / 2,
+        width: ctx.measureText(text).width,
+      };
     });
-    layoutAxisLabels(labels, pad.left, pad.left + plotW).forEach(label => {
+    layoutAxisLabels(labels, pad.left, pad.left + plotW).forEach((label) => {
       ctx.fillText(label.text, label.x, pad.top + plotH + 10);
     });
   }, [series, width, height, grain, measure, hovered, PALETTE, fontSize]);
@@ -351,7 +387,7 @@ export default function TrendChart({
         style={{
           width: `${width}px`,
           height: `${height}px`,
-          cursor: canDrill && hovered ? "pointer" : "default",
+          cursor: canDrill && hovered ? 'pointer' : 'default',
         }}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHovered(null)}
@@ -371,25 +407,32 @@ export default function TrendChart({
           <div className="flex items-center justify-between gap-4 border-b border-divider pb-1 font-semibold">
             <span>{hovered.item.period_label}</span>
             <span className="font-mono text-[11px] text-ink-secondary">
-              {hovered.item.guest_data_status || "COMPLETE"}
+              {hovered.item.guest_data_status || 'COMPLETE'}
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Observed guests</span>
             <span className="font-sans font-semibold tabular-nums">
-              {fmtNum(hovered.item.observed_total_guests ?? hovered.item.active_guests)}
+              {fmtNum(
+                hovered.item.observed_total_guests ?? hovered.item.active_guests
+              )}
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Non-canceled bookings</span>
             <span className="font-sans font-semibold tabular-nums">
-              {fmtNum(hovered.item.non_canceled_bookings ?? hovered.item.arrivals)}
+              {fmtNum(
+                hovered.item.non_canceled_bookings ?? hovered.item.arrivals
+              )}
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Stay nights</span>
             <span className="font-sans tabular-nums">
-              {fmtNum(hovered.item.observed_total_stay_nights ?? hovered.item.room_nights)}
+              {fmtNum(
+                hovered.item.observed_total_stay_nights ??
+                  hovered.item.room_nights
+              )}
             </span>
           </div>
           {hovered.item.cancellation_rate != null && (
@@ -427,38 +470,66 @@ export function HorizontalBarChart({
   scaleMax = 0,
   height: customHeight,
   valueFormatter = (v) => fmtNum(v),
-  ariaLabel = "Horizontal bar comparison chart",
+  ariaLabel = 'Horizontal bar comparison chart',
 }) {
-  const numericValue = (item) => Number.isFinite(Number(item.value)) ? Number(item.value) : 0;
-  const maxValue = Math.max(Number(scaleMax) || 0, ...items.map(numericValue), 1);
+  const numericValue = (item) =>
+    Number.isFinite(Number(item.value)) ? Number(item.value) : 0;
+  const maxValue = Math.max(
+    Number(scaleMax) || 0,
+    ...items.map(numericValue),
+    1
+  );
   const colors = {
-    series1: "var(--color-series-1)",
-    series2: "var(--color-series-2)",
-    series3: "var(--color-series-3)",
-    series4: "var(--color-series-4)",
-    series5: "var(--color-series-5)",
+    series1: 'var(--color-series-1)',
+    series2: 'var(--color-series-2)',
+    series3: 'var(--color-series-3)',
+    series4: 'var(--color-series-4)',
+    series5: 'var(--color-series-5)',
   };
 
   return (
-    <div className="comparison-chart min-w-0 w-full" role="group" aria-label={ariaLabel}>
+    <div
+      className="comparison-chart min-w-0 w-full"
+      role="group"
+      aria-label={ariaLabel}
+    >
       {items.length === 0 ? (
-        <p className="py-4 text-[12px] text-ink-secondary">No data for the selected period.</p>
+        <p className="py-4 text-[12px] text-ink-secondary">
+          No data for the selected period.
+        </p>
       ) : (
         <ul className="space-y-4 py-3" style={{ minHeight: customHeight }}>
           {items.map((item, index) => {
             const value = numericValue(item);
-            const defaultColor = item.highlight || index === 0 ? colors.series1 : index === 1 ? colors.series3 : colors.series5;
+            const defaultColor =
+              item.highlight || index === 0
+                ? colors.series1
+                : index === 1
+                  ? colors.series3
+                  : colors.series5;
             return (
-              <li key={`${item.label}-${index}`} className="comparison-chart-row text-[12px]">
-                <span className={`comparison-chart-label text-ink-primary ${item.highlight ? "font-semibold" : "font-normal"}`}>
+              <li
+                key={`${item.label}-${index}`}
+                className="comparison-chart-row text-[12px]"
+              >
+                <span
+                  className={`comparison-chart-label text-ink-primary ${item.highlight ? 'font-semibold' : 'font-normal'}`}
+                >
                   {item.label}
                 </span>
-                <div className="comparison-chart-track h-3.5 min-w-0 bg-surface-subtle" aria-hidden="true">
-                  <div className="h-full" style={{
-                    width: `${Math.max(0, Math.min(100, value / maxValue * 100))}%`,
-                    minWidth: value > 0 ? 2 : 0,
-                    backgroundColor: colors[item.color] || item.color || defaultColor,
-                  }} />
+                <div
+                  className="comparison-chart-track h-3.5 min-w-0 bg-surface-subtle"
+                  aria-hidden="true"
+                >
+                  <div
+                    className="h-full"
+                    style={{
+                      width: `${Math.max(0, Math.min(100, (value / maxValue) * 100))}%`,
+                      minWidth: value > 0 ? 2 : 0,
+                      backgroundColor:
+                        colors[item.color] || item.color || defaultColor,
+                    }}
+                  />
                 </div>
                 <span className="comparison-chart-value whitespace-nowrap text-right font-medium tabular-nums text-ink-primary">
                   {item.formattedValue || valueFormatter(value)}
@@ -476,7 +547,11 @@ export function HorizontalBarChart({
  * 3. Canvas Weekly Workload Profile Chart for OperationsReportsPage (DO-R01 / DO-R02)
  * Renders 7-day grouped bars (Observed Guests & Non-Canceled Bookings) + Stay Nights line on HTML5 Canvas.
  */
-export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight = 240, metric = "guests" }) {
+export function CanvasWeeklyWorkloadChart({
+  dailyRows = [],
+  height: customHeight = 240,
+  metric = 'guests',
+}) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const hitBoxesRef = useRef([]);
@@ -490,7 +565,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
     const dpr = window.devicePixelRatio || 1;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
@@ -500,46 +575,80 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
     const pad = { top: 24, right: 16, bottom: 46, left: 54 };
     const plotW = Math.max(1, width - pad.left - pad.right);
     const plotH = Math.max(1, height - pad.top - pad.bottom);
-    const values = dailyRows.map(row => metric === "nights"
-      ? Number(row.observed_total_stay_nights ?? row.room_nights ?? 0)
-      : metric === "bookings" ? Number(row.non_canceled_bookings ?? row.arrivals ?? 0)
-      : Number(row.observed_total_guests ?? row.active_guests ?? 0));
-    const maxVal = Math.max(...values, 1) * 1.15;
-    ctx.font = "13px Inter, sans-serif";
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
+    const values = dailyRows.map((row) =>
+      metric === 'nights'
+        ? Number(row.observed_total_stay_nights ?? row.room_nights ?? 0)
+        : metric === 'bookings'
+          ? Number(row.non_canceled_bookings ?? row.arrivals ?? 0)
+          : Number(row.observed_total_guests ?? row.active_guests ?? 0)
+    );
+    const maxVal = Math.round(Math.max(...values, 1) * 1.15);
+    ctx.font = '13px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
     for (let i = 0; i <= 3; i++) {
       const y = pad.top + plotH - (i / 3) * plotH;
       ctx.strokeStyle = PALETTE.divider;
-      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + plotW, y); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(pad.left + plotW, y);
+      ctx.stroke();
       ctx.fillStyle = PALETTE.inkSecondary;
-      ctx.fillText(formatChartAxis(maxVal * i / 3), pad.left - 8, y);
+      ctx.fillText(
+        formatChartAxis(Math.round((maxVal * i) / 3)),
+        pad.left - 8,
+        y
+      );
     }
-    ctx.textAlign = "left";
-    ctx.fillText(metric === "nights" ? "Nights" : metric === "bookings" ? "Bookings" : "Guests", pad.left, 10);
+    ctx.textAlign = 'left';
+    ctx.fillText(
+      metric === 'nights'
+        ? 'Nights'
+        : metric === 'bookings'
+          ? 'Bookings'
+          : 'Guests',
+      pad.left,
+      10
+    );
     const stepX = plotW / dailyRows.length;
     const barW = Math.max(1, stepX * 0.64);
-    const labelStep = Math.max(1, Math.ceil(dailyRows.length / Math.max(1, Math.floor(plotW / 96))));
+    const labelStep = Math.max(
+      1,
+      Math.ceil(dailyRows.length / Math.max(1, Math.floor(plotW / 96)))
+    );
     dailyRows.forEach((row, idx) => {
       const cx = pad.left + idx * stepX + stepX / 2;
-      const barH = values[idx] / maxVal * plotH;
+      const barH = (values[idx] / maxVal) * plotH;
       const cy = pad.top + plotH - barH;
       ctx.fillStyle = hovered?.idx === idx ? PALETTE.series3 : PALETTE.series1;
       ctx.fillRect(cx - barW / 2, cy, barW, barH);
       if (dailyRows.length <= 10) {
-        ctx.font = "600 13px Inter, sans-serif";
-        ctx.textAlign = "center";
+        ctx.font = '600 13px Inter, sans-serif';
+        ctx.textAlign = 'center';
         ctx.fillStyle = PALETTE.inkPrimary;
         ctx.fillText(formatGuests(values[idx]), cx, cy - 9);
       }
       if (idx % labelStep === 0) {
-        ctx.font = "13px Inter, sans-serif";
-        ctx.textAlign = "center";
+        ctx.font = '13px Inter, sans-serif';
+        ctx.textAlign = 'center';
         ctx.fillStyle = PALETTE.inkSecondary;
         const labelX = Math.min(width - 28, Math.max(28, cx));
-        ctx.fillText(formatDate(row.full_date || row.stay_date, true), labelX, pad.top + plotH + 22);
+        ctx.fillText(
+          formatDate(row.full_date || row.stay_date, true),
+          labelX,
+          pad.top + plotH + 22
+        );
       }
-      hitBoxesRef.current.push({ x: pad.left + idx * stepX, y: pad.top, w: stepX, h: plotH, row, idx, cx, cy });
+      hitBoxesRef.current.push({
+        x: pad.left + idx * stepX,
+        y: pad.top,
+        w: stepX,
+        h: plotH,
+        row,
+        idx,
+        cx,
+        cy,
+      });
     });
   }, [dailyRows, width, height, hovered, PALETTE, metric]);
 
@@ -555,7 +664,8 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
   };
 
   const hoveredHolidayName =
-    (Array.isArray(hovered?.row?.holiday_names) && hovered.row.holiday_names[0]) ||
+    (Array.isArray(hovered?.row?.holiday_names) &&
+      hovered.row.holiday_names[0]) ||
     hovered?.row?.holiday_local_name ||
     null;
 
@@ -568,7 +678,7 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHovered(null)}
         role="img"
-        aria-label={`Daily ${metric === "nights" ? "stay nights" : metric === "bookings" ? "non-canceled bookings" : "observed guests"} by arrival date. Exact values are available in the daily demand table.`}
+        aria-label={`Daily ${metric === 'nights' ? 'stay nights' : metric === 'bookings' ? 'non-canceled bookings' : 'observed guests'} by arrival date. Exact values are available in the daily demand table.`}
       />
 
       {hovered?.row && (
@@ -582,37 +692,56 @@ export function CanvasWeeklyWorkloadChart({ dailyRows = [], height: customHeight
           <div className="flex items-center justify-between gap-4 border-b border-divider pb-1 font-semibold">
             <span>
               {hovered.row.full_date || hovered.row.stay_date}
-              {hovered.row.day_of_week ? ` (${String(hovered.row.day_of_week).slice(0, 3)})` : ""}
+              {hovered.row.day_of_week
+                ? ` (${String(hovered.row.day_of_week).slice(0, 3)})`
+                : ''}
             </span>
             <span className="font-mono text-[11px] text-ink-secondary">
-              {hovered.row.guest_data_status || "Unknown coverage"}
+              {hovered.row.guest_data_status || 'Unknown coverage'}
             </span>
           </div>
-          {(hovered.row.is_peak_day || hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName) && (
+          {(hovered.row.is_peak_day ||
+            hovered.row.is_holiday ||
+            hovered.row.is_pt_holiday ||
+            hoveredHolidayName) && (
             <div className="text-[11px] font-medium text-series-2">
-              {hovered.row.is_peak_day ? "★ Peak Demand Day" : ""}
-              {hovered.row.is_peak_day && (hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName) ? " · " : ""}
-              {hovered.row.is_holiday || hovered.row.is_pt_holiday || hoveredHolidayName
-                ? hoveredHolidayName || "PT National Holiday"
-                : ""}
+              {hovered.row.is_peak_day ? '★ Peak Demand Day' : ''}
+              {hovered.row.is_peak_day &&
+              (hovered.row.is_holiday ||
+                hovered.row.is_pt_holiday ||
+                hoveredHolidayName)
+                ? ' · '
+                : ''}
+              {hovered.row.is_holiday ||
+              hovered.row.is_pt_holiday ||
+              hoveredHolidayName
+                ? hoveredHolidayName || 'PT National Holiday'
+                : ''}
             </div>
           )}
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Observed guests</span>
             <span className="font-sans font-semibold tabular-nums">
-              {fmtNum(hovered.row.observed_total_guests ?? hovered.row.active_guests)}
+              {fmtNum(
+                hovered.row.observed_total_guests ?? hovered.row.active_guests
+              )}
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Non-canceled bookings</span>
             <span className="font-sans font-semibold tabular-nums">
-              {fmtNum(hovered.row.non_canceled_bookings ?? hovered.row.arrivals)}
+              {fmtNum(
+                hovered.row.non_canceled_bookings ?? hovered.row.arrivals
+              )}
             </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-ink-secondary">Stay nights</span>
             <span className="font-sans tabular-nums">
-              {fmtNum(hovered.row.observed_total_stay_nights ?? hovered.row.room_nights)}
+              {fmtNum(
+                hovered.row.observed_total_stay_nights ??
+                  hovered.row.room_nights
+              )}
             </span>
           </div>
           {hovered.row.cancellation_rate != null && (
@@ -644,7 +773,7 @@ export function CanvasForecastChart({
   recentHistory = [],
   forecasts = [],
   thresholdRule = {},
-  targetMetric = "guests", // 'guests' | 'stay_nights'
+  targetMetric = 'guests', // 'guests' | 'stay_nights'
 }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
@@ -657,7 +786,7 @@ export function CanvasForecastChart({
     const dpr = window.devicePixelRatio || 1;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
@@ -686,7 +815,12 @@ export function CanvasForecastChart({
     const markerInset = 6;
     const stepX = (plotW - markerInset * 2) / Math.max(1, totalPoints - 1);
     const toX = (idx) => pad.left + markerInset + idx * stepX;
-    const plot = { left: pad.left, right: pad.left + plotW, top: pad.top, bottom: pad.top + plotH };
+    const plot = {
+      left: pad.left,
+      right: pad.left + plotW,
+      top: pad.top,
+      bottom: pad.top + plotH,
+    };
 
     const drawDataLabel = (text, x, y) => {
       ctx.save();
@@ -694,20 +828,26 @@ export function CanvasForecastChart({
       ctx.textBaseline = 'alphabetic';
       const maxWidth = plotW - 4;
       const measured = ctx.measureText(text);
-      const position = forecastLabelPosition(x, y, Math.min(measured.width, maxWidth),
-        measured.actualBoundingBoxAscent || 9, measured.actualBoundingBoxDescent || 2, plot);
+      const position = forecastLabelPosition(
+        x,
+        y,
+        Math.min(measured.width, maxWidth),
+        measured.actualBoundingBoxAscent || 9,
+        measured.actualBoundingBoxDescent || 2,
+        plot
+      );
       ctx.fillText(text, position.x, position.y, maxWidth);
       ctx.restore();
     };
 
     // Grid lines & Y-axis labels
-    ctx.font = "12px Inter, sans-serif";
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
+    ctx.font = '12px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
     for (let i = 0; i <= 4; i++) {
       const ratio = i / 4;
       const y = pad.top + plotH - ratio * plotH;
-      const val = minVal + ratio * range;
+      const val = Math.round(minVal + ratio * range);
 
       ctx.strokeStyle = PALETTE.divider;
       ctx.lineWidth = 1;
@@ -734,9 +874,9 @@ export function CanvasForecastChart({
       ctx.restore();
 
       ctx.fillStyle = PALETTE.inkSecondary;
-      ctx.font = "500 11px Inter, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText("Cutoff T", cutoffX + 5, pad.top + 8);
+      ctx.font = '500 11px Inter, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('Cutoff T', cutoffX + 5, pad.top + 8);
     }
 
     // Threshold reference lines: HIGH (status-critical), Mean (series-3), LOW (series-5)
@@ -754,20 +894,42 @@ export function CanvasForecastChart({
       ctx.restore();
 
       ctx.fillStyle = color;
-      ctx.font = "500 11px Inter, sans-serif";
-      drawDataLabel(label, pad.left + plotW - ctx.measureText(label).width / 2 - 4, y);
+      ctx.font = '500 11px Inter, sans-serif';
+      drawDataLabel(
+        label,
+        pad.left + plotW - ctx.measureText(label).width / 2 - 4,
+        y
+      );
     };
 
-    if (highThresh != null) drawThreshold(highThresh, PALETTE.critical, `HIGH (${formatReference(highThresh)})`);
-    if (meanVal != null) drawThreshold(meanVal, PALETTE.series3, `μ_8w (${formatReference(meanVal)})`);
-    if (lowThresh != null) drawThreshold(lowThresh, PALETTE.series5, `LOW (${formatReference(lowThresh)})`);
+    if (highThresh != null)
+      drawThreshold(
+        highThresh,
+        PALETTE.critical,
+        `HIGH (${formatReference(highThresh)})`
+      );
+    if (meanVal != null)
+      drawThreshold(
+        meanVal,
+        PALETTE.series3,
+        `μ_8w (${formatReference(meanVal)})`
+      );
+    if (lowThresh != null)
+      drawThreshold(
+        lowThresh,
+        PALETTE.series5,
+        `LOW (${formatReference(lowThresh)})`
+      );
 
     // 1. Solid historical line (T-9 .. T)
     if (historySlice.length > 0) {
       ctx.beginPath();
       let connected = false;
       historySlice.forEach((h, idx) => {
-        if (getHistVal(h) == null) { connected = false; return; }
+        if (getHistVal(h) == null) {
+          connected = false;
+          return;
+        }
         const x = toX(idx);
         const y = toY(getHistVal(h));
         if (!connected) ctx.moveTo(x, y);
@@ -801,7 +963,10 @@ export function CanvasForecastChart({
     if (actualPts.length > 0) {
       ctx.beginPath();
       let previousIndex = -2;
-      if (historySlice.length > 0 && getHistVal(historySlice[historySlice.length - 1]) != null) {
+      if (
+        historySlice.length > 0 &&
+        getHistVal(historySlice[historySlice.length - 1]) != null
+      ) {
         const lastH = historySlice[historySlice.length - 1];
         ctx.moveTo(toX(historySlice.length - 1), toY(getHistVal(lastH)));
         previousIndex = -1;
@@ -821,14 +986,20 @@ export function CanvasForecastChart({
       ctx.save();
       ctx.beginPath();
       let connected = false;
-      if (historySlice.length > 0 && getHistVal(historySlice[historySlice.length - 1]) != null) {
+      if (
+        historySlice.length > 0 &&
+        getHistVal(historySlice[historySlice.length - 1]) != null
+      ) {
         const lastH = historySlice[historySlice.length - 1];
         ctx.moveTo(toX(historySlice.length - 1), toY(getHistVal(lastH)));
         connected = true;
       }
       forecasts.forEach((f, i) => {
         const value = getForecastVal(f);
-        if (value == null) { connected = false; return; }
+        if (value == null) {
+          connected = false;
+          return;
+        }
         const x = toX(historySlice.length + i);
         const y = toY(value);
         if (!connected) ctx.moveTo(x, y);
@@ -848,8 +1019,8 @@ export function CanvasForecastChart({
         const val = getForecastVal(f);
         if (val == null) return;
         const y = toY(val);
-        const isHigh = f.demand_level === "HIGH";
-        const isLow = f.demand_level === "LOW";
+        const isHigh = f.demand_level === 'HIGH';
+        const isLow = f.demand_level === 'LOW';
 
         ctx.beginPath();
         ctx.arc(x, y, isHigh ? 4.5 : 3.5, 0, Math.PI * 2);
@@ -864,7 +1035,7 @@ export function CanvasForecastChart({
         ctx.stroke();
 
         ctx.fillStyle = isHigh ? PALETTE.critical : PALETTE.inkPrimary;
-        ctx.font = "600 12px Inter, sans-serif";
+        ctx.font = '600 12px Inter, sans-serif';
         drawDataLabel(formatGuests(val), x, y);
       });
     }
@@ -873,7 +1044,7 @@ export function CanvasForecastChart({
     const allDates = [
       ...historySlice.map((h) => ({
         date: formatDate(h.full_date, true),
-        sub: "Actual",
+        sub: 'Actual',
       })),
       ...forecasts.map((f, i) => ({
         date: formatDate(f.forecast_date || f.stay_date, true),
@@ -881,22 +1052,36 @@ export function CanvasForecastChart({
       })),
     ];
 
-    ctx.font = "500 12px Inter, sans-serif";
+    ctx.font = '500 12px Inter, sans-serif';
     const dateLabels = allDates.map((date, index) => ({
-      text: date.date, sub: date.sub, index,
-      x: toX(index), width: ctx.measureText(date.date).width,
+      text: date.date,
+      sub: date.sub,
+      index,
+      x: toX(index),
+      width: ctx.measureText(date.date).width,
     }));
-    layoutAxisLabels(dateLabels, plot.left, plot.right).forEach(label => {
-      ctx.fillStyle = label.index >= historySlice.length ? PALETTE.inkPrimary : PALETTE.inkSecondary;
-      ctx.font = "500 12px Inter, sans-serif";
-      ctx.textAlign = "center";
+    layoutAxisLabels(dateLabels, plot.left, plot.right).forEach((label) => {
+      ctx.fillStyle =
+        label.index >= historySlice.length
+          ? PALETTE.inkPrimary
+          : PALETTE.inkSecondary;
+      ctx.font = '500 12px Inter, sans-serif';
+      ctx.textAlign = 'center';
       ctx.fillText(label.text, label.x, pad.top + plotH + 14);
 
       ctx.fillStyle = PALETTE.inkMuted;
-      ctx.font = "400 11px Inter, sans-serif";
+      ctx.font = '400 11px Inter, sans-serif';
       ctx.fillText(label.sub, label.x, pad.top + plotH + 30);
     });
-  }, [recentHistory, forecasts, thresholdRule, targetMetric, width, height, PALETTE]);
+  }, [
+    recentHistory,
+    forecasts,
+    thresholdRule,
+    targetMetric,
+    width,
+    height,
+    PALETTE,
+  ]);
 
   return (
     <div ref={containerRef} className="w-full select-none">
