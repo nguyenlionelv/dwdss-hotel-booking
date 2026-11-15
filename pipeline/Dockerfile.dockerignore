@@ -1,0 +1,9 @@
+**
+!backend/
+!backend/requirements.txt
+!ml/
+!ml/requirements.txt
+!pipeline/
+!pipeline/requirements-dev.txt
+!pipeline/ingestion/
+!pipeline/ingestion/requirements.txt

@@ -1,0 +1,268 @@
+{
+  "policy": {
+    "policy_version": "dss-v2",
+    "rule_version": "weekday-transition-mae-v1",
+    "min_group_56": 6,
+    "min_group_112": 10,
+    "min_error_samples": 30,
+    "calibration_end": "2016-06-30",
+    "validation_end": "2017-05-31",
+    "data_version": "9963548d-c0fc-44b4-92dc-55f139447ea7",
+    "min_complete_56": 42,
+    "thresholds": {
+      "weekday": 3.829081204614483,
+      "transition": 3.4552788240291954
+    },
+    "snapshot_sha256": "4f11d9b719de51e60d3ca96d6e724c8104fdbe3387578182211543e82bf0e3c7",
+    "selection": "highest support with >=85% retention, <=5% missingness flips, <=5% validation tails"
+  },
+  "trials": [
+    {
+      "min_complete_56": 42,
+      "retention": 1.0,
+      "eligible": true,
+      "thresholds": {
+        "weekday": 3.829081204614483,
+        "transition": 3.4552788240291954
+      },
+      "analyses": {
+        "weekday": {
+          "calibration_n": 239,
+          "validation_n": 288,
+          "options": [
+            {
+              "quantile": 0.9,
+              "threshold": 2.5218572343533863,
+              "validation_tail_rate": 0.0763888888888889
+            },
+            {
+              "quantile": 0.95,
+              "threshold": 3.001157927262636,
+              "validation_tail_rate": 0.059027777777777776
+            },
+            {
+              "quantile": 0.975,
+              "threshold": 3.829081204614483,
+              "validation_tail_rate": 0.017361111111111112
+            },
+            {
+              "quantile": 0.99,
+              "threshold": 5.013189891526025,
+              "validation_tail_rate": 0.013888888888888888
+            }
+          ],
+          "selected": {
+            "quantile": 0.975,
+            "threshold": 3.829081204614483,
+            "validation_tail_rate": 0.017361111111111112
+          },
+          "missingness_flip_rate": 0.0
+        },
+        "transition": {
+          "calibration_n": 227,
+          "validation_n": 216,
+          "options": [
+            {
+              "quantile": 0.9,
+              "threshold": 2.6050336931092897,
+              "validation_tail_rate": 0.06944444444444445
+            },
+            {
+              "quantile": 0.95,
+              "threshold": 3.4552788240291954,
+              "validation_tail_rate": 0.027777777777777776
+            },
+            {
+              "quantile": 0.975,
+              "threshold": 4.327041950757925,
+              "validation_tail_rate": 0.009259259259259259
+            },
+            {
+              "quantile": 0.99,
+              "threshold": 5.355078480042733,
+              "validation_tail_rate": 0.0
+            }
+          ],
+          "selected": {
+            "quantile": 0.95,
+            "threshold": 3.4552788240291954,
+            "validation_tail_rate": 0.027777777777777776
+          },
+          "missingness_flip_rate": 0.0
+        }
+      }
+    },
+    {
+      "min_complete_56": 46,
+      "retention": 0.998015873015873,
+      "eligible": false,
+      "thresholds": {
+        "weekday": 3.829081204614483,
+        "transition": 3.4552788240291954
+      },
+      "analyses": {
+        "weekday": {
+          "calibration_n": 239,
+          "validation_n": 287,
+          "options": [
+            {
+              "quantile": 0.9,
+              "threshold": 2.5218572343533863,
+              "validation_tail_rate": 0.07317073170731707
+            },
+            {
+              "quantile": 0.95,
+              "threshold": 3.001157927262636,
+              "validation_tail_rate": 0.05574912891986063
+            },
+            {
+              "quantile": 0.975,
+              "threshold": 3.829081204614483,
+              "validation_tail_rate": 0.017421602787456445
+            },
+            {
+              "quantile": 0.99,
+              "threshold": 5.013189891526025,
+              "validation_tail_rate": 0.013937282229965157
+            }
+          ],
+          "selected": {
+            "quantile": 0.975,
+            "threshold": 3.829081204614483,
+            "validation_tail_rate": 0.017421602787456445
+          },
+          "missingness_flip_rate": 0.05226480836236934
+        },
+        "transition": {
+          "calibration_n": 227,
+          "validation_n": 216,
+          "options": [
+            {
+              "quantile": 0.9,
+              "threshold": 2.6050336931092897,
+              "validation_tail_rate": 0.06944444444444445
+            },
+            {
+              "quantile": 0.95,
+              "threshold": 3.4552788240291954,
+              "validation_tail_rate": 0.027777777777777776
+            },
+            {
+              "quantile": 0.975,
+              "threshold": 4.327041950757925,
+              "validation_tail_rate": 0.009259259259259259
+            },
+            {
+              "quantile": 0.99,
+              "threshold": 5.355078480042733,
+              "validation_tail_rate": 0.0
+            }
+          ],
+          "selected": {
+            "quantile": 0.95,
+            "threshold": 3.4552788240291954,
+            "validation_tail_rate": 0.027777777777777776
+          },
+          "missingness_flip_rate": 0.032407407407407406
+        }
+      }
+    },
+    {
+      "min_complete_56": 50,
+      "retention": 0.5257936507936508,
+      "eligible": false,
+      "thresholds": {
+        "weekday": 3.0652538305189005,
+        "transition": 3.4785203931270066
+      },
+      "analyses": {
+        "weekday": {
+          "calibration_n": 237,
+          "validation_n": 144,
+          "options": [
+            {
+              "quantile": 0.9,
+              "threshold": 2.5306119056047116,
+              "validation_tail_rate": 0.05555555555555555
+            },
+            {
+              "quantile": 0.95,
+              "threshold": 3.0652538305189005,
+              "validation_tail_rate": 0.034722222222222224
+            },
+            {
+              "quantile": 0.975,
+              "threshold": 3.9798815338759694,
+              "validation_tail_rate": 0.013888888888888888
+            },
+            {
+              "quantile": 0.99,
+              "threshold": 5.033165689008401,
+              "validation_tail_rate": 0.013888888888888888
+            }
+          ],
+          "selected": {
+            "quantile": 0.95,
+            "threshold": 3.0652538305189005,
+            "validation_tail_rate": 0.034722222222222224
+          },
+          "missingness_flip_rate": 0.3819444444444444
+        },
+        "transition": {
+          "calibration_n": 216,
+          "validation_n": 121,
+          "options": [
+            {
+              "quantile": 0.9,
+              "threshold": 2.648757790486332,
+              "validation_tail_rate": 0.08264462809917356
+            },
+            {
+              "quantile": 0.95,
+              "threshold": 3.4785203931270066,
+              "validation_tail_rate": 0.03305785123966942
+            },
+            {
+              "quantile": 0.975,
+              "threshold": 3.88238815638891,
+              "validation_tail_rate": 0.008264462809917356
+            },
+            {
+              "quantile": 0.99,
+              "threshold": 5.054242384214785,
+              "validation_tail_rate": 0.0
+            }
+          ],
+          "selected": {
+            "quantile": 0.95,
+            "threshold": 3.4785203931270066,
+            "validation_tail_rate": 0.03305785123966942
+          },
+          "missingness_flip_rate": 0.4380165289256198
+        }
+      }
+    },
+    {
+      "min_complete_56": 53,
+      "retention": 0.02976190476190476,
+      "eligible": false,
+      "thresholds": {},
+      "analyses": {}
+    },
+    {
+      "min_complete_56": 56,
+      "retention": 0.0,
+      "eligible": false,
+      "thresholds": {},
+      "analyses": {}
+    }
+  ],
+  "calibration_start": "2015-10-21",
+  "validation_start": "2016-07-01",
+  "holdout_used_for_selection": false,
+  "limitations": [
+    "Overlapping rolling windows are dependent.",
+    "Reference-tail frequency and single-day deletion flips are proxies, not operational false-alarm labels.",
+    "Selection measures historical context; separate saved-model holdout evaluation is descriptive."
+  ]
+}

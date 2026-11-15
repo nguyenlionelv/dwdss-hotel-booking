@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "database": "hotel_dwdss",
+  "publication_state_and_counts": {
+    "active_staging": {
+      "singleton_id": 1,
+      "batch_id": "c5ace7e7-1c1e-4638-849f-6b1894af606c",
+      "published_at": "2026-11-04T04:12:26.519341+00:00"
+    },
+    "active_dw": {
+      "singleton_id": 1,
+      "run_id": "79a7f5b4-fb6b-4f2c-b430-b561546d921d",
+      "published_at": "2026-11-09T04:48:34.987642+00:00"
+    },
+    "mart_state": {
+      "singleton_id": 1,
+      "dw_run_id": "79a7f5b4-fb6b-4f2c-b430-b561546d921d",
+      "data_version": "236f77a6-eba6-46cf-8181-7f943caab2bf",
+      "build_fingerprint": "30794c00380e6954aadbca13407086e28f940a71d6c042abe7ddce929189c0b4",
+      "actual_start": "2015-07-01",
+      "actual_end": "2017-08-31",
+      "row_counts": {
+        "daily_hotel_operations": 793,
+        "daily_hotel_operations_by_country": 131638
+      },
+      "published_at": "2026-11-09T04:48:34.987642+00:00"
+    },
+    "counts": {
+      "staging_booking": 79330,
+      "dw_booking": 79250,
+      "mart_daily": 793
+    }
+  }
+}

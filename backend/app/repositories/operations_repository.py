@@ -6,14 +6,14 @@ from datetime import date
 from typing import Any
 import psycopg
 
-DAY_NAMES_VI = {
-    1: "Thứ Hai",
-    2: "Thứ Ba",
-    3: "Thứ Tư",
-    4: "Thứ Năm",
-    5: "Thứ Sáu",
-    6: "Thứ Bảy",
-    7: "Chủ Nhật",
+DAY_NAMES_EN = {
+    1: "Monday",
+    2: "Tuesday",
+    3: "Wednesday",
+    4: "Thursday",
+    5: "Friday",
+    6: "Saturday",
+    7: "Sunday",
 }
 
 MEASURE_COLUMN_MAP = {
@@ -631,10 +631,10 @@ class OperationsRepository:
                 SELECT
                     CASE
                         WHEN temperature_mean >= 22.0 AND coalesce(precipitation, 0) < 1.0
-                            THEN 'Nắng ấm lý tưởng (22°C – 28°C, < 1mm mưa)'
+                            THEN 'Warm (≥22°C, <1mm rain)'
                         WHEN temperature_mean >= 15.0 AND temperature_mean < 22.0
-                            THEN 'Ôn hòa dễ chịu (15°C – 21°C, khô ráo)'
-                        ELSE 'Mưa lạnh mùa đông (< 15°C hoặc > 5mm mưa)'
+                            THEN 'Mild (15°C to <22°C)'
+                        ELSE 'Other weather conditions'
                     END AS band_label,
                     observed_total_stay_nights,
                     observed_total_guests,
@@ -734,7 +734,7 @@ class OperationsRepository:
                 "bands": bands,
                 "completeness_ratio": completeness_ratio,
                 "missing_days": missing_days,
-                "insight": "Nhiệt độ trung bình tại Lisbon trên 22°C giúp tăng công suất đêm phòng so với trung bình năm.",
+                "insight": "Historical weather and demand comparison for Lisbon; this does not establish causation.",
             },
             "top_countries": top_countries,
         }

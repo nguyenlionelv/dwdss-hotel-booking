@@ -53,5 +53,23 @@ services:
       backend:
         condition: service_healthy
 
+  pipeline:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: pipeline/Dockerfile
+    working_dir: /workspace
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hotel_dwdss}
+      POSTGRES_USER: ${POSTGRES_USER:-hotel_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+    volumes:
+      - .:/workspace
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   postgres_data:

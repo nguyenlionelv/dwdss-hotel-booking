@@ -51,40 +51,40 @@ export default {
           foreground: 'hsl(var(--card-foreground))',
         },
         chart: {
-          1: '#315B52',
-          2: '#C58B55',
-          3: '#547A9B',
-          4: '#9B7185',
-          5: '#92958B',
+          1: 'rgb(var(--series-1-rgb) / <alpha-value>)',
+          2: 'rgb(var(--series-2-rgb) / <alpha-value>)',
+          3: 'rgb(var(--series-3-rgb) / <alpha-value>)',
+          4: 'rgb(var(--series-4-rgb) / <alpha-value>)',
+          5: 'rgb(var(--series-5-rgb) / <alpha-value>)',
         },
-        // Lumina Analytics Semantic & Surface Tokens (DESIGN.md Section 2)
+        // Lumina Analytics Semantic & Surface Tokens (Carbon Neutral Dark Mode Ready)
         surface: {
-          workspace: '#FAFAF8',
-          primary: '#FFFFFF',
-          subtle: '#F4F4F0',
+          workspace: 'rgb(var(--surface-workspace-rgb) / <alpha-value>)',
+          primary: 'rgb(var(--surface-primary-rgb) / <alpha-value>)',
+          subtle: 'rgb(var(--surface-subtle-rgb) / <alpha-value>)',
         },
         ink: {
-          primary: '#252525',
-          secondary: '#666666',
-          muted: '#999999',
+          primary: 'rgb(var(--ink-primary-rgb) / <alpha-value>)',
+          secondary: 'rgb(var(--ink-secondary-rgb) / <alpha-value>)',
+          muted: 'rgb(var(--ink-muted-rgb) / <alpha-value>)',
         },
-        divider: '#E5E5E0',
+        divider: 'rgb(var(--divider-rgb) / <alpha-value>)',
         brand: {
-          DEFAULT: '#315B52',
-          hover: '#264942',
-          subtle: '#EBF1EF',
+          DEFAULT: 'rgb(var(--brand-rgb) / <alpha-value>)',
+          hover: 'rgb(var(--brand-hover-rgb) / <alpha-value>)',
+          subtle: 'rgb(var(--brand-subtle-rgb) / <alpha-value>)',
         },
         series: {
-          1: '#315B52', // Primary data (muted green)
-          2: '#C58B55', // Secondary comparison (ochre)
-          3: '#547A9B', // Additional comparison (muted blue)
-          4: '#9B7185', // Additional comparison (muted plum)
-          5: '#92958B', // Supporting data (neutral grey)
+          1: 'rgb(var(--series-1-rgb) / <alpha-value>)',
+          2: 'rgb(var(--series-2-rgb) / <alpha-value>)',
+          3: 'rgb(var(--series-3-rgb) / <alpha-value>)',
+          4: 'rgb(var(--series-4-rgb) / <alpha-value>)',
+          5: 'rgb(var(--series-5-rgb) / <alpha-value>)',
         },
         status: {
-          success: '#477A61',
-          warning: '#C58B35',
-          critical: '#B64C43',
+          success: 'rgb(var(--status-success-rgb) / <alpha-value>)',
+          warning: 'rgb(var(--status-warning-rgb) / <alpha-value>)',
+          critical: 'rgb(var(--status-critical-rgb) / <alpha-value>)',
         },
       },
       borderRadius: {

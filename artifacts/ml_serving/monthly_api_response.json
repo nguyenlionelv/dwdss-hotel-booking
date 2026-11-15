@@ -1,0 +1,41 @@
+{
+  "hotel_name": "City Hotel",
+  "kind": "monthly",
+  "as_of_date": "2017-08-31",
+  "forecast_month": "2017-09",
+  "horizon_months": 1,
+  "units": "guests/month",
+  "predicted_guests": 4193.225806451613,
+  "model_id": "monthly_last_month_rate",
+  "model_version": "monthly_last_month_rate-78b377ec5203",
+  "data_version": "9963548d-c0fc-44b4-92dc-55f139447ea7",
+  "generated_at": "2026-11-10T13:42:28.671307Z",
+  "model_metadata": {
+    "algorithm": "M0_last_month_rate",
+    "training_cutoff": "2017-08-31",
+    "imputation_policy": "room_type_mean",
+    "label_definition": "Final non-canceled reservation guests by arrival date; not occupancy or verified check-in",
+    "validation_metrics": [
+      {
+        "model": "M0_last_month_rate",
+        "n_months": 11,
+        "MAE": 438.06885189370155,
+        "RMSE": 518.3212182845008,
+        "WAPE": 0.11443871558903303,
+        "signed_bias": -5.242195588241926,
+        "complete_months": 0,
+        "COMPLETE_ONLY_MAE": null
+      }
+    ],
+    "feature_schema": [
+      "last_month_guest_rate",
+      "days_in_target_month"
+    ],
+    "availability_assumptions": {
+      "label_delay_days": 0,
+      "point_in_time_verified": false,
+      "estimated_labels_are_ground_truth": false
+    },
+    "metric_protocol": "11 rolling one-month validation origins, guests/month"
+  }
+}

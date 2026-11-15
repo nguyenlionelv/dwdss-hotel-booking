@@ -1,0 +1,11 @@
+{
+  "schema": "mart",
+  "status": "applied",
+  "version": "002_guest_components.sql",
+  "file_sha256": "0773e4d9a3ac5d32d974e423e327901974a73206e578ebd6f780250e995715d3",
+  "applied": [
+    "operations_mart.sql",
+    "002_guest_components.sql"
+  ],
+  "skipped": []
+}

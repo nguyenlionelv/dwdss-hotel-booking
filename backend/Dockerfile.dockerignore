@@ -8,3 +8,17 @@ backend/**/__pycache__/
 backend/**/*.py[cod]
 backend/**/.env
 backend/**/.env.*
+
+!ml/
+!ml/**
+!pipeline/
+!pipeline/**
+!artifacts/
+!artifacts/ml_serving/
+!artifacts/ml_serving/models/
+!artifacts/ml_serving/models/**
+!artifacts/ml_serving/snapshot/
+!artifacts/ml_serving/snapshot/**
+!artifacts/ml_serving/releases/
+!artifacts/ml_serving/releases/**
+**/__pycache__/

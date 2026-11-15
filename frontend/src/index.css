@@ -4,43 +4,176 @@
 
 @layer base {
   :root {
-    /* Lumina Analytics Core Palette (DESIGN.md Section 2.1) */
-    --background: 60 14% 98%;          /* #FAFAF8 Main background */
-    --foreground: 0 0% 15%;            /* #252525 Primary text */
+    color-scheme: light dark;
 
-    --card: 0 0% 100%;                 /* #FFFFFF Primary surface */
-    --card-foreground: 0 0% 15%;       /* #252525 */
+    &:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+    }
+    &:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+    }
 
+    /* Raw Light Mode Tokens (DESIGN.md Section 2) */
+    --brand-accent-light: #315B52;
+    --brand-accent-dark: #4B8F80;
+    --scrollbar-track-light: transparent;
+    --scrollbar-track-dark: transparent;
+    --scrollbar-thumb-light: #D4D4CE;
+    --scrollbar-thumb-dark: #3E3E44;
+
+    /* RGB Channel Tokens for Tailwind Alpha Support — Light Mode */
+    --surface-workspace-rgb: 250 250 248; /* #FAFAF8 */
+    --surface-primary-rgb: 255 255 255;   /* #FFFFFF */
+    --surface-subtle-rgb: 244 244 240;    /* #F4F4F0 */
+
+    --ink-primary-rgb: 37 37 37;          /* #252525 */
+    --ink-secondary-rgb: 102 102 102;     /* #666666 */
+    --ink-muted-rgb: 153 153 153;         /* #999999 */
+
+    --divider-rgb: 229 229 224;           /* #E5E5E0 */
+
+    --brand-rgb: 49 91 82;                /* #315B52 */
+    --brand-hover-rgb: 38 73 66;          /* #264942 */
+    --brand-subtle-rgb: 235 241 239;      /* #EBF1EF */
+
+    --series-1-rgb: 49 91 82;             /* #315B52 */
+    --series-2-rgb: 197 139 85;           /* #C58B55 */
+    --series-3-rgb: 84 122 155;           /* #547A9B */
+    --series-4-rgb: 155 113 133;          /* #9B7185 */
+    --series-5-rgb: 146 149 139;          /* #92958B */
+
+    --status-success-rgb: 71 122 97;      /* #477A61 */
+    --status-warning-rgb: 197 139 53;     /* #C58B35 */
+    --status-critical-rgb: 182 76 67;     /* #B64C43 */
+
+    /* Resolved Hex/Color Tokens for Canvas & Native CSS */
+    --color-surface-workspace: #FAFAF8;
+    --color-surface-primary: #FFFFFF;
+    --color-surface-subtle: #F4F4F0;
+    --color-ink-primary: #252525;
+    --color-ink-secondary: #666666;
+    --color-ink-muted: #999999;
+    --color-divider: #E5E5E0;
+    --color-brand: #315B52;
+    --color-series-1: #315B52;
+    --color-series-2: #C58B55;
+    --color-series-3: #547A9B;
+    --color-series-4: #9B7185;
+    --color-series-5: #92958B;
+    --color-status-success: #477A61;
+    --color-status-warning: #C58B35;
+    --color-status-critical: #B64C43;
+
+    /* shadcn/ui HSL Tokens — Light Mode */
+    --background: 60 14% 98%;
+    --foreground: 0 0% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 15%;
-
-    --primary: 167 30% 27%;            /* #315B52 Primary accent */
-    --primary-foreground: 0 0% 100%;   /* #FFFFFF */
-
-    --secondary: 60 9% 94%;            /* #F2F2EE Neutral subtle surface */
+    --primary: 167 30% 27%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 9% 94%;
     --secondary-foreground: 0 0% 15%;
-
-    --muted: 60 10% 95%;               /* #F4F4F0 Neutral muted surface */
-    --muted-foreground: 0 0% 40%;      /* #666666 Secondary text */
-
+    --muted: 60 10% 95%;
+    --muted-foreground: 0 0% 40%;
     --accent: 60 9% 94%;
     --accent-foreground: 0 0% 15%;
-
-    --destructive: 5 46% 49%;          /* #B64C43 Critical semantic color */
+    --destructive: 5 46% 49%;
     --destructive-foreground: 0 0% 100%;
+    --border: 60 11% 89%;
+    --input: 60 11% 89%;
+    --ring: 167 30% 27%;
+    --radius: 0.25rem;
 
-    --border: 60 11% 89%;              /* #E5E5E0 Structural divider */
-    --input: 60 11% 89%;               /* #E5E5E0 */
-    --ring: 167 30% 27%;               /* #315B52 */
+    --accent-color: var(--brand-accent-light);
+    --scrollbar-track: var(--scrollbar-track-light);
+    --scrollbar-thumb: var(--scrollbar-thumb-light);
 
-    --radius: 0.25rem;                 /* 4px default border radius (DESIGN.md Section 6.1) */
+    @media (prefers-color-scheme: dark) {
+      --accent-color: var(--brand-accent-dark);
+      --scrollbar-track: var(--scrollbar-track-dark);
+      --scrollbar-thumb: var(--scrollbar-thumb-dark);
+    }
 
-    /* Data Visualization Palette (DESIGN.md Section 2.2) */
-    --chart-1: 167 30% 27%;            /* #315B52 Series 1: Primary data */
-    --chart-2: 29 49% 55%;             /* #C58B55 Series 2: Secondary comparison */
-    --chart-3: 208 30% 47%;            /* #547A9B Series 3: Additional comparison */
-    --chart-4: 331 18% 53%;            /* #9B7185 Series 4: Additional comparison */
-    --chart-5: 78 5% 56%;              /* #92958B Series 5: Supporting data */
+    @supports (color: light-dark(white, black)) {
+      --accent-color: light-dark(var(--brand-accent-light), var(--brand-accent-dark));
+      --scrollbar-track: light-dark(var(--scrollbar-track-light), var(--scrollbar-track-dark));
+      --scrollbar-thumb: light-dark(var(--scrollbar-thumb-light), var(--scrollbar-thumb-dark));
+    }
+
+    accent-color: var(--accent-color);
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  /* Carbon Neutral Dark Palette (Option 2: #0F0F10 / #171719) */
+  :root.dark,
+  :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+    --surface-workspace-rgb: 15 15 16;    /* #0F0F10 Carbon 100 */
+    --surface-primary-rgb: 23 23 25;      /* #171719 Carbon 90 */
+    --surface-subtle-rgb: 34 34 37;       /* #222225 Carbon 80 */
+
+    --ink-primary-rgb: 242 242 243;       /* #F2F2F3 Crisp White */
+    --ink-secondary-rgb: 160 160 166;     /* #A0A0A6 Neutral Secondary */
+    --ink-muted-rgb: 108 108 114;         /* #6C6C72 Neutral Muted */
+
+    --divider-rgb: 42 42 46;              /* #2A2A2E Graphite Border */
+
+    --brand-rgb: 75 143 128;              /* #4B8F80 Mineral Green */
+    --brand-hover-rgb: 92 163 147;        /* #5CA393 */
+    --brand-subtle-rgb: 26 43 40;         /* #1A2B28 */
+
+    --series-1-rgb: 75 143 128;           /* #4B8F80 */
+    --series-2-rgb: 217 155 98;           /* #D99B62 */
+    --series-3-rgb: 110 152 188;          /* #6E98BC */
+    --series-4-rgb: 184 136 159;          /* #B8889F */
+    --series-5-rgb: 142 145 137;          /* #8E9189 */
+
+    --status-success-rgb: 88 158 123;     /* #589E7B */
+    --status-warning-rgb: 220 160 72;     /* #DCA048 */
+    --status-critical-rgb: 216 101 92;    /* #D8655C */
+
+    --color-surface-workspace: #0F0F10;
+    --color-surface-primary: #171719;
+    --color-surface-subtle: #222225;
+    --color-ink-primary: #F2F2F3;
+    --color-ink-secondary: #A0A0A6;
+    --color-ink-muted: #6C6C72;
+    --color-divider: #2A2A2E;
+    --color-brand: #4B8F80;
+    --color-series-1: #4B8F80;
+    --color-series-2: #D99B62;
+    --color-series-3: #6E98BC;
+    --color-series-4: #B8889F;
+    --color-series-5: #8E9189;
+    --color-status-success: #589E7B;
+    --color-status-warning: #DCA048;
+    --color-status-critical: #D8655C;
+
+    --background: 240 3% 6%;
+    --foreground: 240 5% 95%;
+    --card: 240 4% 9%;
+    --card-foreground: 240 5% 95%;
+    --popover: 240 4% 9%;
+    --popover-foreground: 240 5% 95%;
+    --primary: 167 31% 43%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4% 14%;
+    --secondary-foreground: 240 5% 95%;
+    --muted: 240 4% 14%;
+    --muted-foreground: 240 4% 64%;
+    --accent: 240 4% 14%;
+    --accent-foreground: 240 5% 95%;
+    --destructive: 4 62% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5% 17%;
+    --input: 240 5% 17%;
+    --ring: 167 31% 43%;
+
+    --accent-color: var(--brand-accent-dark);
+    --scrollbar-track: var(--scrollbar-track-dark);
+    --scrollbar-thumb: var(--scrollbar-thumb-dark);
   }
 
   * {
@@ -48,12 +181,10 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-surface-workspace text-ink-primary antialiased;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 14px;
     line-height: 1.5;
-    color: #252525;
-    background-color: #FAFAF8;
     overflow-x: hidden;
   }
 
@@ -71,30 +202,240 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Editorial Section Headings & Typography Helpers (DESIGN.md Section 3.2) */
+.comparison-chart {
+  container-type: inline-size;
+}
+
+.comparison-chart-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.comparison-chart-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.comparison-chart-track {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.comparison-chart-value {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+@container (min-width: 560px) {
+  .comparison-chart-row {
+    grid-template-columns: minmax(0, 1.4fr) minmax(80px, 2fr) auto;
+    min-height: 36px;
+  }
+
+  .comparison-chart-track {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .comparison-chart-value {
+    grid-column: 3;
+  }
+}
+
+/* Compact, flat Time grain selector with neutral selection. */
+.time-grain-control {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid rgb(var(--divider-rgb));
+  border-radius: 4px;
+  background: rgb(var(--surface-primary-rgb));
+}
+
+.time-grain-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 3px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  color: rgb(var(--ink-secondary-rgb));
+  cursor: pointer;
+  transition: color 150ms, background-color 150ms;
+}
+
+.time-grain-option:hover {
+  color: rgb(var(--ink-primary-rgb));
+}
+
+.time-grain-input:checked + .time-grain-option {
+  color: rgb(var(--ink-primary-rgb));
+  background: rgb(var(--surface-subtle-rgb));
+  font-weight: 500;
+}
+
+.time-grain-input:focus-visible + .time-grain-option {
+  outline: 2px solid rgb(var(--ink-primary-rgb));
+  outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+  .time-grain-option {
+    padding-inline: 7px;
+  }
+}
+
+/* Dashboard typography: bold Inter headlines/metrics and quieter supporting text. */
 .editorial-page-title {
-  font-size: clamp(1.75rem, 2vw, 2rem); /* 28-32px */
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.75rem, 2vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
   line-height: 1.2;
-  color: #252525;
+  color: rgb(var(--ink-primary-rgb));
 }
 
 .editorial-section-title {
-  font-size: 1.125rem; /* 18px */
+  font-size: 1.125rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.35;
-  color: #252525;
+  color: rgb(var(--ink-primary-rgb));
+}
+
+.kpi-data-group {
+  container-type: inline-size;
 }
 
 .editorial-metric-value {
-  font-size: clamp(1.75rem, 2.2vw, 2.125rem); /* 28-34px */
-  font-weight: 600;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 2rem;
+  font-size: clamp(1.25rem, 25cqi, 2rem);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   line-height: 1.15;
-  color: #252525;
+  color: rgb(var(--ink-primary-rgb));
+}
+
+.editorial-metric-date {
+  font-size: 1.5rem;
+  font-size: clamp(0.875rem, 17cqi, 1.5rem);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Readable detail sections on Analytics; other dashboards keep their sizing. */
+.analytics-reading-section .editorial-section-title {
+  font-size: 20px;
+}
+
+.analytics-reading-section [class~="text-[11px]"] {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.analytics-reading-section [class~="text-[12px]"],
+.analytics-reading-section [class~="text-[13px]"] {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.analytics-reading-section [class~="text-[14px]"] {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.analytics-reading-section table {
+  font-size: 14px;
+}
+
+.analytics-reading-section th {
+  font-size: 13px;
+}
+
+/* Larger supporting text in Forecasting, preserving its header and KPI scale. */
+.forecast-reading-section .editorial-section-title {
+  font-size: 20px;
+}
+
+.forecast-reading-section [class~="text-[15px]"] {
+  font-size: 16px;
+}
+
+.forecast-reading-section [class~="text-[10px]"] {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.forecast-reading-section [class~="text-[11px]"] {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.forecast-reading-section [class~="text-[12px]"],
+.forecast-reading-section [class~="text-[13px]"] {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.forecast-reading-section [class~="text-[14px]"] {
+  font-size: 15px;
+}
+
+.forecast-reading-section table {
+  font-size: 14px;
+}
+
+.forecast-reading-section thead th {
+  font-size: 13px;
+}
+
+/* Reporting keeps document metadata in the printed report only. */
+.report-page .report-peak-date .editorial-metric-date {
+  font-size: clamp(1.125rem, 19cqi, 2rem);
+}
+
+@media (min-width: 1280px) {
+  .report-page .report-period-kpis {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.25fr);
+  }
+}
+
+.report-page .report-print-only {
+  display: none;
+}
+
+.report-reading-section .editorial-section-title {
+  font-size: 20px;
+}
+
+.report-reading-section [class~="text-[15px]"] {
+  font-size: 16px;
+}
+
+.report-reading-section [class~="text-[11px]"] {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.report-reading-section [class~="text-[12px]"],
+.report-reading-section [class~="text-[13px]"] {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.report-reading-section table {
+  font-size: 14px;
+}
+
+.report-reading-section th {
+  font-size: 13px;
 }
 
 /* Accessible Scrollable Data Table Container (modern-web-guidance: responsive-table) */
@@ -107,8 +448,47 @@
 }
 
 .table-scroll-region:focus-visible {
-  outline: 2px solid #315B52;
+  outline: 2px solid rgb(var(--brand-rgb));
   outline-offset: -2px;
+}
+
+@media print {
+  @page operations-report { size: A4 landscape; margin: 12mm; }
+  .report-page { page: operations-report; }
+  .report-page .report-print-only { display: block; }
+  :root:has(.report-page) {
+    color-scheme: light;
+    --surface-workspace-rgb: 255 255 255;
+    --surface-primary-rgb: 255 255 255;
+    --surface-subtle-rgb: 245 245 245;
+    --ink-primary-rgb: 20 20 20;
+    --ink-secondary-rgb: 70 70 70;
+    --ink-muted-rgb: 90 90 90;
+    --divider-rgb: 200 200 200;
+    --color-surface-primary: #fff;
+    --color-ink-primary: #141414;
+    --color-ink-secondary: #464646;
+    --color-divider: #ccc;
+  }
+  body:has(.report-page) {
+    background: white !important;
+    color: #141414 !important;
+  }
+  body:has(.report-page) #desktop-sidebar,
+  body:has(.report-page) #root header:not(.dashboard-page-header),
+  .report-page .dashboard-screen-only { display: none !important; }
+  body:has(.report-page) #root > div > div { padding-left: 0 !important; }
+  body:has(.report-page) main { max-width: none !important; padding: 0 !important; }
+  .report-page :is(.report-context, .kpi-data-group, canvas) { break-inside: avoid; }
+  .report-page .report-context details[open] { font-size: 9px; }
+  .report-page .table-scroll-region { overflow: visible !important; max-width: none; container-type: normal; }
+  .report-page .table-scroll-region table { min-width: 0 !important; width: 100%; font-size: 9px; }
+  .report-page .table-scroll-region :is(th, td) { white-space: normal !important; min-width: 0 !important; padding: 5px; font-size: 9px; }
+  .report-page .table-scroll-region thead { display: table-header-group; position: static; }
+  .report-page .table-scroll-region tfoot { display: table-row-group; }
+  .report-page .table-scroll-region tr { break-inside: avoid; }
+  .report-page :is(h1, h2, h3) { break-after: avoid; }
+  .report-page a { color: inherit; text-decoration: none; }
 }
 
 .table-scroll-region thead {
@@ -117,18 +497,17 @@
   z-index: 10;
 }
 
-/* Restrained scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #D4D4CE;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #999999;
+/* Legacy fallback for WebKit/Blink browsers without scrollbar-color support */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+  }
 }

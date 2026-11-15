@@ -1,0 +1,232 @@
+{
+  "status": "descriptive_only",
+  "holdout_already_inspected": true,
+  "not_used_for_policy_selection": true,
+  "models": [
+    {
+      "model_id": "imputed_canonical_history",
+      "label_delay_days": 0,
+      "metrics": {
+        "status": "available",
+        "eligible_origins": 54,
+        "first_origin": "2017-06-01",
+        "last_origin": "2017-08-24",
+        "selected": "historical_weekday",
+        "policies": {
+          "uniform": {
+            "mean_mrr": 0.08455877434798409,
+            "median_mrr": 0.08897285800611424,
+            "std_mrr_across_origins": 0.025506169555087558,
+            "p10_mrr": 0.049079754601226995,
+            "p90_mrr": 0.11536774382219622
+          },
+          "historical_weekday": {
+            "mean_mrr": 0.08292565131087014,
+            "median_mrr": 0.0853219299726178,
+            "std_mrr_across_origins": 0.02048097857188886,
+            "p10_mrr": 0.04905299056246549,
+            "p90_mrr": 0.10466498171137326,
+            "mean_improvement_vs_uniform": 0.001633123037113951,
+            "win_rate_vs_uniform": 0.5185185185185185,
+            "mean_improvement_vs_historical_weekday": 0.0,
+            "win_rate_vs_historical_weekday": 0.0
+          },
+          "forecast_proportional": {
+            "mean_mrr": 0.07679765411714443,
+            "median_mrr": 0.07509324726912049,
+            "std_mrr_across_origins": 0.02294481155388731,
+            "p10_mrr": 0.04715848102766041,
+            "p90_mrr": 0.10725848548916006
+          },
+          "blended_0": {
+            "mean_mrr": 0.08292565131087014,
+            "median_mrr": 0.0853219299726178,
+            "std_mrr_across_origins": 0.02048097857188886,
+            "p10_mrr": 0.04905299056246549,
+            "p90_mrr": 0.10466498171137326
+          },
+          "blended_0.25": {
+            "mean_mrr": 0.0798320496001786,
+            "median_mrr": 0.08274967285053914,
+            "std_mrr_across_origins": 0.020564634812199473,
+            "p10_mrr": 0.04913508845529292,
+            "p90_mrr": 0.10087787748715785
+          },
+          "blended_0.5": {
+            "mean_mrr": 0.07781333154219748,
+            "median_mrr": 0.07779239695689197,
+            "std_mrr_across_origins": 0.02092381367605363,
+            "p10_mrr": 0.05165075620760593,
+            "p90_mrr": 0.10614998230087383
+          },
+          "blended_0.75": {
+            "mean_mrr": 0.07673460605541896,
+            "median_mrr": 0.07725100445032657,
+            "std_mrr_across_origins": 0.021659379581095928,
+            "p10_mrr": 0.04641090207789458,
+            "p90_mrr": 0.10737316179550052
+          },
+          "blended_1": {
+            "mean_mrr": 0.07679765411714443,
+            "median_mrr": 0.07509324726912049,
+            "std_mrr_across_origins": 0.02294481155388731,
+            "p10_mrr": 0.04715848102766041,
+            "p90_mrr": 0.10725848548916006
+          }
+        },
+        "overlapping_origins_independent": false,
+        "mean_forecast_mae_on_same_eligible_origins": 23.21201811228315
+      }
+    },
+    {
+      "model_id": "imputed_imputed_history",
+      "label_delay_days": 0,
+      "metrics": {
+        "status": "available",
+        "eligible_origins": 54,
+        "first_origin": "2017-06-01",
+        "last_origin": "2017-08-24",
+        "selected": "historical_weekday",
+        "policies": {
+          "uniform": {
+            "mean_mrr": 0.08455877434798409,
+            "median_mrr": 0.08897285800611424,
+            "std_mrr_across_origins": 0.025506169555087558,
+            "p10_mrr": 0.049079754601226995,
+            "p90_mrr": 0.11536774382219622
+          },
+          "historical_weekday": {
+            "mean_mrr": 0.08292565131087014,
+            "median_mrr": 0.0853219299726178,
+            "std_mrr_across_origins": 0.02048097857188886,
+            "p10_mrr": 0.04905299056246549,
+            "p90_mrr": 0.10466498171137326,
+            "mean_improvement_vs_uniform": 0.001633123037113951,
+            "win_rate_vs_uniform": 0.5185185185185185,
+            "mean_improvement_vs_historical_weekday": 0.0,
+            "win_rate_vs_historical_weekday": 0.0
+          },
+          "forecast_proportional": {
+            "mean_mrr": 0.077358948086559,
+            "median_mrr": 0.07360652823871247,
+            "std_mrr_across_origins": 0.02197783172431771,
+            "p10_mrr": 0.05031974429276308,
+            "p90_mrr": 0.10468305955672003
+          },
+          "blended_0": {
+            "mean_mrr": 0.08292565131087014,
+            "median_mrr": 0.0853219299726178,
+            "std_mrr_across_origins": 0.02048097857188886,
+            "p10_mrr": 0.04905299056246549,
+            "p90_mrr": 0.10466498171137326
+          },
+          "blended_0.25": {
+            "mean_mrr": 0.07974941122699362,
+            "median_mrr": 0.08273680817288148,
+            "std_mrr_across_origins": 0.020502137259617543,
+            "p10_mrr": 0.04864442885344258,
+            "p90_mrr": 0.10052746069649277
+          },
+          "blended_0.5": {
+            "mean_mrr": 0.07793455319840902,
+            "median_mrr": 0.07767118813929776,
+            "std_mrr_across_origins": 0.020487630739126832,
+            "p10_mrr": 0.05280286967134217,
+            "p90_mrr": 0.10453682218962862
+          },
+          "blended_0.75": {
+            "mean_mrr": 0.07702436938303661,
+            "median_mrr": 0.076582990456223,
+            "std_mrr_across_origins": 0.020969071276321794,
+            "p10_mrr": 0.04995733107933168,
+            "p90_mrr": 0.10490532359778232
+          },
+          "blended_1": {
+            "mean_mrr": 0.077358948086559,
+            "median_mrr": 0.07360652823871247,
+            "std_mrr_across_origins": 0.02197783172431771,
+            "p10_mrr": 0.05031974429276308,
+            "p90_mrr": 0.10468305955672003
+          }
+        },
+        "overlapping_origins_independent": false,
+        "mean_forecast_mae_on_same_eligible_origins": 23.438778794163564
+      }
+    },
+    {
+      "model_id": "causal_causal_history",
+      "label_delay_days": 1,
+      "metrics": {
+        "status": "available",
+        "eligible_origins": 54,
+        "first_origin": "2017-06-01",
+        "last_origin": "2017-08-24",
+        "selected": "historical_weekday",
+        "policies": {
+          "uniform": {
+            "mean_mrr": 0.08455877434798409,
+            "median_mrr": 0.08897285800611424,
+            "std_mrr_across_origins": 0.025506169555087558,
+            "p10_mrr": 0.049079754601226995,
+            "p90_mrr": 0.11536774382219622
+          },
+          "historical_weekday": {
+            "mean_mrr": 0.08221930846155726,
+            "median_mrr": 0.08361632544894461,
+            "std_mrr_across_origins": 0.021383886525233677,
+            "p10_mrr": 0.04951107572007467,
+            "p90_mrr": 0.10466498171137326,
+            "mean_improvement_vs_uniform": 0.0023394658864268336,
+            "win_rate_vs_uniform": 0.5185185185185185,
+            "mean_improvement_vs_historical_weekday": 0.0,
+            "win_rate_vs_historical_weekday": 0.0
+          },
+          "forecast_proportional": {
+            "mean_mrr": 0.0774154720746629,
+            "median_mrr": 0.07326872879672365,
+            "std_mrr_across_origins": 0.021960308946240677,
+            "p10_mrr": 0.05059060695591607,
+            "p90_mrr": 0.1046667741680874
+          },
+          "blended_0": {
+            "mean_mrr": 0.08221930846155726,
+            "median_mrr": 0.08361632544894461,
+            "std_mrr_across_origins": 0.021383886525233677,
+            "p10_mrr": 0.04951107572007467,
+            "p90_mrr": 0.10466498171137326
+          },
+          "blended_0.25": {
+            "mean_mrr": 0.07921501967643373,
+            "median_mrr": 0.079796808775669,
+            "std_mrr_across_origins": 0.02118782837248153,
+            "p10_mrr": 0.049850860118726505,
+            "p90_mrr": 0.10408873862319593
+          },
+          "blended_0.5": {
+            "mean_mrr": 0.07773025873593932,
+            "median_mrr": 0.07755183486339975,
+            "std_mrr_across_origins": 0.020757016754830455,
+            "p10_mrr": 0.05315583334056544,
+            "p90_mrr": 0.10341887212183468
+          },
+          "blended_0.75": {
+            "mean_mrr": 0.07706807372976412,
+            "median_mrr": 0.07681821613626443,
+            "std_mrr_across_origins": 0.020953341786554863,
+            "p10_mrr": 0.04824164129436156,
+            "p90_mrr": 0.10446798250996267
+          },
+          "blended_1": {
+            "mean_mrr": 0.0774154720746629,
+            "median_mrr": 0.07326872879672365,
+            "std_mrr_across_origins": 0.021960308946240677,
+            "p10_mrr": 0.05059060695591607,
+            "p90_mrr": 0.1046667741680874
+          }
+        },
+        "overlapping_origins_independent": false,
+        "mean_forecast_mae_on_same_eligible_origins": 23.484424016723914
+      }
+    }
+  ]
+}
