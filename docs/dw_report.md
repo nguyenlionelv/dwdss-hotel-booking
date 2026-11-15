@@ -4,7 +4,7 @@
 
 Data Warehouse phục vụ phân tích vận hành City Hotel theo ngày đến. Mô hình gồm một FactBooking ở grain một reservation record nguồn, sáu dimension và một DailyContext ở grain một ngày. Các bảng kỹ thuật lưu phiên bản nạp, source coverage, chất lượng và lỗi truy vết.
 
-DW đã được nạp và kiểm chứng trên PostgreSQL local. Operations Mart đã hiện thực tổng hợp theo ngày và ngày × country trong cùng domain Operations, tích hợp publish đồng bộ với DW. Kết quả và evidence Mart tại mục 13; API, OLAP/Reporting, feature dataset và mô hình ML được tích hợp ở giai đoạn sau.
+DW đã được nạp và kiểm chứng trên PostgreSQL local. Operations Mart tổng hợp theo ngày và ngày × country, publish đồng bộ với DW. API, OLAP/Reporting và ML/DSS đã được tích hợp; báo cáo này tập trung DW/Mart, kết quả hiện tại tại mục 13.5.
 
 | Tài liệu DW | Chức năng |
 |---|---|
@@ -14,7 +14,7 @@ DW đã được nạp và kiểm chứng trên PostgreSQL local. Operations Mar
 
 Các tài liệu nguồn, Staging và hợp đồng tích hợp thuộc giai đoạn trước tiếp tục được giữ tại vị trí hiện có.
 
-Trong phạm vi DW/Mart, `dw_design.md` quy định mô hình và baseline hiện hành; báo cáo xác định kết quả đã có bằng chứng; runbook mô tả thao tác vận hành. Evidence DW trước khi tích hợp Mart được giữ nguyên ở mục 10–11; serving version và kiểm chứng Mart theo mục 13. Feature/ML chưa triển khai và không là điều kiện bổ sung để công nhận DW/Mart READY.
+Trong phạm vi DW/Mart, `dw_design.md` quy định mô hình và baseline hiện hành; báo cáo xác định kết quả đã có bằng chứng; runbook mô tả thao tác vận hành. Mục 10–11 và 13.2–13.4 giữ evidence lịch sử; mục 13.5 ghi snapshot được kiểm chứng gần nhất. Kết quả ML không là điều kiện bổ sung để công nhận DW/Mart READY.
 
 ## 2. Quá trình triển khai
 
@@ -38,11 +38,11 @@ DW loader đọc `staging.v_booking_current`, `staging.v_holiday_current`, `stag
 
 | Nguồn | File raw trong manifest | Published Staging |
 |---|---|---|
-| Booking | [hotel_bookings.csv](../data/raw/booking/mathsian_hotel-bookings_20261017/hotel_bookings.csv) | 79.330 reservation City Hotel |
-| Holiday | [Lịch PT/Lisboa](../data/raw/holiday/pt_lisboa_holidays_2015_2017_20261017.csv) | 38 records |
-| Weather | [ERA5 Lisbon](../data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261027.json) | 793 records ngày |
+| Booking | [hotel_bookings.csv](../data/raw/booking/mathsian_hotel-bookings_20261110/hotel_bookings.csv) | 79.330 reservation City Hotel |
+| Holiday | [Lịch PT/Lisboa](../data/raw/holiday/pt_lisboa_holidays_2015_2017_20261110.csv) | 38 records |
+| Weather | [ERA5 Lisbon](../data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261110.json) | 793 records ngày |
 
-Raw và acquisition metadata được giữ bất biến; manifest chứa checksum và đường dẫn metadata. Raw thường bị Git-ignore nên phải chuyển giao riêng đúng checksum. DW không trừ lại Resort vì Staging đã xử lý phạm vi City Hotel.
+Raw và acquisition metadata được giữ bất biến, đã được Git theo dõi; manifest chứa checksum và đường dẫn metadata. DW không trừ lại Resort vì Staging đã xử lý phạm vi City Hotel.
 
 Booking source key là checksum file + source row ID. Row ID là ordinal trong CSV gốc trước lọc, header=1 và data đầu=2. Hai reservation giống thuộc tính nhưng khác source key vẫn là hai record. `source_first_batch_id` theo batch nạp dòng vật lý đầu tiên; `staging_batch_id` của DW run theo published snapshot đang dùng.
 
@@ -78,11 +78,11 @@ Giả định Booking được ghi tại [decision.json](../artifacts/dw/operati
 
 Calendar có 800 ngày liên tục từ 01/07/2015 đến 07/09/2017. Khoảng actual có 793 ngày đến 31/08/2017; bảy ngày sau dành cho horizon, không được coi là actual. Booking/Weather ở bảy ngày này giữ UNKNOWN; Holiday vẫn trong coverage của lịch đã sinh.
 
-Evidence v1 giữ Booking UNKNOWN để thể hiện trạng thái trước khi áp dụng giả định. Config/coverage v2 và quyết định chấp nhận là căn cứ hiện hành; report lịch sử không biểu diễn trạng thái đang phục vụ.
+Evidence v1 giữ Booking UNKNOWN trước khi áp dụng giả định. Config hiện hành là `dw-inputs-v3-20261110`, coverage `selected-coverage-v3-20261110`, gắn source set ngày 10/11; giả định Booking tiếp tục áp dụng cho cùng checksum. Report lịch sử không biểu diễn snapshot đang phục vụ.
 
 ## 5. Migration và cấu trúc database
 
-Ba SQL migration tạo 15 bảng trong schema `dw`:
+Bốn SQL migration quản lý 15 bảng trong schema `dw`; migration `004_booking_cleaning_quality.sql` bổ sung `excluded_booking_count` và điều chỉnh constraints chất lượng cho bản ghi bị loại theo rule làm sạch:
 
 | Nhóm | Bảng và mục đích |
 |---|---|
@@ -109,7 +109,8 @@ Hàm nhận một row Staging cùng raw record, lineage và issues của đúng 
 | Ngày hợp lệ ngoài calendar | Lỗi config; không đổi thành rejection để bỏ dòng |
 | Cancellation invalid | Core rejection; lỗi có ngày xác định ảnh hưởng daily quality |
 | Guest missing/invalid/âm/phân số/overflow | Giữ booking core hợp lệ; vô hiệu measure tương ứng và ghi issue |
-| Guest tổng bằng 0 | Giữ 0 và warning ZERO_GUESTS; guest-ineligible |
+| Guest tổng bằng 0 và (đã hủy hoặc đồng thời ADR hữu hạn ≤ 0 và nights = 0) | Loại khỏi fact, lưu rejection `EXCLUDED_ZERO_GUEST_BOOKING`; không tự làm ngày PARTIAL |
+| Guest tổng bằng 0 còn lại | Giữ 0 và warning ZERO_GUESTS; guest-ineligible |
 | Nights bằng 0 | Stay-eligible, giữ warning ZERO_STAY_NIGHTS |
 | Nights/lead time/ADR lỗi | Vô hiệu measure tương ứng, không loại booking chỉ vì measure lỗi |
 | ADR bằng 0 | Hợp lệ, giữ precision |
@@ -121,8 +122,8 @@ Raw/typed values và issues được đối chiếu trước khi sử dụng. Kh
 ### 6.1. Ảnh hưởng D01/D02
 
 - Có 4 booking thiếu children, đều đã hủy. Giữ booking/issue; riêng lỗi này không làm thiếu demand khách không hủy.
-- Có 167 ZERO_GUESTS, gồm 144 booking không hủy thuộc 114 ngày. Giữ booking; không impute hoặc gán nguyên nhân nhập liệu khi chưa có căn cứ.
-- Actual có 679 ngày guest COMPLETE và 114 PARTIAL. Booking coverage COMPLETE không làm 114 ngày này trở thành COMPLETE.
+- Nguồn có 167 ZERO_GUESTS; rule hiện hành loại 80 booking vào rejection có lineage. Các booking zero-guests còn lại được giữ, guest-ineligible; không impute hoặc gán nguyên nhân nhập liệu.
+- Đối soát hiện tại: 79.330 Staging = 79.250 fact + 80 rejection. Actual có 713 ngày guest COMPLETE và 80 PARTIAL; target giữ NULL ở các ngày PARTIAL.
 
 Các con số thuộc source version hiện hành, phải tính lại khi đổi source/rule. Booking hủy vẫn phục vụ count/cancellation nhưng không góp guest demand không hủy.
 
@@ -147,7 +148,7 @@ Holiday được tổng hợp theo ngày/scope trước join, giữ national, Li
 
 Weather trùng ngày được đánh dấu AMBIGUOUS, hai measure giữ NULL. Ngày có một record được kiểm tra từng field; thiếu mưa không thành 0, nhiệt độ âm có thể hợp lệ, NaN/Infinity và mưa âm không hợp lệ.
 
-Daily quality có đủ calendar, gồm ngày không booking. Technical counts bằng 0 không chứng nhận demand bằng 0 khi coverage chưa đủ. Defect ở booking không hủy làm measure tương ứng PARTIAL; unknown categorical dimension không tự làm mất guest hợp lệ.
+Daily quality có đủ calendar, gồm ngày không booking. Technical counts bằng 0 không chứng nhận demand bằng 0 khi coverage chưa đủ. `excluded_booking_count` là phần rejection do làm sạch; chỉ rejection còn lại và measure-ineligible làm trạng thái tương ứng PARTIAL. Unknown categorical dimension không tự làm mất guest hợp lệ.
 
 <a id="null-zero"></a>
 
@@ -216,11 +217,12 @@ Tái sử dụng [common.py](../pipeline/source_to_staging/common.py) cho kết 
 | [001_control.sql](../database/dw/001_control.sql) | Schema và sáu bảng kỹ thuật |
 | [002_dimensions.sql](../database/dw/002_dimensions.sql) | Sáu dimension, constraints và unknown members |
 | [003_fact_context_quality.sql](../database/dw/003_fact_context_quality.sql) | Fact, context, quality và lineage |
+| [004_booking_cleaning_quality.sql](../database/dw/004_booking_cleaning_quality.sql) | Đếm riêng cleaning exclusions và điều chỉnh constraints chất lượng |
 | [dw_checks.sql](../database/validation/dw_checks.sql) | SQL đối soát, được quality CLI bind tham số |
 | [operations_mart.sql](../database/marts/operations_mart.sql) | Hai serving tables, CHECK/FK/keys/index, migration ledger và dataset state |
 | [refresh_operations.sql](../database/marts/refresh_operations.sql) | GROUPING SETS ngày/country, join calendar/context sau aggregate, eligibility/NULL/0 |
-| [dw_operations.json](../pipeline/config/dw_operations.json) | Config `dw-inputs-v2`, calendar/actual, asset versions/hashes |
-| [coverage_selected_source_set.json](../pipeline/config/coverage_selected_source_set.json) | Coverage `selected-coverage-v2`, source checksums và evidence |
+| [dw_operations.json](../pipeline/config/dw_operations.json) | Config `dw-inputs-v3-20261110`, calendar/actual, asset versions/hashes |
+| [coverage_selected_source_set.json](../pipeline/config/coverage_selected_source_set.json) | Coverage `selected-coverage-v3-20261110`, source checksums và evidence |
 | [country_codes.csv](../pipeline/mappings/country_codes.csv) | Country aliases/labels/unknown |
 | [channel_codes.csv](../pipeline/mappings/channel_codes.csv) | Channel mapping |
 | [market_segment_codes.csv](../pipeline/mappings/market_segment_codes.csv) | Segment mapping |
@@ -240,7 +242,7 @@ Tái sử dụng [common.py](../pipeline/source_to_staging/common.py) cho kết 
 | [test_dw_cli.py](../tests/warehouse/test_dw_cli.py) | Runner: thứ tự, dừng khi lỗi, version mismatch, output tồn tại, tùy chọn tests và interruption | 13 |
 | [operations_expected.json](../tests/fixtures/dw/operations_expected.json) | Fixture tính tay; có expected country cho bước Mart | — |
 
-Có thêm 5 Staging regression tests trong bộ pipeline, tổng cộng 237. Integration dùng database test riêng; SQLite không thay thế kiểm chứng PostgreSQL. File `pytest_final.xml` của bộ nghiệm thu loader gốc giữ nguyên 223 cases; kết quả bộ hiện hành nằm trong evidence runner.
+Có thêm 5 Staging regression tests trong bộ pipeline tại lần nghiệm thu trước Mart, tổng cộng 237. Integration dùng database test riêng; SQLite không thay thế kiểm chứng PostgreSQL. File `pytest_final.xml` của bộ nghiệm thu loader gốc giữ nguyên 223 cases; kết quả gần nhất tại mục 13.5.
 
 <a id="results"></a>
 
@@ -264,7 +266,7 @@ Có thêm 5 Staging regression tests trong bộ pipeline, tổng cộng 237. Int
 | Observed eligible nights không hủy | 135.153 |
 | Tổng ADR hợp lệ không hủy | 4.888.423,70; giá trị đối soát, không phải doanh thu |
 | Kiểm tra độc lập | 36 checks đạt, violation counts bằng 0 |
-| Bộ test pipeline hiện hành | 237 passed; 0 failed/error/skipped; bộ nghiệm thu loader gốc giữ 223 cases |
+| Bộ test pipeline tại lần nghiệm thu | 237 passed; 0 failed/error/skipped; bộ nghiệm thu loader gốc giữ 223 cases |
 | Chạy lại cùng input | No-op, cùng run/data version |
 | Staging trước/sau | Snapshot, registry, issues, counts và quality không đổi |
 
@@ -347,14 +349,14 @@ Giữ counts/sums riêng, KPI NUMERIC, eligibility theo G/S/L/R và quy tắc NU
 
 DW loader tích hợp xóa Mart children trước DW parents, rebuild và validate cả hai lớp trong cùng transaction rồi mới publish state/active run. Mọi writer dùng cùng advisory lock. Lỗi giữ nguyên snapshot phục vụ cũ; schema Mart không có ledger/checksum đúng bị chặn. Runner thêm `--with-mart`; CLI riêng và lệnh quality theo [runbook mục 9](dw_runbook.md#9-xây-và-kiểm-tra-operations-mart).
 
-### 13.2. Serving snapshot đã kiểm chứng
+### 13.2. Snapshot nghiệm thu ngày 27/10/2026 (lịch sử)
 
-**Audit bổ sung:** quality hiện tại phát hiện một calendar violation trong bảng Mart ngày; DW và bảng country vẫn đúng ở trường đang đối chiếu. Bảng dưới ghi kết quả tại lần publish nghiệm thu ban đầu. Chưa xác nhận lại MART READY cho dữ liệu hiện tại cho đến khi xử lý sai lệch và quality đạt lại; chi tiết ở mục 13.4.
+Snapshot này từng được nghiệm thu, sau đó audit phát hiện một calendar violation tại mục 13.4. Đây là lịch sử ngày 27/10; trạng thái được kiểm chứng gần nhất tại mục 13.5.
 
 | Nội dung | Kết quả |
 |---|---|
 | Trạng thái tại lần publish ban đầu | MART READY trên PostgreSQL local; hai đầu ra đã publish, quality và rerun đạt |
-| DW run đang phục vụ | `c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873` |
+| DW run tại lần nghiệm thu | `c58a5d47-dfa2-4bb1-a6f6-5058dd1b8873` |
 | DW/Mart data version | `75deb861-6eb3-4475-8b15-f23bcef91b9b` |
 | Staging batch | `735da72d-5c48-4690-984c-13b5c44b9325`, giữ nguyên |
 | Actual range | 01/07/2015–31/08/2017; không có bảy ngày horizon trong actual |
@@ -369,7 +371,7 @@ DW loader tích hợp xóa Mart children trước DW parents, rebuild và valida
 | Rerun | No-op, cùng run/version/fingerprint/counts |
 | Staging trước/sau | Snapshot, registry, issues, counts và content hashes của ba current views khớp |
 
-Các con số gắn đúng source/config và serving run này, không là hằng số thuật toán. DW run/version ở mục 10–11 là evidence nghiệm thu trước Mart, không thay cho serving snapshot hiện hành ở đây.
+Các con số gắn đúng source/config và run lịch sử này, không là hằng số thuật toán hoặc số liệu hiện tại.
 
 ### 13.3. Tests, hiệu năng và bằng chứng
 
@@ -393,11 +395,11 @@ Tests kiểm tra expected values độc lập từ fixture, country calendar/UNK
 
 Lần build thật đầu tiên phát hiện statistics còn giữ run ID cũ khiến planner ước lượng run mới chỉ một fact và chọn Nested Loop lặp aggregate theo từng ô country/ngày. Truy vấn được hủy có kiểm soát, attempt ghi failed (57014), snapshot cũ giữ nguyên; evidence trong `serving` và rollback JSON được giữ. Runtime cuối ANALYZE sáu bảng DW đầu vào trước SQL refresh; build thật hoàn tất và plan sau là Hash Join. Đây là cập nhật statistics sau full refresh, không đổi eligibility hoặc dữ liệu nguồn.
 
-`summary.json` là bản bàn giao hiện hành, thay bản phụ trợ `handoff_summary.json`. Khoảng `finished_at-started_at` DW trong report phụ trợ ban đầu dùng timestamp transaction `now()`, không phản ánh wall-clock duration; không dùng số đo đó để kết luận tốc độ. Evidence hiệu năng chính thức chỉ đối chiếu execution plans trong `performance_verification.json`.
+`summary.json` là bản bàn giao của lần nghiệm thu 27/10, thay bản phụ trợ `handoff_summary.json`. Khoảng `finished_at-started_at` DW trong report phụ trợ ban đầu dùng timestamp transaction `now()`, không phản ánh wall-clock duration; không dùng số đo đó để kết luận tốc độ. Evidence hiệu năng chính thức chỉ đối chiếu execution plans trong `performance_verification.json`.
 
-Phạm vi kết thúc ở dữ liệu Operations Mart. Chưa xây OLAP operators, Reporting/API, feature dataset, model hoặc DSS rules. Ngưỡng model, split hoặc feature window không chặn nghiệm thu DW/Mart; API/ML contract được liên kết ở giai đoạn sau.
+Lần nghiệm thu 27/10 kết thúc ở Operations Mart. API, OLAP/Reporting và ML/DSS được tích hợp sau đó; kết quả của các lớp này không thay thế quality DW/Mart.
 
-### 13.4. Audit hiện trạng sau EDA
+### 13.4. Audit sau EDA ngày 27/10/2026 (lịch sử)
 
 Khi xác nhận lại nghiệm thu, truy vấn chỉ đọc và quality độc lập phát hiện ngày 18/06/2017 (Chủ Nhật): `dw.dim_date.is_weekend=true`, toàn bộ Mart country của ngày này có `is_weekend=true`, nhưng `mart.daily_hotel_operations.is_weekend=false`. CSV export cũng mang giá trị false. Có một calendar violation ở Mart ngày; không có weekend-calendar violation ở bảng country.
 
@@ -408,3 +410,27 @@ Audit không sửa dữ liệu PostgreSQL hoặc CSV. Cần xử lý sự không
 Đối chiếu nguyên nhân: code DimDate tính `is_weekend = iso.weekday >= 6`; SQL Mart sao chép cột từ DimDate cho cả hai grain. Evidence quality ban đầu có calendar violations bằng 0, hiện chỉ bảng ngày lệch một dòng. `pg_stat_user_tables` ghi nhận bảng ngày có `n_tup_ins=793`, `n_tup_upd=1`, `n_tup_del=0`; đây là bằng chứng phù hợp với một cập nhật sau publish, không xác định được tác nhân hoặc câu lệnh cụ thể. PostgreSQL đang `log_statement=none`, không có pg_stat_statements/pgaudit hoặc track commit timestamp, và không còn lệnh ghi Mart trong trạng thái session hiện thấy, nên chưa truy vết được ai/thao tác nào đã đổi cột.
 
 Schema Mart có quality check độc lập phát hiện sai lệch nhưng chưa có CHECK tại bảng buộc `is_weekend` khớp ngày lịch; do đó một UPDATE trực tiếp có thể ghi false cho Chủ Nhật mà DB không chặn ngay. Đây là khoảng trống bảo vệ dữ liệu cần bổ sung bằng migration mới; không sửa checksum DDL đã áp dụng hoặc quy kết thao tác thay đổi khi chưa có bằng chứng.
+
+<a id="current-results"></a>
+
+### 13.5. Kết quả kiểm chứng ngày 15/11/2026
+
+Kiểm tra chỉ đọc trên PostgreSQL xác nhận Staging, DW và Mart đạt quality; calendar violation của snapshot lịch sử không xuất hiện trong snapshot được kiểm tra này.
+
+| Nội dung | Kết quả |
+|---|---|
+| Staging batch | `0bc571c3-b1d2-4919-96af-07a414f0bba4` |
+| DW run / data version | `8dbd06c9-0d46-4dc2-887a-cb01bf360233` / `10d836bb-4917-4aed-b338-b8f857d7edeb` |
+| Đối soát Booking | 79.330 Staging = 79.250 fact + 80 cleaning exclusions có rejection/lineage |
+| Fact không hủy / hủy | 46.171 / 33.079 |
+| Dimensions | Date 800; Country 166; Channel 5; Segment 8; Profile 9; Room 9 |
+| Context / daily quality | 800 / 800 |
+| Mart ngày / ngày × country | 793 / 131.638 |
+| Guest quality | 713 COMPLETE + 80 PARTIAL; target NULL ở ngày PARTIAL |
+| Tổng khách / nights đủ điều kiện không hủy | 89.456 / 135.153; khách là subtotal quan sát, không phải demand đầy đủ |
+| Tổng ADR hợp lệ không hủy | 4.888.423,70; không phải doanh thu |
+| Quality độc lập | 37 checks DW + 21 checks Mart đạt, mọi violation bằng 0 |
+
+Evidence: [Staging quality](../artifacts/tests/software_review_a7ba9a00548040b1be11bde85df2b7cf/staging_quality.json), [DW/Mart quality](../artifacts/tests/software_review_a7ba9a00548040b1be11bde85df2b7cf/dw_mart_quality.json). Lượt này không nạp lại pipeline hoặc chạy lại rerun trên database phục vụ.
+
+Regression toàn repository: [380 passed, 4 failed, 4 skipped](../artifacts/tests/software_review_a7ba9a00548040b1be11bde85df2b7cf/pytest_postgres.xml). Ba lỗi đường dẫn Temp Windows và một lỗi cấu hình model đều đạt khi chạy lại riêng với cấu hình đúng: [startup](../artifacts/tests/software_review_a7ba9a00548040b1be11bde85df2b7cf/pytest_startup_retry.xml), [DSS status](../artifacts/tests/software_review_a7ba9a00548040b1be11bde85df2b7cf/pytest_status_retry.xml). Không coi đây là một lượt full-suite xanh.

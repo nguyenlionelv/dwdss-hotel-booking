@@ -2,9 +2,9 @@
 
 **Ngày chốt cấu trúc/phạm vi:** 24/10/2026. **Document ID:** `dw-operations-6dim-design-v1`.
 
-Đây là bản thiết kế hợp nhất hiện hành, quy định mô hình, baseline dữ liệu và tiêu chí nghiệm thu. Grain là mức chi tiết mà một dòng đại diện. Trạng thái triển khai được xác định bằng code và evidence trong [báo cáo DW](../dw_report.md#results), không suy từ việc tài liệu thiết kế đã được chấp nhận.
+Đây là bản thiết kế hợp nhất hiện hành, quy định mô hình, baseline dữ liệu và tiêu chí nghiệm thu. Grain là mức chi tiết mà một dòng đại diện. Trạng thái triển khai được xác định bằng code và evidence trong [báo cáo DW](../dw_report.md#current-results), không suy từ việc tài liệu thiết kế đã được chấp nhận.
 
-**Trạng thái triển khai:** DW đã nạp đủ 1 Fact + 6 Dim + DailyContext; Operations Mart đã hiện thực hai đầu ra ngày/country và publish đồng bộ DW/Mart. Kết quả kiểm chứng, trạng thái READY và evidence theo [báo cáo mục 13](../dw_report.md#operations-mart); lệnh vận hành theo [runbook](../dw_runbook.md). Các baseline ngày 26/10 bên dưới giữ lịch sử quyết định dữ liệu.
+**Trạng thái triển khai:** DW đã nạp đủ 1 Fact + 6 Dim + DailyContext; Operations Mart có hai đầu ra ngày/country và publish đồng bộ DW/Mart. Kiểm chứng ngày 15/11/2026: 79.250 fact + 80 cleaning exclusions, 713 ngày guest COMPLETE và 80 PARTIAL; 37 checks DW + 21 checks Mart đạt. Evidence tại [báo cáo](../dw_report.md#current-results), lệnh chạy tại [runbook](../dw_runbook.md). D02 bên dưới đã cập nhật theo rule làm sạch hiện hành; các ví dụ nguồn cũ được giữ để truy vết.
 
 ## 1. Phạm vi và trạng thái quyết định
 
@@ -17,11 +17,11 @@
 | Ngày phân tích | Arrival date; `date_key` trong fact là khóa ngày đến |
 | DailyContext | Tên logic; tên bảng vật lý giữ `dw.daily_hotel_context`, một dòng/ngày của City Hotel |
 | Đầu ra Mart theo thiết kế | Chỉ **Operations Mart**, gồm tổng ngày và breakdown country |
-| Định hướng forecast ở giai đoạn sau | Proxy lượng khách không hủy theo ngày đến, 7 ngày sau cutoff dữ liệu |
+| Forecast đã tích hợp | Proxy lượng khách không hủy theo ngày đến, 7 ngày sau cutoff dữ liệu |
 | Ngoài phạm vi đầu ra | Customer, Revenue & Cancellation, Booking/Commercial Mart và mô hình tương ứng |
 | Không bổ sung | DimDepositType, DimMeal, DimAgent, DimCompany, DimPartyType |
 
-**Phạm vi đã thống nhất:** cấu trúc 1/6/1, City Hotel, arrival date và đầu ra Operations. Áp dụng D01–D08 tại [mục 12](#decisions-baseline), gồm bổ sung D05 về giả định Booking completeness. D01 giữ lineage và validation dù cả 4 dòng thiếu children của source hiện hành đều đã hủy. D02 giữ booking kèm warning và guest-ineligible. Mapping, coverage evidence, migration và loader DW đã được triển khai/kiểm chứng; **DW READY trên local**. Operations Mart đã hiện thực; evidence nghiệm thu theo báo cáo mục 13. API/ML contract được liên kết ở giai đoạn sau; ngưỡng model, split hoặc feature window của mẫu ML không chặn nghiệm thu DW/Mart.
+**Phạm vi đã thống nhất:** cấu trúc 1/6/1, City Hotel, arrival date và đầu ra Operations. Áp dụng D01–D08 tại [mục 12](#decisions-baseline), gồm D05 về Booking completeness và D02 về làm sạch zero-guests. D01 giữ lineage và validation dù cả 4 dòng thiếu children đều đã hủy. API, OLAP/Reporting và ML/DSS đã tích hợp; kết quả model không chặn nghiệm thu DW/Mart.
 
 Bốn chiều Channel/Segment/Profile/Room **được xây và nạp ngay trong DW** dù chưa dùng trong Operations Mart. Không chờ Customer Mart mới triển khai; cũng không tạo Customer views/API/forecast ở giai đoạn này.
 
@@ -287,7 +287,8 @@ Các rules mục này đã được áp dụng trong DW. Version được ghi qu
 | Ngày đến thiếu/sai | Không vào fact chính; một booking_rejection/source row + issues. Không đoán ngày; unknown-date ảnh hưởng coverage chưa xác định thì block publish |
 | Cancellation missing/ngoài 0,1 | Không vào fact; nếu biết ngày, ngày đó thiếu booking/cancellation và guest completeness |
 | Guest component thiếu/invalid/âm/phân số/overflow | Giữ fact nếu core hợp lệ; component sai→NULL, total_guests=NULL, guest_eligible=false + issue |
-| Guest tổng=0 | Giữ booking, total=0, guest_eligible=false, warning ZERO_GUESTS |
+| Guest tổng=0 và (đã hủy hoặc đồng thời ADR hữu hạn ≤ 0 và nights=0) | Không vào fact; lưu rejection `EXCLUDED_ZERO_GUEST_BOOKING` và lineage, đếm riêng trong `excluded_booking_count` |
+| Guest tổng=0 còn lại | Giữ booking, total=0, guest_eligible=false, warning ZERO_GUESTS |
 | Nights thiếu/sai | Giữ booking; total_stay_nights=NULL, stay_eligible=false |
 | Nights=0 | Giữ 0, eligible nếu đủ component, warning để đối soát |
 | Lead time/ADR thiếu/sai/âm | NULL + issue; chỉ loại khỏi measure/mẫu số tương ứng; ADR=0 hợp lệ |
@@ -297,7 +298,7 @@ Các rules mục này đã được áp dụng trong DW. Version được ghi qu
 
 Không dùng COALESCE(children,0), missing precipitation=0, missing holiday=false hoặc global dropna. Missing và invalid đều có thể dẫn tới typed NULL nhưng issue/reason phải phân biệt và raw còn truy vết được.
 
-**Ghi chú source set hiện tại:** 4 dòng thiếu children (40602, 40669, 40681, 41162) đều `is_canceled=1`, nên riêng lỗi này không làm thiếu target khách không hủy; giữ booking/issue, không ưu tiên thêm imputation hoặc loại row. Trong 167 ZERO_GUESTS có 144 booking không hủy thuộc 114 ngày: giữ booking và warning, `guest_eligible=false`; chất lượng guest phải phản ánh ảnh hưởng này, không báo COMPLETE chỉ vì không có rejection. Giả thuyết nhân viên chưa hỏi hoặc thiếu sót trao đổi chưa được dữ liệu xác nhận, không dùng để sửa số khách nguồn.
+**Source set hiện tại:** 4 dòng thiếu children (40602, 40669, 40681, 41162) đều đã hủy; giữ booking/issue. Nguồn có 167 ZERO_GUESTS, rule làm sạch loại 80 booking khỏi fact và giữ rejection có lineage. Đối soát: 79.330 Staging = 79.250 fact + 80 rejection; guest quality có 713 ngày COMPLETE và 80 PARTIAL. Không impute hoặc suy nguyên nhân nhập liệu cho các booking zero-guests còn lại.
 
 ### Dẫn xuất party type
 
@@ -316,11 +317,11 @@ Theo baseline D07, thiếu bất kỳ component nào vẫn UNKNOWN. Các nhãn m
 - Nguồn booking/holiday/weather có coverage evidence riêng theo ngày. Min/max hoặc 793 Weather entries không chứng minh Booking đầy đủ mọi ngày.
 - COMPLETE: đã chứng nhận đầy đủ và không có lỗi ảnh hưởng measure. PARTIAL: có phần dữ liệu đáng tin nhưng thiếu row/measure. MISSING: nguồn xác nhận thiếu dữ liệu. UNKNOWN: chưa đủ căn cứ kết luận coverage.
 - Non-canceled booking guest-ineligible làm guest ngày đó PARTIAL; canceled booking thiếu guest không tự làm guest target PARTIAL.
-- Invalid cancellation/rejected row có ngày biết được làm guest PARTIAL vì chưa biết có nên cộng row đó vào khách không hủy.
+- Invalid cancellation/rejected row chưa giải quyết có ngày biết được làm guest PARTIAL. Rejection chỉ do `EXCLUDED_ZERO_GUEST_BOOKING` được đếm riêng, không tự làm ngày PARTIAL.
 - Ngày không Booking chỉ có guest=0 khi source coverage ngày đó COMPLETE. Ngoài coverage/chưa xác nhận không tự lấp 0.
 - Channel/profile/room unknown không làm mất guest hợp lệ hoặc chặn Operations chỉ vì các chiều đó chưa được dùng. Tuy nhiên lookup/unknown mapping và vấn đề của cả 6 Dim vẫn phải được kiểm tra, không seed toàn bộ key=0 rồi coi đã nạp xong.
 
-**Quyết định bổ sung 27/10/2026 — D05:** người dùng chấp nhận giả định file Booking đã chọn chứa đầy đủ các reservation City Hotel có ngày đến 01/07/2015–31/08/2017 trong phạm vi dự án. Source Booking coverage trong khoảng này là COMPLETE theo giả định được chấp nhận, không suy từ count/min/max hoặc quality Staging. Quyết định chỉ áp dụng checksum Booking `7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06`; ngoài khoảng/đổi source phải đánh giá lại. D01/D02 và eligibility theo measure vẫn giữ nguyên: 114 ngày bị non-canceled ZERO_GUESTS vẫn guest PARTIAL, target=NULL. Xem [decision có version](../../artifacts/dw/operations/booking_coverage_accepted_20261027/decision.json) và [coverage/calendar hiện hành](../dw_report.md#coverage-calendar).
+**Quyết định bổ sung 27/10/2026 — D05:** người dùng chấp nhận giả định file Booking đầy đủ reservation City Hotel có ngày đến 01/07/2015–31/08/2017. Source coverage là COMPLETE theo giả định, không suy từ count/min/max hoặc quality Staging. Quyết định chỉ áp dụng checksum `7c2ae42a7353905ea136e5c2287f17c92c5435826598bfbb8491c6f0c7b1fc06`; ngoài khoảng/đổi source phải đánh giá lại. Sau rule làm sạch hiện hành, 80 ngày guest PARTIAL vẫn có target=NULL. Xem [decision](../../artifacts/dw/operations/booking_coverage_accepted_20261027/decision.json) và [coverage/calendar](../dw_report.md#coverage-calendar).
 
 ## 8. Bảng kỹ thuật và attributes
 
@@ -346,6 +347,7 @@ Những bảng này hỗ trợ lineage, đối soát và transaction; không tă
 | source_booking_count | BIGINT N | Source rows xác định thuộc ngày này |
 | fact_booking_count | BIGINT N | Fact rows ngày này |
 | rejected_booking_count | BIGINT N | Distinct rejected source rows có ngày biết được |
+| excluded_booking_count | BIGINT N | Phần rejection do `EXCLUDED_ZERO_GUEST_BOOKING`; không tự làm ngày PARTIAL |
 | non_canceled_booking_count | BIGINT N | Fact không hủy |
 | guest_ineligible_booking_count | BIGINT N | Fact không hủy thiếu điều kiện guest |
 | stay_ineligible_booking_count | BIGINT N | Fact không hủy thiếu điều kiện nights |
@@ -416,7 +418,7 @@ Roll-up ngày→tuần/tháng cộng sum/count rồi tính lại tỷ lệ/trung
 
 ### 9.4. Feature dataset cho Operations
 
-Phần feature/ML thuộc giai đoạn sau, chưa triển khai và không nằm trong gate DW/Mart hiện tại. Danh sách dưới đây là định hướng để liên kết API/ML contract sau khi Mart có đầu ra thực tế; không phải yêu cầu tạo feature dataset trước khi nghiệm thu DW hoặc Mart.
+ML hiện đọc snapshot có version qua `ml/demand_forecast/data.py`, dựng feature trong module ML và phục vụ qua API. Phần dưới giữ định hướng feature dataset ban đầu; `mart.demand_features` chưa được triển khai và không là điều kiện nghiệm thu DW/Mart.
 
 `mart.demand_features` là output kỹ thuật dự kiến của cùng Operations domain, grain date_key: date_key/full_date, data_version, feature_version, target_guests, lag_1, lag_7, rolling_mean_7/14, day_of_week, month, is_weekend, optional is_holiday đã xác nhận, feature_ready.
 
@@ -494,6 +496,7 @@ database/dw/
   001_control.sql
   002_dimensions.sql                # đủ 6 Dim, không phải chỉ Date/Country
   003_fact_context_quality.sql
+  004_booking_cleaning_quality.sql
 database/validation/dw_checks.sql
 database/marts/operations_mart.sql
 database/marts/refresh_operations.sql
@@ -644,12 +647,12 @@ Fixture theo [operations_expected.json](../../tests/fixtures/dw/operations_expec
 
 ## 12. Baseline quyết định tạm chốt ngày 26/10/2026
 
-Baseline D01–D08 được khởi lập khi thiết kế và đã được áp dụng trong DW; D05 được bổ sung giả định Booking completeness như mục 7. Bảng dưới thể hiện quy tắc hiện hành. DW có evidence nghiệm thu local tại [báo cáo](../dw_report.md#results); Mart có kết quả riêng tại [mục 13](../dw_report.md#operations-mart). Các record minh họa và ghi chú D01/D02 tiếp tục áp dụng khi bàn giao.
+Baseline D01–D08 được khởi lập ngày 26/10; D05 bổ sung Booking completeness, D02 được cập nhật theo rule làm sạch hiện hành tại mục 7. Bảng dưới ghi quy tắc đang áp dụng; evidence gần nhất tại [báo cáo](../dw_report.md#current-results). Ví dụ nguồn cũ được giữ để đối chiếu.
 
 | ID | Nội dung | Quyết định hiện hành |
 |---|---|---|
 | D01 | Core vs measure eligibility | Không ưu tiên xử lý đặc biệt ở source set hiện tại: cả 4 dòng thiếu children đều đã hủy, không ảnh hưởng target khách không hủy. Giữ dòng/issue và baseline điều kiện riêng từng measure; không impute hoặc bỏ kiểm tra khi đổi nguồn. |
-| D02 | ZERO_GUESTS | Giữ booking, total=0, guest-ineligible và warning; không suy số khách từ giả thuyết thiếu sót nhập liệu/trao đổi. 144 booking không hủy trên 114 ngày phải được phản ánh trong guest quality. |
+| D02 | ZERO_GUESTS | Loại khỏi fact khi total=0 và (đã hủy hoặc đồng thời ADR hữu hạn ≤ 0 và nights=0); lưu rejection/lineage, đếm cleaning exclusions riêng. Các trường hợp total=0 còn lại giữ booking, guest-ineligible và warning; không impute. |
 | D03 | Mapping code/unknown | Versioned lookup + key0; country thiếu/không map → DimCountry.UNK, vẫn giữ booking; profile partial-known. Năm mapping và shared room namespace đã được xác minh. |
 | D04 | ADR precision | NUMERIC giữ precision, rounding khi hiển thị; không mở thêm phạm vi phân tích ADR/doanh thu. File City hiện không có ADR quá 2 chữ số thập phân. |
 | D05 | Coverage | Evidence riêng theo ngày/nguồn, Holiday phân biệt national/Lisboa. Booking COMPLETE theo giả định đã chấp nhận cho đúng checksum và arrival 01/07/2015–31/08/2017; ngoài khoảng giữ UNKNOWN. D01/D02 vẫn có thể làm guest PARTIAL. Không suy completeness từ min/max hoặc row count. |
@@ -673,7 +676,7 @@ Không đưa quyết định bổ sung DimDepositType hay triển khai Customer 
 | ID | Record / quan sát thật | Cách áp dụng baseline |
 |---|---|---|
 | D01 | Row 40602: 03/08/2015, canceled=1, adults=2, children=NA, babies=0. Cả 4 row 40602/40669/40681/41162 đều đã hủy. | Giữ booking/issue, guest chưa đủ điều kiện; riêng lỗi này không ảnh hưởng target khách không hủy. Không xóa các booking vì vẫn cần số booking/hủy và lineage. |
-| D02 | Row 40394: 23/07/2015, canceled=0, adults/children/babies=0, nights=7, ADR=0, status=Check-Out. | Giữ booking/warning, total=0, guest_eligible=false. Trong 167 ZERO_GUESTS có 144 không hủy trên 114 ngày; các ngày này không được coi guest COMPLETE theo baseline. |
+| D02 | Row 40394: 23/07/2015, canceled=0, adults/children/babies=0, nights=7, ADR=0, status=Check-Out. | Vẫn giữ booking/warning, total=0, guest_eligible=false vì không thỏa điều kiện loại. Số 144 booking/114 ngày là quan sát trước rule làm sạch; kết quả hiện tại theo mục 7. |
 | D03 | Row 80832: 23/11/2015, canceled=0, adults=1, children/babies=0, country token NULL. City có 24 country thiếu. | country_key=0/UNK; vẫn cộng 1 guest hợp lệ vào nhóm UNK và tổng khách. |
 | D04 | Row 40068: 02/07/2015, canceled=0, ADR=58.67. City không có ADR quá 2 chữ số thập phân theo lần đối chiếu này. | Lưu NUMERIC giữ precision; không mở thêm bài toán ADR/doanh thu. |
 | D05 | Row 92619: arrival=31/08/2017, canceled=0, guest=1. Có 79 booking City đến ngày này, cũng là ngày cuối nguồn. | Record không tự chứng minh completeness; Booking COMPLETE trong khoảng actual dựa trên giả định đã chấp nhận riêng. Ngày 01/09 ngoài phạm vi vẫn UNKNOWN, không tự gán guest=0. |
@@ -694,7 +697,7 @@ Không đưa quyết định bổ sung DimDepositType hay triển khai Customer 
 
 1. Quyết định người dùng ngày 24/10/2026: cấu trúc 1 Fact + 6 Dim + 1 DailyContext, output Operations.
 2. Bản thiết kế này, gồm [baseline hiện hành tại mục 12](#decisions-baseline) và bổ sung D05 tại mục 7: dictionary DW, rules dữ liệu, phạm vi Mart và acceptance. [Báo cáo](../dw_report.md) xác định kết quả đã kiểm chứng; [runbook](../dw_runbook.md) xác định lệnh vận hành.
-3. [Detailed plan](../detailed_plan.md), [scope](../scope_assessment.md) và API/ML contract thuộc các lớp kế hoạch/tích hợp tương ứng. Các chi tiết nháp cũ không thay baseline DW hiện hành; API/ML contract được liên kết sau khi hiện thực DW/Mart.
+3. [Detailed plan](../detailed_plan.md), [scope](../scope_assessment.md) và API/ML contract thuộc các lớp kế hoạch/tích hợp tương ứng. API/ML đã được tích hợp; các chi tiết nháp cũ không thay baseline DW hiện hành.
 4. [Dictionary nguồn](../data_dictionary/operations_sources.md), [Staging contract](../etl_spec/operations_source_to_target.md), [DDL Staging](../../database/staging/001_staging.sql): giữ nguyên quy tắc nguồn đã nghiệm thu; đây là căn cứ tên cột thật.
 5. Các phương án A/B/shared/code-plan cũ đã được thay thế và dọn khỏi thư mục này; `dw_design.md` là tài liệu thiết kế hiện hành duy nhất trong `docs/dw_design`. [Master plan](../Hotel_booking_Overall_plan.md) chỉ tham khảo mở rộng; không tự thêm các Mart/Dim hoặc imputation ngoài phạm vi.
 
