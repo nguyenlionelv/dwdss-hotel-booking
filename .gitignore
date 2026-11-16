@@ -35,13 +35,6 @@ data/raw/**/*.zip
 !data/raw/holiday/pt_lisboa_holidays_2015_2017_20261110.metadata.json
 !data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261110.json
 !data/raw/weather/open_meteo_lisbon_era5_2015-07-01_2017-08-31_20261110.metadata.json
-ml/artifacts/*.joblib
-ml/artifacts/*.pkl
-artifacts/forecasts/*
-artifacts/metrics/*
-artifacts/logs/*
-artifacts/screenshots/*
-!artifacts/**/.gitkeep
 
 # OS / IDE
 .DS_Store
