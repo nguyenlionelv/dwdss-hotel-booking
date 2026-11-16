@@ -54,6 +54,17 @@ flowchart TD
 └── docker-compose.yml     # PostgreSQL, pipeline tools, backend và frontend
 ```
 
+## Kết quả mô hình
+
+Các model được chọn bằng validation trước khi đánh giá trên holdout **06–08/2017**. Daily dùng ba fold theo thời gian (TimeSeriesSplit); monthly dùng 11 tháng validation.
+
+| Mô hình / nhánh | MAE validation | MAE test | RMSE test | Đơn vị |
+|---|---:|---:|---:|---|
+| B4_weekday — lịch sử chưa bù | 30,75 | 24,55 | 32,63 | Khách/dự báo ngày |
+| B4_weekday — lịch sử đã bù | 30,73 | 24,90 | 32,92 | Khách/dự báo ngày |
+| B4_matched — nhãn trễ 1 ngày | 30,92 | 24,96 | 32,98 | Khách/dự báo ngày |
+| M0_last_month_rate — dự báo tháng | 438,07 | 288,16 | 325,45 | Khách/tháng |
+
 ## Hướng dẫn chạy
 
 ### Chạy toàn bộ hệ thống
