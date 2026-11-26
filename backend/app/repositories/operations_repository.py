@@ -512,7 +512,7 @@ class OperationsRepository:
             (1) So sánh hiệu suất vận hành giữa ngày lễ và ngày thường để tính mức tăng trưởng (`lift_pct`)
                 và liệt kê các ngày lễ nổi bật,
             (2) Phân nhóm các ngày theo 3 dải thời tiết/nhiệt độ tại Lisbon và tính chỉ số nhu cầu (`demand_index`),
-            (3) Xếp hạng Top 5 thị trường quốc gia gửi khách lớn nhất kèm tỷ trọng đêm phòng (`share_pct`).
+            (3) Xếp hạng Top 5 thị trường quốc gia gửi khách lớn nhất theo sản lượng khách (`observed_total_guests`) kèm tỷ trọng khách (`share_pct`).
 
         Input:
             - conn (psycopg.Connection): Kết nối cơ sở dữ liệu PostgreSQL.
@@ -523,7 +523,7 @@ class OperationsRepository:
             - dict[str, Any]: Từ điển chứa 3 khóa chính:
                 - `"holiday_impact"`: Thống kê so sánh ngày lễ vs ngày thường và danh sách ngày lễ đỉnh.
                 - `"weather_impact"`: Các dải thời tiết (`bands`), tỷ lệ đầy đủ dữ liệu và nhận định (`insight`).
-                - `"top_countries"`: Danh sách 5 quốc gia dẫn đầu về số đêm phòng.
+                - `"top_countries"`: Danh sách Top 5 thị trường nguồn khách (source markets) xếp hạng theo sản lượng khách (`observed_total_guests`).
         """
         cur = conn.cursor()
         conditions = ["1=1"]
@@ -683,7 +683,7 @@ class OperationsRepository:
         cur.execute(
             f"""
             WITH total_mkt AS (
-                SELECT nullif(sum(observed_total_stay_nights), 0) AS grand_rn
+                SELECT nullif(sum(observed_total_guests), 0) AS grand_guests
                 FROM mart.daily_hotel_operations_by_country
                 WHERE {where_sql}
             )
@@ -691,14 +691,17 @@ class OperationsRepository:
                 c.country_code AS code,
                 c.country_name AS name,
                 coalesce(sum(c.total_bookings), 0) AS bookings,
+                round(sum(c.total_cancellations)::numeric / nullif(sum(c.total_bookings), 0), 4) AS cancellation_rate,
                 coalesce(sum(c.observed_total_guests), 0) AS guests,
                 coalesce(sum(c.observed_total_stay_nights), 0) AS room_nights,
-                coalesce(round((sum(c.observed_total_stay_nights)::numeric / max(t.grand_rn)) * 100, 1), 0) AS share_pct
+                coalesce(round((sum(c.observed_total_guests)::numeric / max(t.grand_guests)) * 100, 1), 0) AS share_pct
             FROM mart.daily_hotel_operations_by_country c
             CROSS JOIN total_mkt t
-            WHERE {where_sql} AND c.country_code <> 'UNK'
+            WHERE {where_sql}
             GROUP BY c.country_code, c.country_name
-            ORDER BY room_nights DESC, guests DESC, code ASC
+            HAVING coalesce(sum(c.observed_total_guests), 0) > 0
+                OR coalesce(sum(c.total_bookings), 0) > 0
+            ORDER BY guests DESC, bookings DESC, room_nights DESC, code ASC
             LIMIT 5
             """,
             params,
@@ -708,6 +711,7 @@ class OperationsRepository:
                 "code": r["code"],
                 "name": r["name"],
                 "bookings": int(r["bookings"]),
+                "cancellation_rate": float(r["cancellation_rate"]) if r["cancellation_rate"] is not None else None,
                 "guests": int(r["guests"]),
                 "room_nights": int(r["room_nights"]),
                 "share_pct": float(r["share_pct"]),

@@ -194,6 +194,7 @@ class TopCountryImpactItem(BaseModel):
     code: str
     name: str
     bookings: int
+    cancellation_rate: float | None = None
     guests: int
     room_nights: int
     share_pct: float

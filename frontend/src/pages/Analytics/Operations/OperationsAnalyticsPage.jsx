@@ -5,6 +5,8 @@ import {
   fetchOperationsPivot,
   fetchOperationsImpact,
   resolvePresetDates,
+  buildTopCountryBarItems,
+  formatSharePct,
 } from '../../../services/analyticsApi';
 import { ANALYTICS_PRESETS } from '../../../data/mockData';
 import { useSystemContext } from '../../../hooks/useSystemContext';
@@ -389,12 +391,7 @@ export default function OperationsAnalyticsPage() {
   }));
 
   // Country ranking (DO-A05)
-  const topCountries = (impactData?.top_countries || []).map((c, idx) => ({
-    label: `${c.name} (${c.code})`,
-    value: Number(c.guests ?? c.room_nights ?? 0),
-    formattedValue: `${Number(c.guests ?? c.room_nights ?? 0).toLocaleString('en-US')} (${c.share_pct}%)`,
-    color: idx === 0 ? 'series1' : idx < 3 ? 'series3' : 'series5',
-  }));
+  const topCountries = buildTopCountryBarItems(impactData?.top_countries);
 
   const activeMeasureObj =
     MEASURE_OPTIONS.find((m) => m.id === chartMeasure) || MEASURE_OPTIONS[0];
@@ -1087,7 +1084,7 @@ export default function OperationsAnalyticsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(impactData?.top_countries || []).map((c) => (
+                {(impactData?.top_countries || []).slice(0, 5).map((c) => (
                   <TableRow key={c.code}>
                     <TableCell className="font-medium text-ink-primary">
                       {c.name}{' '}
@@ -1106,7 +1103,7 @@ export default function OperationsAnalyticsPage() {
                         : c.yoy_growth || '—'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums font-semibold text-brand">
-                      {c.share_pct}%
+                      {formatSharePct(c.share_pct)}
                     </TableCell>
                   </TableRow>
                 ))}
