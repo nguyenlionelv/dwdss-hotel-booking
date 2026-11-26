@@ -620,3 +620,25 @@ export async function fetchOperationsImpact(params = {}) {
   }
   return { ...MOCK_ANALYTICS_IMPACT, is_mock: true, demo_mode: true };
 }
+
+/**
+ * Format a percentage share to one decimal place (e.g. 8 -> '8.0%').
+ */
+export function formatSharePct(sharePct) {
+  return `${Number(sharePct ?? 0).toFixed(1)}%`;
+}
+
+/**
+ * Build up to 5 horizontal bar chart items from top_countries ranked by guests.
+ */
+export function buildTopCountryBarItems(topCountries = []) {
+  return (topCountries || []).slice(0, 5).map((c, idx) => {
+    const guests = Number(c.guests ?? 0);
+    return {
+      label: `${c.name} (${c.code})`,
+      value: guests,
+      formattedValue: `${guests.toLocaleString('en-US')} (${formatSharePct(c.share_pct)})`,
+      color: idx === 0 ? 'series1' : idx < 3 ? 'series3' : 'series5',
+    };
+  });
+}

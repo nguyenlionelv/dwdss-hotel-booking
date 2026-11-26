@@ -102,6 +102,21 @@ def test_analytics_pivot_and_impact_endpoints(database, tmp_path):
     assert len(impact["top_countries"]) >= 1
     assert all(c["yoy_growth"] is None for c in impact["top_countries"])
 
+    res_trend = client.get("/api/analytics/operations/trend?grain=day")
+    assert res_trend.status_code == 200
+    total_guests = res_trend.json()["summary"]["observed_total_guests"]
+
+    top_c = impact["top_countries"]
+    assert [c["guests"] for c in top_c] == sorted([c["guests"] for c in top_c], reverse=True)
+    assert [c["share_pct"] for c in top_c] == sorted([c["share_pct"] for c in top_c], reverse=True)
+    if total_guests > 0:
+        for c in top_c:
+            assert c["share_pct"] == pytest.approx(round((c["guests"] / total_guests) * 100, 1), abs=0.1)
+    for c in top_c:
+        if c["bookings"] > 0:
+            assert c["cancellation_rate"] is not None
+            assert 0.0 <= c["cancellation_rate"] <= 1.0
+
 
 def test_reports_weekly_demand_capacity_and_csv_export(database, tmp_path):
     """Verify DO-R01 weekly-demand (and /weekly alias), DO-R02 capacity-summary, and CSV export."""
